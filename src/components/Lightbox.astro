@@ -1,0 +1,43 @@
+---
+---
+
+<script>
+	function ensureOverlay() {
+		let overlay = document.getElementById('lightbox-overlay');
+		if (overlay) return overlay;
+
+		overlay = document.createElement('div');
+		overlay.id = 'lightbox-overlay';
+		overlay.className = 'lightbox-overlay';
+		const img = document.createElement('img');
+		overlay.appendChild(img);
+		overlay.addEventListener('click', () => overlay?.classList.remove('open'));
+		document.body.appendChild(overlay);
+		return overlay;
+	}
+
+	function onClick(e: MouseEvent) {
+		const target = e.target;
+		if (!(target instanceof HTMLImageElement)) return;
+		if (!target.closest('.case-study-body, .about-photos')) return;
+
+		const overlay = ensureOverlay();
+		const img = overlay.querySelector('img');
+		if (!img) return;
+		img.src = target.src;
+		img.alt = target.alt;
+		overlay.classList.add('open');
+	}
+
+	function onKeydown(e: KeyboardEvent) {
+		if (e.key !== 'Escape') return;
+		document.getElementById('lightbox-overlay')?.classList.remove('open');
+	}
+
+	const w = window as typeof window & { __lightboxBound?: boolean };
+	if (!w.__lightboxBound) {
+		document.addEventListener('click', onClick);
+		document.addEventListener('keydown', onKeydown);
+		w.__lightboxBound = true;
+	}
+</script>

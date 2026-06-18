@@ -1,0 +1,57 @@
+---
+import Base from '../layouts/Base.astro';
+import { withBase } from '../lib/url';
+---
+
+<Base title="About — Christopher Rangel" description="About Christopher Rangel, Product Designer">
+	<div class="container">
+		<section class="hero">
+			<h1>About</h1>
+		</section>
+		<div class="prose">
+			<p>
+				A classroom was my home for 13 years; I would not trade that experience for anything
+				else. I learned about the importance of access to the curriculum and looking at the
+				trends in data patterns to design learning solutions.
+			</p>
+			<p>
+				During the virtual learning year, I had a newfound love for tech and began to learn
+				front-end coding languages, becoming proficient in front-end software development. I
+				missed engaging with people and coming up with solutions, which is how I learned about
+				Design. I saw the similarities in the human-centered design process of products and how
+				I thought of my teaching practice.
+			</p>
+			<p>
+				Sometimes, I feel my life has been reflected in the Design Squiggle and my career
+				pathway, but that has also come with countless experiences that have shaped the
+				Designer I am today.
+			</p>
+			<img src={withBase('images/design-squiggle.png')} alt="The Design Squiggle" style="max-width: 480px;" />
+			<p>
+				I have a Bachelor of Arts in Liberal Studies, a Master of Education in General
+				Education with a teaching emphasis, and a Clear Multiple Subject Teaching Credential.
+			</p>
+			<p>
+				My love for learning and my desire to enable others' success led to an unconventional
+				path into Design that I would not trade. My students, and eventually business
+				stakeholders, benefitted from my understanding of the multiple organizational layers
+				involved in creating solutions.
+			</p>
+			<p>
+				In my spare time, I enjoy being in nature and taking photos of the world around me. I
+				believe that nature offers cues about Design that we can take in.
+			</p>
+			<p>
+				The different perspectives that can be taken within a shoot setting begin to show the
+				multiple layers and perspectives that we need to think about when designing solutions.
+			</p>
+		</div>
+		<div class="about-photos">
+			<img src={withBase('images/dsc02733.jpg')} alt="Photography by Christopher Rangel" loading="lazy" />
+			<img src={withBase('images/plants.jpg')} alt="Photography by Christopher Rangel" loading="lazy" />
+			<img src={withBase('images/laguna-sunset.jpg')} alt="Laguna sunset" loading="lazy" />
+			<img src={withBase('images/top-of-stairwell.jpg')} alt="Top of stairwell" loading="lazy" />
+			<img src={withBase('images/bottom-of-stairwell.jpg')} alt="Bottom of stairwell" loading="lazy" />
+		</div>
+	</div>
+</Base>

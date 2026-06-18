@@ -1,0 +1,65 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { withBase } from '../lib/url';
+
+const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base title="Christopher Rangel — Product Designer">
+	<div class="container">
+		<section class="hero">
+			<h1>Hi there 😁</h1>
+			<p>
+				I'm Chris, a Product Designer specializing in the governance of complex, high-stakes
+				enterprise systems. Currently at Capital One, I architect the internal infrastructure
+				that governs how thousands of developers interact with data products and AI protocols.
+				My design philosophy is rooted in Systems Intelligence: bridging the gap between
+				rigorous technical constraints and seamless human experiences.
+			</p>
+			<p>
+				Before architecting enterprise software, I spent a decade managing the most complex
+				'Service Ecosystem' in existence: the classroom. This background in high-stakes
+				operational leadership allows me to approach enterprise-scale with a unique lens on
+				accessibility, policy-driven design, and technical empathy.
+			</p>
+		</section>
+
+		<section class="principles">
+			<div class="principle-card">
+				<h3>Inclusive Architecture</h3>
+				<p>
+					Access isn't a feature; it's a requirement. I design with an 'Accessibility-First'
+					mindset, ensuring that system metadata and interaction patterns are inclusive of all
+					cognitive and physical abilities.
+				</p>
+			</div>
+			<div class="principle-card">
+				<h3>Iterative Governance</h3>
+				<p>
+					My process is governed by a 'Cycle of Inquiry'—utilizing real-time data and user
+					feedback loops to continuously audit and refine system integrity.
+				</p>
+			</div>
+			<div class="principle-card">
+				<h3>Scalable Frameworks</h3>
+				<p>
+					I leverage Universal Design for Learning (UDL) to build 'Low-Floor, High-Ceiling'
+					systems—interfaces that are simple for beginners but powerful for power users.
+				</p>
+			</div>
+		</section>
+
+		<h2 class="section-title">Collection of Work</h2>
+		<div class="work-grid">
+			{work.map((project) => (
+				<a class="work-card" href={withBase(`work/${project.id}`)}>
+					<div class="thumb-wrap">
+						<img src={withBase(`images/${project.data.thumbnail}`)} alt={project.data.name} loading="lazy" />
+					</div>
+					<h3>{project.data.name}</h3>
+				</a>
+			))}
+		</div>
+	</div>
+</Base>

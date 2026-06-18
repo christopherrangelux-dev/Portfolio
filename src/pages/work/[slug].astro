@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+import { withBase } from '../../lib/url';
+
+export async function getStaticPaths() {
+	const work = await getCollection('work');
+	return work.map((project) => ({
+		params: { slug: project.id },
+		props: { project },
+	}));
+}
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+---
+
+<Base title={`${project.data.title} — Christopher Rangel`} description={project.data.subtitle}>
+	<a class="back-link" href={withBase('')}>&larr; Back to all work</a>
+	<div class="case-study-header container">
+		<h1>{project.data.title}</h1>
+		<p class="subtitle">{project.data.subtitle}</p>
+	</div>
+	<div class="case-study-body prose">
+		<Content />
+	</div>
+</Base>

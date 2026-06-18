@@ -1,0 +1,54 @@
+---
+import '../styles/global.css';
+import { withBase } from '../lib/url';
+import { ClientRouter } from 'astro:transitions';
+import Lightbox from '../components/Lightbox.astro';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Christopher Rangel — Product Designer' } = Astro.props;
+const path = Astro.url.pathname;
+
+const navLink = (href: string) => withBase(href);
+const isActive = (href: string) => path === navLink(href) || (href === '' && path === withBase('/'));
+---
+
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<link rel="icon" type="image/svg+xml" href={withBase('favicon.svg')} />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="description" content={description} />
+		<meta name="generator" content={Astro.generator} />
+		<title>{title}</title>
+		<ClientRouter />
+	</head>
+	<body>
+		<header class="site-header">
+			<div class="container">
+				<a class="brand" href={navLink('')}>Christopher Rangel</a>
+				<nav class="site-nav">
+					<a href={navLink('')} class={isActive('') ? 'active' : ''}>Home</a>
+					<a href={navLink('about')} class={isActive('about') ? 'active' : ''}>About</a>
+					<a href={navLink('contact')} class={isActive('contact') ? 'active' : ''}>Contact</a>
+					<a href={withBase('resume.pdf')} target="_blank" rel="noopener">Resume</a>
+				</nav>
+			</div>
+		</header>
+
+		<main>
+			<slot />
+		</main>
+
+		<footer class="site-footer">
+			<div class="container">
+				<p>&copy; {new Date().getFullYear()} Christopher Rangel. Built with Astro, deployed on GitHub Pages.</p>
+			</div>
+		</footer>
+
+		<Lightbox />
+	</body>
+</html>
