@@ -2,7 +2,7 @@
 name: "Self-Service Workflow"
 title: "Self-Service Workflow: From 53% to 96% Completion"
 subtitle: "Rebuilding a confusing multi-touch credential request process into one guided change-order flow — completion scaled from 53% to 96%."
-thumbnail: "self-service-change-order.png"
+thumbnail: "cover-self-service-workflow.png"
 order: 2
 featured: true
 tags: ["Workflow Design", "Developer Tooling", "Self-Service UX"]

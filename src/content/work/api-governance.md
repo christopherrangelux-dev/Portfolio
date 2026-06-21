@@ -2,7 +2,7 @@
 name: "API Governance"
 title: "API Governance: Surfacing Evidence, Not Just Verdicts"
 subtitle: "Cutting platform debt 25% by pairing dormant-API evidence with a clear action path — across an 11,000-endpoint platform."
-thumbnail: "api-governance-evidence.png"
+thumbnail: "cover-api-governance.png"
 order: 3
 tags: ["Platform Governance", "Data Trust", "Developer Tooling"]
 snapshot:

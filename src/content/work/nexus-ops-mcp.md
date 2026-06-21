@@ -2,7 +2,7 @@
 name: "MCP Server Registration"
 title: "MCP Registry: One Shared Backend Instead of a Dozen Siloed Ones"
 subtitle: "A shared-backend architecture for MCP server registration and discovery — adopted by 80%+ of developers across 5 enterprise-approved servers."
-thumbnail: "mcp-discovery-directory.png"
+thumbnail: "cover-mcp-server-registration.png"
 order: 1
 featured: true
 tags: ["AI Infrastructure", "Developer Tooling", "Systems Architecture"]

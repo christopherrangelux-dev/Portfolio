@@ -2,7 +2,7 @@
 name: "XD Library"
 title: "The XD Library: A Resource Hub Organized the Way Designers Actually Think"
 subtitle: "1,000+ viewers in two weeks, 54 contributions in three months — built by matching the IA to how design specialists categorize their own work."
-thumbnail: "xd-library-resource-grid.png"
+thumbnail: "cover-xd-library.png"
 order: 4
 featured: true
 tags: ["Design Systems", "Information Architecture", "Design Ops"]
