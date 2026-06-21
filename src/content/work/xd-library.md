@@ -2,7 +2,7 @@
 name: "XD Library"
 title: "The XD Library: A Resource Hub Organized the Way Designers Actually Think"
 subtitle: "1,000+ viewers in two weeks, 54 contributions in three months — built by matching the IA to how design specialists categorize their own work."
-thumbnail: "the-xd-library.png"
+thumbnail: "xd-library-resource-grid.png"
 order: 4
 featured: true
 tags: ["Design Systems", "Information Architecture", "Design Ops"]
@@ -34,6 +34,8 @@ into how design specialists, not generalists, actually categorize and think abou
 Rather than impose a generic or engineering-driven taxonomy, the library's IA was built around
 design specialty — the way designers already organized their own work. Getting that structure
 right was the lever that made the library both findable and easy enough to contribute to.
+
+![The resource library, filterable by design discipline and resource type (representative recreation)](/images/xd-library-resource-grid.png)
 
 ## The Outcome
 

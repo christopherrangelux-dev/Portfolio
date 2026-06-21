@@ -2,7 +2,7 @@
 name: "Self-Service Workflow"
 title: "Self-Service Workflow: From 53% to 96% Completion"
 subtitle: "Rebuilding a confusing multi-touch credential request process into one guided change-order flow — completion scaled from 53% to 96%."
-thumbnail: "nexus-ops-data-management.png"
+thumbnail: "self-service-change-order.png"
 order: 2
 featured: true
 tags: ["Workflow Design", "Developer Tooling", "Self-Service UX"]
@@ -37,6 +37,8 @@ rebuilding the request process around a single change-order pattern. Select the 
 panel opens with a dropdown of the available metadata changes, add any additional fields the
 change needs, then submit and get confirmation. What had been a confusing, multi-touch process
 became one guided path.
+
+![The change-order side panel — select a change type, fill in just the fields it needs, submit (representative recreation)](/images/self-service-change-order.png)
 
 ## The Outcome
 

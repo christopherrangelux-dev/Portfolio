@@ -2,7 +2,7 @@
 name: "API Governance"
 title: "API Governance: Surfacing Evidence, Not Just Verdicts"
 subtitle: "Cutting platform debt 25% by pairing dormant-API evidence with a clear action path — across an 11,000-endpoint platform."
-thumbnail: "nexus-ops-mobile-api-governance.png"
+thumbnail: "api-governance-evidence.png"
 order: 3
 tags: ["Platform Governance", "Data Trust", "Developer Tooling"]
 snapshot:
@@ -35,6 +35,8 @@ Two things made that trust possible. First, surfacing the underlying evidence be
 flag, so a team could see *why* an endpoint was being called out instead of taking a verdict on
 faith. Second, pairing that evidence with a clear, simple action path, so finding out an endpoint
 was dormant and doing something about it weren't two disconnected steps.
+
+![Evidence behind an access decision — scopes, risk level, and policy context surfaced together, not just a verdict (representative recreation)](/images/api-governance-evidence.png)
 
 ## The Outcome
 

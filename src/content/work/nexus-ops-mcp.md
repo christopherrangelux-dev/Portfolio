@@ -2,7 +2,7 @@
 name: "MCP Server Registration"
 title: "MCP Registry: One Shared Backend Instead of a Dozen Siloed Ones"
 subtitle: "A shared-backend architecture for MCP server registration and discovery — adopted by 80%+ of developers across 5 enterprise-approved servers."
-thumbnail: "nexus-ops-mcp.png"
+thumbnail: "mcp-discovery-directory.png"
 order: 1
 featured: true
 tags: ["AI Infrastructure", "Developer Tooling", "Systems Architecture"]
@@ -37,9 +37,13 @@ discoverable everywhere, instead of requiring manual registration team by team. 
 the original design problem (a form) into a systems problem (where capability lives) — and solving
 the systems problem made the form mostly unnecessary.
 
+![Permission graph showing one MCP server with scoped, per-resource access (representative recreation)](/images/mcp-registry-architecture.png)
+
 From there, the work extended beyond registration into the human side: a search-and-directory
 experience so developers could find a server, see what it does, and request access directly,
 instead of hunting through docs or asking around.
+
+![MCP Server Directory — the human-facing discovery layer (representative recreation)](/images/mcp-discovery-directory.png)
 
 ## The Outcome
 
