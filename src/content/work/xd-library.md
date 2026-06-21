@@ -1,31 +1,49 @@
 ---
-name: "The XD Library"
-title: "The XD Library: Architecting Enterprise Design Intelligence"
-subtitle: "Standardizing a multi-disciplinary taxonomy and governance model for 120+ internal design resources."
+name: "XD Library"
+title: "The XD Library: A Resource Hub Organized the Way Designers Actually Think"
+subtitle: "1,000+ viewers in two weeks, 54 contributions in three months — built by matching the IA to how design specialists categorize their own work."
 thumbnail: "the-xd-library.png"
-order: 5
+order: 4
 featured: true
+tags: ["Design Systems", "Information Architecture", "Design Ops"]
+snapshot:
+  role: "Service Designer"
+  timeline: "Aug 2023–Aug 2024"
+  tools: "Figma, FigJam, React (recreation)"
+  team: "Solo design, design-org stakeholders"
 ---
 
-## The Strategic Problem Statement
+## The Problem
 
+Design resources — tokens, UI patterns, accessibility documentation — were scattered across tools,
+docs, and Slack threads with no central home. There was no single place a designer could go to
+find what already existed; finding anything depended on knowing the right person to ask, which
+meant constant reinvention and inconsistency across teams.
 
-Design maturity at scale requires more than just components; it requires a unified source of truth for methodology and governance. I architected the XD Library, an internal learning management system designed to eliminate knowledge silos across Capital One’s design organization. By developing a standardized Taxonomy for Design Disciplines, I created a scalable framework that allows 800+ designers to contribute to and consume institutional knowledge without administrative friction.
+## The Process
 
+**[Explore the live, interactive demo →](https://christopherrangelux-dev.github.io/xd-library/)**
+*A representative recreation, genericized and rebuilt in React — not the real internal tool.*
 
+Centralizing the content was the easy part. The harder problem was structuring it so designers
+could actually find what they needed at enterprise scale — which meant starting with research
+into how design specialists, not generalists, actually categorize and think about information.
 
-![The XD Library: Architecting Enterprise Design Intelligence screenshot](/images/screenshot-2026-04-19-at-4.40.32-pm.png)
+## The Decision
 
-## Taxonomy Governance & Content Orchestration
+Rather than impose a generic or engineering-driven taxonomy, the library's IA was built around
+design specialty — the way designers already organized their own work. Getting that structure
+right was the lever that made the library both findable and easy enough to contribute to.
 
+## The Outcome
 
-The primary challenge was not the build, but the Information Architecture. I led a cross-functional initiative to synthesize qualitative research into a cohesive Experience Design Taxonomy. By implementing an A/B tested 'Mental Model' for resource grouping, I ensured that the platform's navigation mirrored the natural workflows of product designers, researchers, and managers, reducing 'time-to-insight' across the enterprise.
+- 1,000+ viewers within two weeks of launch
+- 54 new contributions within three months, submitted through an in-library intake form
+- Became the enterprise's central design resource hub, and helped enable HCD workshops for
+  1,000+ Product and Tech partners
 
+## Reflection
 
-
-![The XD Library: Architecting Enterprise Design Intelligence screenshot](/images/screenshot-2026-04-19-at-4.39.23-pm.png)
-
-## Product Maintenance & Lifecycle Management
-
-
-To ensure the system's long-term integrity, I established a Governance Playbook and integrated Immerse-based tracking for the submission and audit of new resources. This moved the XD Library from a static site to a living product. I managed the documentation of 120 initial resources within Pulse LumApps, creating a repeatable 'Onboarding Logic' for newly submitted assets to maintain metadata consistency and searchability.
+The easy failure mode for a project like this is treating it as a content problem — just put the
+docs somewhere. The real work was the taxonomy decision, and that's the part that made people
+actually come back and contribute.

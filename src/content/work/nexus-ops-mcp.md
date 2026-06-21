@@ -1,31 +1,54 @@
 ---
-name: "Nexus Ops Model Context Protocol"
-title: "Nexus MCP: The Enterprise Gateway for Agentic Systems"
-subtitle: "Architecting centralized infrastructure for the discovery, secure provisioning, and real-time validation of Model Context Protocol (MCP) servers."
+name: "MCP Server Registration"
+title: "MCP Registry: One Shared Backend Instead of a Dozen Siloed Ones"
+subtitle: "A shared-backend architecture for MCP server registration and discovery — adopted by 80%+ of developers across 5 enterprise-approved servers."
 thumbnail: "nexus-ops-mcp.png"
-order: 2
+order: 1
 featured: true
+tags: ["AI Infrastructure", "Developer Tooling", "Systems Architecture"]
+snapshot:
+  role: "Product Designer"
+  timeline: "2024–Present"
+  tools: "Figma, FigJam, React (recreation)"
+  team: "Solo design, cross-functional engineering partners"
 ---
 
-## The Strategic Problem Statement
+## The Problem
 
+There was no standardized way to register a new MCP (Model Context Protocol) server, so every
+team solved discovery differently — or didn't solve it at all. AI agents and the developers
+building them had no reliable way to find out what servers existed or how to access them safely.
 
-The future of enterprise productivity lies in Agentic Workflows. I architected the MCP Gateway to serve as the unified discovery and governance layer for Model Context Protocols. As AI agents increasingly require secure access to disparate data sources, this gateway provides the necessary Protocol Transparency and secure handoff logic. It ensures that developers can discover, test, and implement AI connectors without compromising the bank’s rigorous data boundary standards.
+## The Process
 
+**[Explore the live, interactive demo →](https://christopherrangelux-dev.github.io/nexus-ops-mcp/)**
+*A representative recreation, genericized and rebuilt in React — not the real internal tool.*
 
+The work started as an information architecture problem: design a registration form and a
+metadata schema clear enough for both humans and AI agents to use. Partway through, it became
+clear the registration form wasn't the real problem.
 
-![Nexus MCP: The Enterprise Gateway for Agentic Systems screenshot](/images/screenshot-2026-04-19-at-6.17.26-pm.png)
+## The Decision
 
-## Orchestrating AI Interoperability & Secure Discovery
+There were two options: keep refining the registration form so each data product could register
+its own MCP server in isolation, or consolidate registration into one shared backend that every
+team plugged into. We chose the shared backend — a server registered once became automatically
+discoverable everywhere, instead of requiring manual registration team by team. That shift turned
+the original design problem (a form) into a systems problem (where capability lives) — and solving
+the systems problem made the form mostly unnecessary.
 
+From there, the work extended beyond registration into the human side: a search-and-directory
+experience so developers could find a server, see what it does, and request access directly,
+instead of hunting through docs or asking around.
 
-The primary architectural challenge was Schema Complexity. AI protocols are often dense and opaque; I designed a discovery interface that prioritizes 'Signal over Noise,' allowing developers to quickly verify protocol health, data types, and authentication requirements. By implementing a Logical Registry, I’ve moved the organization away from ad-hoc AI implementation toward a governed, scalable marketplace of interoperable model contexts.
+## The Outcome
 
+- 5 enterprise-approved MCP servers running on the shared backend
+- 80%+ developer adoption
+- One discovery path that works for both AI agents and human developers
 
+## Reflection
 
-![Nexus MCP: The Enterprise Gateway for Agentic Systems screenshot](/images/screenshot-2026-04-19-at-6.17.56-pm.png)
-
-## Standardizing the Developer Experience (DX) for AI
-
-
-In the MCP Gateway, the developer is the primary user. I focused on Information Density and Technical Clarity, ensuring that endpoint documentation and protocol logs are accessible in a single-pane-of-glass view. I worked to ensure the UI supports real-time protocol testing (sandboxing), allowing engineers to validate AI agent behavior in a controlled environment before moving to production—drastically reducing the 'Time-to-Agent' deployment.
+The lesson here was about scope: "make the form better" would have produced a marginally nicer
+form and the same underlying fragmentation. Stepping back to ask where capability *should* live is
+what actually fixed the problem.
