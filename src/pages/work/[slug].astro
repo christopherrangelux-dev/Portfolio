@@ -20,6 +20,14 @@ const { Content } = await render(project);
 	<div class="case-study-header container">
 		<h1>{project.data.title}</h1>
 		<p class="subtitle">{project.data.subtitle}</p>
+		{project.data.snapshot && (
+			<dl class="case-study-snapshot">
+				<div><dt>Role</dt><dd>{project.data.snapshot.role}</dd></div>
+				<div><dt>Timeline</dt><dd>{project.data.snapshot.timeline}</dd></div>
+				<div><dt>Tools</dt><dd>{project.data.snapshot.tools}</dd></div>
+				<div><dt>Team</dt><dd>{project.data.snapshot.team}</dd></div>
+			</dl>
+		)}
 	</div>
 	<div class="case-study-body prose">
 		<Content />

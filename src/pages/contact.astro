@@ -1,19 +1,24 @@
 ---
 import Base from '../layouts/Base.astro';
 const email = 'christopherrangelUX@gmail.com';
+const linkedin = 'https://www.linkedin.com/in/christopher-rangel-767a94b2/';
 ---
 
 <Base title="Contact — Christopher Rangel" description="Get in touch with Christopher Rangel">
 	<div class="container">
 		<section class="hero">
-			<h1>Contact</h1>
+			<h1>Let's talk.</h1>
 			<p>
-				The easiest way to reach me is by email — I'd love to hear about your project or
-				opportunity.
+				Whether you're hiring, collaborating, or just want to talk design systems (or
+				sourdough) — reach out.
 			</p>
 			<p>
 				<a href={`mailto:${email}`} style="font-weight: 500; border-bottom: 1px solid var(--ink);">
 					{email}
+				</a>
+				&nbsp;&middot;&nbsp;
+				<a href={linkedin} target="_blank" rel="noopener" style="font-weight: 500; border-bottom: 1px solid var(--ink);">
+					LinkedIn
 				</a>
 			</p>
 		</section>

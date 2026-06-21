@@ -9,6 +9,16 @@ const work = defineCollection({
     subtitle: z.string(),
     thumbnail: z.string(),
     order: z.number(),
+    featured: z.boolean().optional(),
+    tags: z.array(z.string()).optional(),
+    snapshot: z
+      .object({
+        role: z.string(),
+        timeline: z.string(),
+        tools: z.string(),
+        team: z.string(),
+      })
+      .optional(),
   }),
 });
 

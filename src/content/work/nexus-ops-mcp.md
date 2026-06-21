@@ -4,6 +4,7 @@ title: "Nexus MCP: The Enterprise Gateway for Agentic Systems"
 subtitle: "Architecting centralized infrastructure for the discovery, secure provisioning, and real-time validation of Model Context Protocol (MCP) servers."
 thumbnail: "nexus-ops-mcp.png"
 order: 2
+featured: true
 ---
 
 ## The Strategic Problem Statement

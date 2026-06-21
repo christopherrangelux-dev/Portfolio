@@ -4,6 +4,7 @@ title: "The XD Library: Architecting Enterprise Design Intelligence"
 subtitle: "Standardizing a multi-disciplinary taxonomy and governance model for 120+ internal design resources."
 thumbnail: "the-xd-library.png"
 order: 5
+featured: true
 ---
 
 ## The Strategic Problem Statement

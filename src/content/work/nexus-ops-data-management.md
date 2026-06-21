@@ -4,6 +4,8 @@ title: "Architecting Enterprise Trust: The Bilateral API Entitlement Engine"
 subtitle: "Standardizing application registration and automated data stewardship to eliminate \"Identity Debt\" in high-compliance fintech environments."
 thumbnail: "nexus-ops-data-management.png"
 order: 1
+# Placeholder for "Self-Service Credential & Approval Workflow" until that case study is rewritten (see Second Brain Portfolio Redo project)
+featured: true
 ---
 
 ## The Strategic Problem Statement

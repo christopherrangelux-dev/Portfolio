@@ -1,0 +1,31 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { withBase } from '../../lib/url';
+
+const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+---
+
+<Base title="Work — Christopher Rangel" description="Case studies by Christopher Rangel, Product Designer">
+	<div class="container">
+		<section class="hero">
+			<h1>Work</h1>
+		</section>
+		<div class="work-grid">
+			{work.map((project) => (
+				<a class="work-card" href={withBase(`work/${project.id}`)}>
+					<div class="thumb-wrap">
+						<img src={withBase(`images/${project.data.thumbnail}`)} alt={project.data.name} loading="lazy" />
+					</div>
+					<h3>{project.data.name}</h3>
+					<p class="work-card-subtitle">{project.data.subtitle}</p>
+					{project.data.tags && (
+						<div class="tag-list">
+							{project.data.tags.map((tag) => <span class="tag-pill">{tag}</span>)}
+						</div>
+					)}
+				</a>
+			))}
+		</div>
+	</div>
+</Base>
