@@ -30,7 +30,10 @@ const isActive = (href: string) => path === navLink(href) || (href === '' && pat
 		<header class="site-header">
 			<div class="container">
 				<a class="brand" href={navLink('')}>Christopher Rangel</a>
-				<nav class="site-nav">
+				<button class="nav-toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="site-nav">
+					<span></span><span></span><span></span>
+				</button>
+				<nav class="site-nav" id="site-nav">
 					<a href={navLink('')} class={isActive('') ? 'active' : ''}>Home</a>
 					<a href={navLink('work')} class={isActive('work') ? 'active' : ''}>Work</a>
 					<a href={navLink('about')} class={isActive('about') ? 'active' : ''}>About</a>
@@ -51,5 +54,43 @@ const isActive = (href: string) => path === navLink(href) || (href === '' && pat
 		</footer>
 
 		<Lightbox />
+
+		<script>
+			function closeNav() {
+				document.getElementById('site-nav')?.classList.remove('is-open');
+				document.querySelector('.nav-toggle')?.setAttribute('aria-expanded', 'false');
+			}
+
+			function onClick(e: MouseEvent) {
+				const target = e.target as Element;
+				const toggle = target.closest('.nav-toggle');
+				const nav = document.getElementById('site-nav');
+				if (!nav) return;
+
+				if (toggle) {
+					const isOpen = nav.classList.toggle('is-open');
+					toggle.setAttribute('aria-expanded', String(isOpen));
+					return;
+				}
+
+				if (!nav.classList.contains('is-open')) return;
+				if (target.closest('#site-nav a')) {
+					closeNav();
+				} else if (!nav.contains(target)) {
+					closeNav();
+				}
+			}
+
+			function onKeydown(e: KeyboardEvent) {
+				if (e.key === 'Escape') closeNav();
+			}
+
+			const w = window as typeof window & { __navBound?: boolean };
+			if (!w.__navBound) {
+				document.addEventListener('click', onClick);
+				document.addEventListener('keydown', onKeydown);
+				w.__navBound = true;
+			}
+		</script>
 	</body>
 </html>

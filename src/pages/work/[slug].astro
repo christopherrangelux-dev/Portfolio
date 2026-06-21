@@ -13,6 +13,11 @@ export async function getStaticPaths() {
 
 const { project } = Astro.props;
 const { Content } = await render(project);
+
+const allWork = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const currentIndex = allWork.findIndex((p) => p.id === project.id);
+const prevProject = allWork[(currentIndex - 1 + allWork.length) % allWork.length];
+const nextProject = allWork[(currentIndex + 1) % allWork.length];
 ---
 
 <Base title={`${project.data.title} — Christopher Rangel`} description={project.data.subtitle}>
@@ -32,4 +37,24 @@ const { Content } = await render(project);
 	<div class="case-study-body prose">
 		<Content />
 	</div>
+	{allWork.length > 1 && (
+		<nav class="project-nav" aria-label="More projects">
+			<div class="container">
+				<a class="project-nav-link project-nav-prev" href={withBase(`work/${prevProject.id}`)}>
+					<span class="project-nav-arrow" aria-hidden="true">&lsaquo;</span>
+					<span>
+						<span class="project-nav-label">Previous</span>
+						<span class="project-nav-title">{prevProject.data.name}</span>
+					</span>
+				</a>
+				<a class="project-nav-link project-nav-next" href={withBase(`work/${nextProject.id}`)}>
+					<span>
+						<span class="project-nav-label">Next</span>
+						<span class="project-nav-title">{nextProject.data.name}</span>
+					</span>
+					<span class="project-nav-arrow" aria-hidden="true">&rsaquo;</span>
+				</a>
+			</div>
+		</nav>
+	)}
 </Base>
