@@ -2,7 +2,7 @@
 name: "Olaiya's Cradle"
 title: "Olaiya's Cradle: Stepping Into a Lead Role to Secure $50K in Funding"
 subtitle: "A pro bono service design audit that secured $50K in funding and became a reusable toolkit for future engagements."
-thumbnail: "oc-portfolio-image-3-.png"
+thumbnail: "cover-olaiyas-cradle.png"
 order: 5
 tags: ["Service Design", "Nonprofit", "Pro Bono"]
 snapshot:
