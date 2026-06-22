@@ -1,0 +1,125 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { withBase } from '../lib/url';
+
+const tokens = [
+	{ name: 'ink', value: '#221f1b' },
+	{ name: 'paper', value: '#fbf7f1' },
+	{ name: 'muted', value: '#8a8170' },
+	{ name: 'accent', value: '#c2752e' },
+	{ name: 'accent-indigo', value: '#382b5f' },
+	{ name: 'border', value: '#e7e0d2' },
+];
+
+const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const xdLibrary = work.find((p) => p.id === 'xd-library')!;
+---
+
+<Base
+	title="Design System — Christopher Rangel"
+	description="A living reference for the type scale, color tokens, and components behind this site."
+>
+	<div class="container">
+		<section class="hero">
+			<h1>Design System</h1>
+			<p>
+				The real type scale, color tokens, and components this site is built from, rendered
+				as themselves rather than redrawn as static images. Grew out of the <a href={withBase('work/xd-library')} style="border-bottom: 1px solid var(--ink);">XD Library</a> case study.
+			</p>
+		</section>
+
+		<h2 class="section-title">Color Tokens</h2>
+		<div class="swatch-grid">
+			{tokens.map((token) => (
+				<div class="swatch">
+					<div class="swatch-color" style={`background: ${token.value};`}></div>
+					<p class="swatch-name">--{token.name}</p>
+					<p class="principle-card-meta">{token.value}</p>
+				</div>
+			))}
+		</div>
+
+		<h2 class="section-title">Type Scale</h2>
+		<div class="showcase-samples">
+			<div class="showcase-sample">
+				<div class="hero" style="padding: 0;">
+					<h1>Product Designer who bakes and chases patterns.</h1>
+				</div>
+				<p class="principle-card-meta">.hero h1, 2rem</p>
+			</div>
+			<div class="showcase-sample">
+				<div class="case-study-header" style="padding: 0;">
+					<h1>One Shared Backend Instead of a Dozen Siloed Ones</h1>
+				</div>
+				<p class="principle-card-meta">.case-study-header h1, 1.9rem</p>
+			</div>
+			<div class="showcase-sample">
+				<h2 class="section-title" style="margin: 0;">Featured Work</h2>
+				<p class="principle-card-meta">.section-title, 1.4rem</p>
+			</div>
+			<div class="showcase-sample">
+				<div class="case-study-body" style="margin: 0; padding: 0; max-width: none;">
+					<h2 style="margin-top: 0;">The Decision</h2>
+				</div>
+				<p class="principle-card-meta">.case-study-body h2, 1.25rem</p>
+			</div>
+			<div class="showcase-sample">
+				<p style="margin: 0;">
+					Body text sets in Lora at 1rem with 1.6 line-height. Long-form case-study prose
+					reads at this size throughout the site.
+				</p>
+				<p class="principle-card-meta">body p, 1rem</p>
+			</div>
+			<div class="showcase-sample">
+				<p class="work-card-subtitle" style="margin: 0;">A shared-backend architecture for MCP server registration and discovery.</p>
+				<p class="principle-card-meta">.work-card-subtitle, 0.85rem, muted</p>
+			</div>
+		</div>
+
+		<h2 class="section-title">Components</h2>
+
+		<div class="showcase-samples">
+			<div class="showcase-sample">
+				<div class="tag-list">
+					{xdLibrary.data.tags?.map((tag) => <span class="tag-pill">{tag}</span>)}
+				</div>
+				<p class="principle-card-meta">.tag-pill</p>
+			</div>
+
+			<div class="showcase-sample">
+				<div class="principle-card" style="max-width: 360px;">
+					<h3>Systems Thinking, Human Outcomes</h3>
+					<p>
+						The best system is invisible; it just works. I design for the architecture
+						underneath, not just the screen on top.
+					</p>
+				</div>
+				<p class="principle-card-meta">.principle-card</p>
+			</div>
+
+			<div class="showcase-sample">
+				<a class="work-card" href={withBase(`work/${xdLibrary.id}`)} style="max-width: 320px; display: block;">
+					<div class="thumb-wrap">
+						<img src={withBase(`images/${xdLibrary.data.thumbnail}`)} alt={xdLibrary.data.name} loading="lazy" />
+					</div>
+					<h3>{xdLibrary.data.name}</h3>
+					<p class="work-card-subtitle">{xdLibrary.data.subtitle}</p>
+				</a>
+				<p class="principle-card-meta">.work-card</p>
+			</div>
+
+			<div class="showcase-sample">
+				{xdLibrary.data.snapshot && (
+					<dl class="case-study-snapshot" style="margin: 0;">
+						<div><dt>Role</dt><dd>{xdLibrary.data.snapshot.role}</dd></div>
+						<div><dt>Timeline</dt><dd>{xdLibrary.data.snapshot.timeline}</dd></div>
+						<div><dt>Tools</dt><dd>{xdLibrary.data.snapshot.tools}</dd></div>
+						<div><dt>Team</dt><dd>{xdLibrary.data.snapshot.team}</dd></div>
+					</dl>
+				)}
+				<p class="principle-card-meta">.case-study-snapshot</p>
+			</div>
+		</div>
+	</div>
+</Base>

@@ -49,3 +49,6 @@ right was the lever that made the library both findable and easy enough to contr
 The easy failure mode for a project like this is treating it as a content problem: just put the
 docs somewhere. The real work was the taxonomy decision, and that's the part that made people
 actually come back and contribute.
+
+**[See this site's own design system →](/design-system)**
+*The real type scale, tokens, and components behind this portfolio, built with the same instinct for structure as the library above (not a recreation of the original).*

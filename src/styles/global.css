@@ -853,3 +853,48 @@ img {
 [data-theme='night'] .command-palette-hint kbd {
   background: rgba(164, 140, 224, 0.16);
 }
+
+/* design-system showcase page */
+
+.swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin: 0.5rem 0 3rem;
+}
+
+@media (max-width: 700px) {
+  .swatch-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.swatch-color {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  aspect-ratio: 2 / 1;
+  margin-bottom: 0.5rem;
+}
+
+.swatch-name {
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  margin: 0 0 0.2rem;
+}
+
+.showcase-samples {
+  margin: 0.5rem 0 3rem;
+}
+
+.showcase-sample {
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.showcase-sample:first-child {
+  padding-top: 0;
+}
+
+.showcase-sample:last-child {
+  border-bottom: none;
+}
