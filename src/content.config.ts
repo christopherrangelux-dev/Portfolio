@@ -21,8 +21,23 @@ const work = defineCollection({
     metric: z.string(),
     metricLabel: z.string(),
     color: z.string(),
-    pattern: z.enum(['node-graph', 'path-motif', 'dot-matrix', 'stacked-bars', 'branch']),
+    pattern: z.enum(['node-graph', 'path-motif', 'dot-matrix', 'stacked-bars', 'branch', 'lattice']),
   }),
 });
 
-export const collections = { work };
+const recipes = defineCollection({
+  loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/recipes' }),
+  schema: z.object({
+    title: z.string(),
+    description: z.string(),
+    category: z.enum(['baked-goods', 'savory', 'soups', 'pasta']),
+    tags: z.array(z.string()).optional(),
+    yield: z.string().optional(),
+    personalNote: z.string(),
+    youtubeId: z.string().optional(),
+    image: z.string().optional(),
+    date: z.date(),
+  }),
+});
+
+export const collections = { work, recipes };

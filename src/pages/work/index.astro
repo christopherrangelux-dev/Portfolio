@@ -18,10 +18,10 @@ const allTags = [...new Set(allWork.flatMap((p) => p.data.tags ?? []))];
 		<section class="hero work-hero">
 			<h1>Work</h1>
 			<p>
-				Five case studies in systems design, from AI infrastructure to service design for
-				nonprofits.
+				Case studies in systems design, from AI infrastructure to service design for
+				nonprofits, plus one rebuilt from scratch in the kitchen.
 			</p>
-			<p class="work-count">5 projects</p>
+			<p class="work-count">{allWork.length} projects</p>
 		</section>
 
 		<div class="tag-filter-bar" role="toolbar" aria-label="Filter projects by tag">

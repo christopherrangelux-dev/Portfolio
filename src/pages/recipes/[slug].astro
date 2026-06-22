@@ -1,0 +1,54 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+import { withBase } from '../../lib/url';
+
+const categoryLabels: Record<string, string> = {
+	'baked-goods': 'Baked Goods',
+	savory: 'Savory',
+	soups: 'Soups',
+	pasta: 'Pasta',
+};
+
+export async function getStaticPaths() {
+	const recipes = await getCollection('recipes');
+	return recipes.map((recipe) => ({
+		params: { slug: recipe.id },
+		props: { recipe },
+	}));
+}
+
+const { recipe } = Astro.props;
+const { Content } = await render(recipe);
+---
+
+<Base title={`${recipe.data.title} — Christopher Rangel`} description={recipe.data.description}>
+	<a class="back-link" href={withBase('recipes')}>&larr; Back to all recipes</a>
+	<div class="container recipe-detail">
+		<header class="recipe-header">
+			<h1>{recipe.data.title}</h1>
+			<p class="recipe-personal-note">{recipe.data.personalNote}</p>
+			<div class="recipe-meta">
+				<span class="recipe-category-tag">
+					<span class={`recipe-category-dot recipe-category-dot-${recipe.data.category}`} aria-hidden="true"></span>
+					{categoryLabels[recipe.data.category]}
+				</span>
+				{recipe.data.yield && <span class="recipe-yield">{recipe.data.yield}</span>}
+			</div>
+			{recipe.data.youtubeId && (
+				<div class="recipe-video">
+					<iframe
+						src={`https://www.youtube.com/embed/${recipe.data.youtubeId}`}
+						title={`${recipe.data.title} video`}
+						frameborder="0"
+						allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+						allowfullscreen
+					></iframe>
+				</div>
+			)}
+		</header>
+		<div class="recipe-body prose">
+			<Content />
+		</div>
+	</div>
+</Base>

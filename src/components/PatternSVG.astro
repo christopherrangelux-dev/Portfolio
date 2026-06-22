@@ -1,6 +1,6 @@
 ---
 interface Props {
-	pattern: 'node-graph' | 'path-motif' | 'dot-matrix' | 'stacked-bars' | 'branch';
+	pattern: 'node-graph' | 'path-motif' | 'dot-matrix' | 'stacked-bars' | 'branch' | 'lattice';
 }
 
 const { pattern } = Astro.props as Props;
@@ -35,6 +35,8 @@ const dots = Array.from({ length: dotCols * dotRows }, (_, i) => {
 		dormant: (col + row) % 3 === 0,
 	};
 });
+
+const latticeOffsets = Array.from({ length: 8 }, (_, i) => i * 80);
 ---
 
 {pattern === 'node-graph' && (
@@ -76,6 +78,17 @@ const dots = Array.from({ length: dotCols * dotRows }, (_, i) => {
 		<rect x="40" y="45" width="220" height="22" rx="3" fill="currentColor" />
 		<rect x="40" y="84" width="150" height="22" rx="3" fill="currentColor" opacity="0.75" />
 		<rect x="40" y="123" width="280" height="22" rx="3" fill="currentColor" opacity="0.5" />
+	</svg>
+)}
+
+{pattern === 'lattice' && (
+	<svg viewBox="0 0 400 180" class="pattern-svg" aria-hidden="true">
+		{latticeOffsets.map((x0) => (
+			<line x1={x0 - 180} y1="0" x2={x0} y2="180" stroke="currentColor" stroke-width="1.5" />
+		))}
+		{latticeOffsets.map((x0) => (
+			<line x1={x0} y1="0" x2={x0 - 180} y2="180" stroke="currentColor" stroke-width="1.5" />
+		))}
 	</svg>
 )}
 

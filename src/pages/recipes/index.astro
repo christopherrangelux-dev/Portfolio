@@ -1,0 +1,96 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { withBase } from '../../lib/url';
+
+const categoryLabels: Record<string, string> = {
+	'baked-goods': 'Baked Goods',
+	savory: 'Savory',
+	soups: 'Soups',
+	pasta: 'Pasta',
+};
+
+const allRecipes = (await getCollection('recipes')).sort((a, b) => a.data.title.localeCompare(b.data.title));
+const categories = [...new Set(allRecipes.map((r) => r.data.category))];
+---
+
+<Base title="Recipes — Christopher Rangel" description="Recipes Christopher Rangel actually cooks, with the stories attached" image="og/recipes.png">
+	<div class="container">
+		<section class="hero">
+			<h1>Recipes</h1>
+			<p>Things we actually cook. With the stories attached.</p>
+		</section>
+
+		<div class="tag-filter-bar recipe-filter-bar" role="toolbar" aria-label="Filter recipes by category">
+			<button type="button" class="tag-filter-btn is-active" data-category="all" aria-pressed="true">All</button>
+			{categories.map((category) => (
+				<button type="button" class="tag-filter-btn" data-category={category} aria-pressed="false">{categoryLabels[category]}</button>
+			))}
+		</div>
+
+		<div class="recipe-grid">
+			{allRecipes.map((recipe) => (
+				<a class="recipe-card" href={withBase(`recipes/${recipe.id}`)} data-category={recipe.data.category}>
+					<h3>{recipe.data.title}</h3>
+					<p class="recipe-card-note">{recipe.data.personalNote}</p>
+					<span class="recipe-category-tag">
+						<span class={`recipe-category-dot recipe-category-dot-${recipe.data.category}`} aria-hidden="true"></span>
+						{categoryLabels[recipe.data.category]}
+					</span>
+				</a>
+			))}
+		</div>
+	</div>
+</Base>
+
+<script>
+	function setupCategoryFilter() {
+		const bar = document.querySelector('.recipe-filter-bar');
+		if (!bar) return;
+
+		const buttons = Array.from(bar.querySelectorAll<HTMLButtonElement>('.tag-filter-btn'));
+		const cards = Array.from(document.querySelectorAll<HTMLElement>('.recipe-card'));
+		let activeIndex = 0;
+
+		function applyFilter(category: string) {
+			cards.forEach((card) => {
+				const show = category === 'all' || card.dataset.category === category;
+				card.classList.toggle('is-filtered-out', !show);
+			});
+		}
+
+		function setActive(button: HTMLButtonElement) {
+			buttons.forEach((b) => {
+				b.classList.toggle('is-active', b === button);
+				b.setAttribute('aria-pressed', String(b === button));
+			});
+			applyFilter(button.dataset.category ?? 'all');
+		}
+
+		function onClick(e: MouseEvent) {
+			const target = e.target as Element;
+			const button = target.closest<HTMLButtonElement>('.tag-filter-btn');
+			if (button) {
+				activeIndex = buttons.indexOf(button);
+				setActive(button);
+			}
+		}
+
+		function onKeydown(e: KeyboardEvent) {
+			if (!buttons.includes(document.activeElement as HTMLButtonElement)) return;
+			if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+				e.preventDefault();
+				activeIndex = (activeIndex + (e.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+				buttons[activeIndex].focus();
+			} else if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				setActive(document.activeElement as HTMLButtonElement);
+			}
+		}
+
+		bar.addEventListener('click', onClick);
+		bar.addEventListener('keydown', onKeydown);
+	}
+
+	setupCategoryFilter();
+</script>

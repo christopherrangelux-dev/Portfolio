@@ -49,6 +49,6 @@ was dormant and doing something about it weren't two disconnected steps.
 
 ## Reflection
 
-Of the five case studies here, this is the most data-heavy: the interesting design problem
+Of the enterprise case studies here, this is the most data-heavy: the interesting design problem
 wasn't the UI, it was figuring out what evidence actually builds trust, versus what just produces
 another dashboard nobody acts on.
