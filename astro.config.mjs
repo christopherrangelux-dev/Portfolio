@@ -1,5 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
+import mdx from '@astrojs/mdx';
 
 const base = '/Portfolio';
 
@@ -20,6 +21,7 @@ function rewriteImagePaths() {
 export default defineConfig({
   site: 'https://christopherrangelux-dev.github.io',
   base,
+  integrations: [mdx()],
   markdown: {
     remarkPlugins: [rewriteImagePaths],
   },

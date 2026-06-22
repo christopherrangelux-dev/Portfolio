@@ -538,3 +538,135 @@ img {
   cursor: zoom-out;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
+
+/* permission graph */
+
+.permission-graph {
+  margin: 2rem 0;
+}
+
+.permission-graph-canvas {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  aspect-ratio: 1;
+  margin: 0 auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.permission-graph-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.permission-graph-lines line {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.permission-graph-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  text-align: center;
+}
+
+.permission-graph-hub {
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 999px;
+  padding: 0.5rem 0.9rem;
+  white-space: nowrap;
+}
+
+.permission-graph-resource {
+  width: 4.5rem;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.45rem 0.5rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.permission-graph-resource:hover {
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+.permission-graph-resource:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.permission-graph-resource[aria-expanded='true'] {
+  border-color: var(--accent);
+}
+
+.permission-graph-resource-label {
+  display: block;
+  font-size: 0.76rem;
+}
+
+.permission-graph-scope {
+  font-size: 0.66rem;
+}
+
+@media (max-width: 480px) {
+  .permission-graph-resource {
+    width: 3.8rem;
+    padding: 0.35rem 0.4rem;
+  }
+
+  .permission-graph-resource-label {
+    font-size: 0.68rem;
+  }
+
+  .permission-graph-scope {
+    font-size: 0.6rem;
+    padding: 0.15rem 0.5rem;
+  }
+
+  .permission-graph-hub {
+    font-size: 0.7rem;
+    padding: 0.4rem 0.7rem;
+  }
+}
+
+.permission-graph-detail {
+  max-width: 380px;
+  margin: 1rem auto 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  background: rgba(56, 43, 95, 0.04);
+}
+
+.permission-graph-detail p {
+  margin: 0 0 0.5rem;
+}
+
+.permission-graph-detail p:last-child {
+  margin-bottom: 0;
+}
+
+.permission-graph-detail-note {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.permission-graph figcaption {
+  margin-top: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+  text-align: center;
+}

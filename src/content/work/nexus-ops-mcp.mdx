@@ -13,6 +13,8 @@ snapshot:
   team: "Solo design, cross-functional engineering partners"
 ---
 
+import PermissionGraph from '../../components/PermissionGraph.astro';
+
 ## The Problem
 
 There was no standardized way to register a new MCP (Model Context Protocol) server, so every
@@ -37,7 +39,7 @@ discoverable everywhere, instead of requiring manual registration team by team. 
 the original design problem (a form) into a systems problem (where capability lives) — and solving
 the systems problem made the form mostly unnecessary.
 
-![Permission graph showing one MCP server with scoped, per-resource access (representative recreation)](/images/mcp-registry-architecture.png)
+<PermissionGraph />
 
 From there, the work extended beyond registration into the human side: a search-and-directory
 experience so developers could find a server, see what it does, and request access directly,

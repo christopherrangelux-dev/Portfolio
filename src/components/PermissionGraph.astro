@@ -1,0 +1,134 @@
+---
+const resources = [
+	{
+		id: 'a',
+		label: 'Resource A',
+		scope: 'Read',
+		note: 'This server can read Resource A’s data to serve requests, but cannot modify it.',
+		x: 50,
+		y: 10,
+	},
+	{
+		id: 'b',
+		label: 'Resource B',
+		scope: 'Read-Write',
+		note: 'This server can read and write to Resource B within its registered scope.',
+		x: 86,
+		y: 50,
+	},
+	{
+		id: 'c',
+		label: 'Resource C',
+		scope: 'Admin',
+		note: 'This server has administrative access to Resource C, limited to its own configuration.',
+		x: 50,
+		y: 90,
+	},
+	{
+		id: 'd',
+		label: 'Resource D',
+		scope: 'Read',
+		note: 'This server can read Resource D’s data but has no write access.',
+		x: 14,
+		y: 50,
+	},
+];
+---
+
+<figure class="permission-graph" aria-label="Permission graph: one MCP server with scoped, per-resource access (representative recreation)">
+	<div class="permission-graph-canvas">
+		<svg class="permission-graph-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+			{resources.map((r) => (
+				<line x1="50" y1="50" x2={r.x} y2={r.y} />
+			))}
+		</svg>
+
+		<div class="permission-graph-node permission-graph-hub" style={`left:50%; top:50%;`}>
+			MCP Server
+		</div>
+
+		{resources.map((r) => (
+			<button
+				type="button"
+				class="permission-graph-node permission-graph-resource"
+				style={`left:${r.x}%; top:${r.y}%;`}
+				data-resource={r.id}
+				aria-expanded="false"
+				aria-controls="permission-graph-detail"
+			>
+				<span class="permission-graph-resource-label">{r.label}</span>
+				<span class="tag-pill permission-graph-scope">{r.scope}</span>
+			</button>
+		))}
+	</div>
+
+	<div class="permission-graph-detail" id="permission-graph-detail" hidden>
+		<p>
+			<strong class="permission-graph-detail-label"></strong>
+			<span class="tag-pill permission-graph-detail-scope"></span>
+		</p>
+		<p class="permission-graph-detail-note"></p>
+	</div>
+
+	<figcaption>One MCP server with scoped, per-resource access. Click a resource to see its access scope (representative recreation).</figcaption>
+</figure>
+
+<script>
+	const resourceData: Record<string, { label: string; scope: string; note: string }> = {
+		a: { label: 'Resource A', scope: 'Read', note: 'This server can read Resource A’s data to serve requests, but cannot modify it.' },
+		b: { label: 'Resource B', scope: 'Read-Write', note: 'This server can read and write to Resource B within its registered scope.' },
+		c: { label: 'Resource C', scope: 'Admin', note: 'This server has administrative access to Resource C, limited to its own configuration.' },
+		d: { label: 'Resource D', scope: 'Read', note: 'This server can read Resource D’s data but has no write access.' },
+	};
+
+	function closeDetail() {
+		const detail = document.getElementById('permission-graph-detail');
+		if (!detail || detail.hidden) return;
+		detail.hidden = true;
+		document.querySelectorAll('.permission-graph-resource[aria-expanded="true"]').forEach((node) => {
+			node.setAttribute('aria-expanded', 'false');
+		});
+	}
+
+	function openDetail(button: HTMLElement) {
+		const id = button.dataset.resource;
+		if (!id) return;
+		const data = resourceData[id];
+		if (!data) return;
+
+		const detail = document.getElementById('permission-graph-detail');
+		if (!detail) return;
+
+		const wasActive = button.getAttribute('aria-expanded') === 'true';
+		closeDetail();
+		if (wasActive) return;
+
+		detail.querySelector('.permission-graph-detail-label')!.textContent = data.label;
+		detail.querySelector('.permission-graph-detail-scope')!.textContent = data.scope;
+		detail.querySelector('.permission-graph-detail-note')!.textContent = data.note;
+		detail.hidden = false;
+		button.setAttribute('aria-expanded', 'true');
+	}
+
+	function onClick(e: MouseEvent) {
+		const target = e.target as Element;
+		const button = target.closest<HTMLElement>('.permission-graph-resource');
+		if (button) {
+			openDetail(button);
+			return;
+		}
+		if (!target.closest('.permission-graph')) closeDetail();
+	}
+
+	function onKeydown(e: KeyboardEvent) {
+		if (e.key !== 'Escape') return;
+		closeDetail();
+	}
+
+	const w = window as typeof window & { __permissionGraphBound?: boolean };
+	if (!w.__permissionGraphBound) {
+		document.addEventListener('click', onClick);
+		document.addEventListener('keydown', onKeydown);
+		w.__permissionGraphBound = true;
+	}
+</script>
