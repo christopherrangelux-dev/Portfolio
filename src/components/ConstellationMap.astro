@@ -1,0 +1,475 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { withBase } from '../lib/url';
+
+interface Props {
+	work: CollectionEntry<'work'>[];
+}
+
+const { work } = Astro.props;
+
+// Hardcoded layout — tweakable constants. Positions are in the 1000x600 SVG
+// viewBox; connections drive line opacity between two slugs.
+const POSITIONS: Record<string, { x: number; y: number }> = {
+	'nexus-ops-mcp': { x: 280, y: 180 },
+	'self-service-workflow': { x: 420, y: 220 },
+	'api-governance': { x: 350, y: 310 },
+	'xd-library': { x: 550, y: 160 },
+	'olaiyas-cradle': { x: 680, y: 380 },
+	'recipe-book': { x: 720, y: 480 },
+};
+
+const CONNECTIONS: Array<{ from: string; to: string; opacity: number }> = [
+	{ from: 'nexus-ops-mcp', to: 'self-service-workflow', opacity: 0.7 },
+	{ from: 'nexus-ops-mcp', to: 'api-governance', opacity: 1.0 },
+	{ from: 'self-service-workflow', to: 'api-governance', opacity: 0.7 },
+	{ from: 'nexus-ops-mcp', to: 'xd-library', opacity: 0.4 },
+	{ from: 'xd-library', to: 'api-governance', opacity: 0.5 },
+	{ from: 'olaiyas-cradle', to: 'recipe-book', opacity: 0.6 },
+	{ from: 'olaiyas-cradle', to: 'xd-library', opacity: 0.3 },
+];
+
+// Static decorative star field — scattered hardcoded coordinates, purely
+// cosmetic, no animation.
+const STARS: Array<{ x: number; y: number; r: number }> = [
+	{ x: 90, y: 60, r: 1.4 },
+	{ x: 180, y: 480, r: 1 },
+	{ x: 340, y: 70, r: 1.2 },
+	{ x: 470, y: 50, r: 1 },
+	{ x: 610, y: 90, r: 1.6 },
+	{ x: 800, y: 130, r: 1 },
+	{ x: 900, y: 60, r: 1.3 },
+	{ x: 920, y: 300, r: 1 },
+	{ x: 850, y: 520, r: 1.4 },
+	{ x: 580, y: 540, r: 1 },
+	{ x: 230, y: 350, r: 1.2 },
+	{ x: 60, y: 250, r: 1 },
+];
+
+const projectsBySlug = new Map(work.map((p) => [p.id, p]));
+const nodes = Object.entries(POSITIONS)
+	.map(([slug, pos]) => {
+		const project = projectsBySlug.get(slug);
+		if (!project) return null;
+		return { slug, ...pos, project };
+	})
+	.filter((n): n is { slug: string; x: number; y: number; project: CollectionEntry<'work'> } => n !== null);
+
+const connections = CONNECTIONS.filter((c) => POSITIONS[c.from] && POSITIONS[c.to]);
+---
+
+<div class="constellation-wrap" id="constellation-wrap">
+	<svg
+		id="constellation"
+		viewBox="0 0 1000 600"
+		preserveAspectRatio="xMidYMid meet"
+		role="img"
+		aria-label="Constellation map of case studies, connected by shared themes"
+	>
+		<g aria-hidden="true" class="constellation-stars">
+			{STARS.map((s) => (
+				<circle cx={s.x} cy={s.y} r={s.r} class="constellation-star" />
+			))}
+		</g>
+
+		<g class="constellation-lines">
+			{connections.map((c) => {
+				const from = POSITIONS[c.from];
+				const to = POSITIONS[c.to];
+				return (
+					<line
+						x1={from.x}
+						y1={from.y}
+						x2={to.x}
+						y2={to.y}
+						class="constellation-line"
+						data-from={c.from}
+						data-to={c.to}
+						style={`--base-opacity: ${c.opacity}`}
+					/>
+				);
+			})}
+		</g>
+
+		<g class="constellation-nodes">
+			{nodes.map((n) => (
+				<a
+					href={withBase(`work/${n.project.id}`)}
+					class="constellation-node"
+					data-slug={n.slug}
+					data-name={n.project.data.name}
+					data-node-metric={n.project.data.metric}
+					data-node-metric-label={n.project.data.metricLabel}
+					data-tags={(n.project.data.tags ?? []).join(' · ')}
+					aria-label={`${n.project.data.name} — ${n.project.data.subtitle}`}
+				>
+					<circle
+						cx={n.x}
+						cy={n.y}
+						r="10"
+						class="constellation-node-circle"
+						style={`fill: ${n.project.data.color}`}
+						data-x={n.x}
+						data-y={n.y}
+					/>
+					<text
+						x={n.x}
+						y={n.y + 24}
+						class="constellation-node-label"
+						transition:name={`work-node-${n.project.id}`}
+					>
+						{n.project.data.name}
+					</text>
+				</a>
+			))}
+		</g>
+	</svg>
+</div>
+
+<style>
+	.constellation-wrap {
+		overflow-x: auto;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: transparent;
+		margin-bottom: 2.5rem;
+		cursor: grab;
+		-webkit-user-select: none;
+		user-select: none;
+	}
+
+	.constellation-wrap.is-panning {
+		cursor: grabbing;
+	}
+
+	#constellation {
+		display: block;
+		width: 100%;
+		min-width: 720px;
+		height: auto;
+		aspect-ratio: 1000 / 600;
+	}
+
+	.constellation-star {
+		fill: var(--ink);
+		fill-opacity: 0.18;
+	}
+
+	[data-theme='night'] .constellation-star {
+		fill: #ffffff;
+		fill-opacity: 0.35;
+	}
+
+	.constellation-line {
+		stroke: var(--accent);
+		stroke-width: 1;
+		stroke-linecap: round;
+		opacity: var(--base-opacity, 0.5);
+		transition: opacity 0.2s ease;
+	}
+
+	.constellation-node {
+		cursor: pointer;
+	}
+
+	.constellation-node-circle {
+		transition: r 0.2s ease;
+		transform-origin: center;
+		transform-box: fill-box;
+	}
+
+	.constellation-node-label {
+		font-family: var(--mono);
+		font-size: 12px;
+		fill: var(--muted);
+		text-anchor: middle;
+		pointer-events: none;
+		transition: fill 0.2s ease;
+	}
+
+	.constellation-node:hover .constellation-node-label,
+	.constellation-node:focus-visible .constellation-node-label {
+		fill: var(--ink);
+	}
+
+	.constellation-node:focus-visible .constellation-node-circle {
+		outline: 2px solid var(--accent-indigo);
+		outline-offset: 2px;
+	}
+
+	.constellation-node-circle.is-pulsing {
+		animation: constellation-pulse 600ms ease-in-out;
+	}
+
+	@keyframes constellation-pulse {
+		0% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.15);
+		}
+		100% {
+			transform: scale(1);
+		}
+	}
+
+	@media (hover: none) {
+		#constellation {
+			min-width: 900px;
+		}
+	}
+</style>
+
+<style is:global>
+	/* Tooltip — single shared instance, created at runtime via
+	   document.createElement (not rendered by Astro), so it never receives
+	   the scoped data-astro-cid attribute a normal <style> block relies on.
+	   Marked is:global for that reason, same convention as design-system.astro's
+	   .ds-tooltip. Every selector below is uniquely prefixed (.constellation-*)
+	   so this can't leak into or collide with the rest of the site's styling. */
+	.constellation-tooltip {
+		position: fixed;
+		z-index: 60;
+		max-width: 260px;
+		padding: 0.75rem 0.9rem;
+		background: var(--paper);
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+		font-size: 0.82rem;
+		line-height: 1.45;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 150ms ease;
+	}
+
+	.constellation-tooltip.is-open {
+		opacity: 1;
+	}
+
+	.constellation-tooltip-name {
+		margin: 0 0 0.25rem;
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.constellation-tooltip-metric {
+		margin: 0 0 0.25rem;
+		color: var(--accent);
+	}
+
+	.constellation-tooltip-tags {
+		margin: 0 0 0.5rem;
+		color: var(--muted);
+		font-size: 0.76rem;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+
+	.constellation-tooltip-cta {
+		margin: 0;
+		color: var(--accent-indigo);
+		font-size: 0.78rem;
+	}
+</style>
+
+<script>
+	function setupConstellationMap() {
+		const wrap = document.getElementById('constellation-wrap');
+		const svg = document.getElementById('constellation');
+		if (!wrap || !svg) return;
+
+		const isTouch = window.matchMedia('(hover: none)').matches;
+		const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const NODE_RADIUS = isTouch ? 18 : 10;
+		const NODE_RADIUS_HOVER = isTouch ? 22 : 14;
+
+		const nodeEls = Array.from(svg.querySelectorAll<SVGAElement>('.constellation-node'));
+		const lineEls = Array.from(svg.querySelectorAll<SVGLineElement>('.constellation-line'));
+		const circleEls = Array.from(svg.querySelectorAll<SVGCircleElement>('.constellation-node-circle'));
+
+		// Apply touch-vs-desktop default radius.
+		circleEls.forEach((c) => c.setAttribute('r', String(NODE_RADIUS)));
+
+		// slug -> connected line elements, for efficient hover highlighting.
+		const linesBySlug = new Map<string, SVGLineElement[]>();
+		lineEls.forEach((line) => {
+			const from = line.dataset.from!;
+			const to = line.dataset.to!;
+			if (!linesBySlug.has(from)) linesBySlug.set(from, []);
+			if (!linesBySlug.has(to)) linesBySlug.set(to, []);
+			linesBySlug.get(from)!.push(line);
+			linesBySlug.get(to)!.push(line);
+		});
+
+		function getTooltip(): HTMLDivElement {
+			let tooltip = document.querySelector<HTMLDivElement>('.constellation-tooltip');
+			if (!tooltip || !document.body.contains(tooltip)) {
+				tooltip = document.createElement('div');
+				tooltip.className = 'constellation-tooltip';
+				tooltip.setAttribute('role', 'tooltip');
+				document.body.appendChild(tooltip);
+			}
+			return tooltip;
+		}
+
+		function escapeHtml(str: string): string {
+			const div = document.createElement('div');
+			div.textContent = str;
+			return div.innerHTML;
+		}
+
+		let activeSlug: string | null = null;
+		let tappedSlug: string | null = null;
+
+		function highlight(slug: string | null) {
+			if (slug === activeSlug) return;
+			activeSlug = slug;
+
+			circleEls.forEach((c) => {
+				const parent = c.closest<SVGAElement>('.constellation-node');
+				const isActive = parent?.dataset.slug === slug;
+				c.setAttribute('r', String(isActive ? NODE_RADIUS_HOVER : NODE_RADIUS));
+				if (isActive && !reduceMotion) {
+					c.classList.remove('is-pulsing');
+					// restart animation
+					void c.getBoundingClientRect();
+					c.classList.add('is-pulsing');
+				} else if (!isActive) {
+					c.classList.remove('is-pulsing');
+				}
+			});
+
+			if (!slug) {
+				lineEls.forEach((line) => {
+					line.style.opacity = '';
+				});
+				return;
+			}
+
+			const connected = new Set(linesBySlug.get(slug) ?? []);
+			lineEls.forEach((line) => {
+				line.style.opacity = connected.has(line) ? '1' : '0.1';
+			});
+		}
+
+		function renderTooltipContent(node: SVGAElement) {
+			const tooltip = getTooltip();
+			const name = node.getAttribute('data-name') ?? '';
+			const metric = node.getAttribute('data-node-metric') ?? '';
+			const metricLabel = node.getAttribute('data-node-metric-label') ?? '';
+			const tags = node.getAttribute('data-tags') ?? '';
+
+			tooltip.innerHTML = `
+				<p class="constellation-tooltip-name">${escapeHtml(name)}</p>
+				${metric ? `<p class="constellation-tooltip-metric">${escapeHtml(metric)} ${escapeHtml(metricLabel)}</p>` : ''}
+				${tags ? `<p class="constellation-tooltip-tags">${escapeHtml(tags)}</p>` : ''}
+				<p class="constellation-tooltip-cta">Click to view case study &rarr;</p>
+			`;
+		}
+
+		function positionTooltip(circle: SVGCircleElement, node: SVGAElement) {
+			const tooltip = getTooltip();
+			const rect = circle.getBoundingClientRect();
+			const tooltipRect = tooltip.getBoundingClientRect();
+			const margin = 8;
+
+			let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+			left = Math.max(margin, Math.min(left, window.innerWidth - tooltipRect.width - margin));
+
+			const nodeY = parseFloat(circle.dataset.y ?? '0');
+			const flipBelow = nodeY < 120;
+
+			let top: number;
+			if (flipBelow) {
+				top = rect.bottom + margin;
+			} else {
+				top = rect.top - tooltipRect.height - margin;
+				if (top < margin) {
+					top = rect.bottom + margin;
+				}
+			}
+
+			tooltip.style.left = `${left}px`;
+			tooltip.style.top = `${top}px`;
+		}
+
+		function openTooltip(node: SVGAElement) {
+			const circle = node.querySelector<SVGCircleElement>('.constellation-node-circle');
+			if (!circle) return;
+			renderTooltipContent(node);
+			const tooltip = getTooltip();
+			tooltip.classList.add('is-open');
+			positionTooltip(circle, node);
+		}
+
+		function closeTooltip() {
+			getTooltip().classList.remove('is-open');
+		}
+
+		nodeEls.forEach((node) => {
+			const project = node.dataset;
+			const slug = project.slug ?? '';
+
+			if (!isTouch) {
+				node.addEventListener('mouseenter', () => {
+					highlight(slug);
+					openTooltip(node);
+				});
+				node.addEventListener('mouseleave', () => {
+					highlight(null);
+					closeTooltip();
+				});
+				node.addEventListener('focus', () => {
+					highlight(slug);
+					openTooltip(node);
+				});
+				node.addEventListener('blur', () => {
+					highlight(null);
+					closeTooltip();
+				});
+			} else {
+				node.addEventListener('click', (e) => {
+					if (tappedSlug !== slug) {
+						e.preventDefault();
+						tappedSlug = slug;
+						highlight(slug);
+						openTooltip(node);
+					}
+					// second tap with the same slug: let the anchor navigate normally.
+				});
+			}
+		});
+
+		// Desktop click-and-drag panning. Touch keeps native scroll behavior.
+		let isPanning = false;
+		let startX = 0;
+		let startScrollLeft = 0;
+
+		wrap.addEventListener('pointerdown', (e: PointerEvent) => {
+			if (e.pointerType !== 'mouse') return;
+			isPanning = true;
+			startX = e.clientX;
+			startScrollLeft = wrap.scrollLeft;
+			wrap.classList.add('is-panning');
+		});
+
+		window.addEventListener('pointermove', (e: PointerEvent) => {
+			if (!isPanning) return;
+			const dx = e.clientX - startX;
+			wrap.scrollLeft = startScrollLeft - dx;
+		});
+
+		window.addEventListener('pointerup', () => {
+			if (!isPanning) return;
+			isPanning = false;
+			wrap.classList.remove('is-panning');
+		});
+	}
+
+	const w = window as typeof window & { __constellationMapBound?: boolean };
+	if (!w.__constellationMapBound) {
+		setupConstellationMap();
+		w.__constellationMapBound = true;
+	}
+</script>

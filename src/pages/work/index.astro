@@ -4,6 +4,7 @@ import { getCollection } from 'astro:content';
 import { withBase } from '../../lib/url';
 import { parseMetric } from '../../lib/metric';
 import PatternSVG from '../../components/PatternSVG.astro';
+import ConstellationMap from '../../components/ConstellationMap.astro';
 
 const allWork = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 // Tier 1 is the two most senior/complex pieces (lowest `order`), independent of the
@@ -24,93 +25,124 @@ const allTags = [...new Set(allWork.flatMap((p) => p.data.tags ?? []))];
 			<p class="work-count">{allWork.length} projects</p>
 		</section>
 
-		<div class="tag-filter-bar" role="toolbar" aria-label="Filter projects by tag">
-			<button type="button" class="tag-filter-btn is-active" data-tag="all" aria-pressed="true">All</button>
-			{allTags.map((tag) => (
-				<button type="button" class="tag-filter-btn" data-tag={tag} aria-pressed="false">{tag}</button>
-			))}
+		<div class="work-toolbar">
+			<div class="tag-filter-bar" role="toolbar" aria-label="Filter projects by tag">
+				<button type="button" class="tag-filter-btn is-active" data-tag="all" aria-pressed="true">All</button>
+				{allTags.map((tag) => (
+					<button type="button" class="tag-filter-btn" data-tag={tag} aria-pressed="false">{tag}</button>
+				))}
+			</div>
+
+			<div class="view-toggle-bar" role="toolbar" aria-label="Switch work view">
+				<button type="button" class="view-toggle-btn is-active" data-view="grid" aria-pressed="true">Grid</button>
+				<button type="button" class="view-toggle-btn" data-view="map" aria-pressed="false">Map</button>
+			</div>
 		</div>
 
-		<div class="work-tier work-tier-1">
-			{featured.map((project) => {
-				const m = parseMetric(project.data.metric);
-				return (
-					<a
-						class="work-card work-card-featured"
-						href={withBase(`work/${project.id}`)}
-						data-tags={(project.data.tags ?? []).join('|')}
-						style={`--card-color: ${project.data.color}`}
-					>
-						<div class="work-card-visual" style={`color: ${project.data.color}`}>
-							<PatternSVG pattern={project.data.pattern} />
-						</div>
-						<h3 transition:name={`work-title-${project.id}`}>{project.data.name}</h3>
-						<p class="work-card-subtitle">{project.data.subtitle}</p>
-						<div class="metric-callout">
-							{m.staticPrefix && <span class="metric-static">{m.staticPrefix}</span>}
-							<span
-								class="metric-value"
-								transition:name={`work-metric-${project.id}`}
-								data-metric
-								data-metric-end={m.end}
-								data-metric-prefix={m.animPrefix}
-								data-metric-suffix={m.animSuffix}
-								data-metric-comma={m.comma ? '1' : ''}
-							>
-								{m.animPrefix}{m.comma ? m.end.toLocaleString() : m.end}{m.animSuffix}
-							</span>
-							<span class="metric-label">{project.data.metricLabel}</span>
-						</div>
-						{project.data.tags && (
-							<div class="tag-list">
-								{project.data.tags.map((tag) => <span class="tag-pill">{tag}</span>)}
+		<div id="work-grid-view">
+			<div class="work-tier work-tier-1">
+				{featured.map((project) => {
+					const m = parseMetric(project.data.metric);
+					return (
+						<a
+							class="work-card work-card-featured"
+							href={withBase(`work/${project.id}`)}
+							data-tags={(project.data.tags ?? []).join('|')}
+							style={`--card-color: ${project.data.color}`}
+						>
+							<div class="work-card-visual" style={`color: ${project.data.color}`}>
+								<PatternSVG pattern={project.data.pattern} />
 							</div>
-						)}
-						<span class="work-card-link">View case study &rarr;</span>
-					</a>
-				);
-			})}
+							<h3 transition:name={`work-title-${project.id}`}>{project.data.name}</h3>
+							<p class="work-card-subtitle">{project.data.subtitle}</p>
+							<div class="metric-callout">
+								{m.staticPrefix && <span class="metric-static">{m.staticPrefix}</span>}
+								<span
+									class="metric-value"
+									transition:name={`work-metric-${project.id}`}
+									data-metric
+									data-metric-end={m.end}
+									data-metric-prefix={m.animPrefix}
+									data-metric-suffix={m.animSuffix}
+									data-metric-comma={m.comma ? '1' : ''}
+								>
+									{m.animPrefix}{m.comma ? m.end.toLocaleString() : m.end}{m.animSuffix}
+								</span>
+								<span class="metric-label">{project.data.metricLabel}</span>
+							</div>
+							{project.data.tags && (
+								<div class="tag-list">
+									{project.data.tags.map((tag) => <span class="tag-pill">{tag}</span>)}
+								</div>
+							)}
+							<span class="work-card-link">View case study &rarr;</span>
+						</a>
+					);
+				})}
+			</div>
+
+			<div class="work-tier work-tier-2">
+				{supporting.map((project) => {
+					const m = parseMetric(project.data.metric);
+					return (
+						<a
+							class="work-card work-card-supporting"
+							href={withBase(`work/${project.id}`)}
+							data-tags={(project.data.tags ?? []).join('|')}
+							style={`--card-color: ${project.data.color}`}
+						>
+							<div class="work-card-pattern-bg" style={`color: ${project.data.color}`} aria-hidden="true">
+								<PatternSVG pattern={project.data.pattern} />
+							</div>
+							<h3 transition:name={`work-title-${project.id}`}>{project.data.name}</h3>
+							<p class="work-card-subtitle">{project.data.subtitle}</p>
+							<div class="metric-callout metric-callout-small">
+								{m.staticPrefix && <span class="metric-static">{m.staticPrefix}</span>}
+								<span
+									class="metric-value"
+									transition:name={`work-metric-${project.id}`}
+									data-metric
+									data-metric-end={m.end}
+									data-metric-prefix={m.animPrefix}
+									data-metric-suffix={m.animSuffix}
+									data-metric-comma={m.comma ? '1' : ''}
+								>
+									{m.animPrefix}{m.comma ? m.end.toLocaleString() : m.end}{m.animSuffix}
+								</span>
+								<span class="metric-label">{project.data.metricLabel}</span>
+							</div>
+							{project.data.tags && (
+								<div class="tag-list">
+									{project.data.tags.map((tag) => <span class="tag-pill">{tag}</span>)}
+								</div>
+							)}
+						</a>
+					);
+				})}
+			</div>
 		</div>
 
-		<div class="work-tier work-tier-2">
-			{supporting.map((project) => {
-				const m = parseMetric(project.data.metric);
-				return (
-					<a
-						class="work-card work-card-supporting"
-						href={withBase(`work/${project.id}`)}
-						data-tags={(project.data.tags ?? []).join('|')}
-						style={`--card-color: ${project.data.color}`}
-					>
-						<div class="work-card-pattern-bg" style={`color: ${project.data.color}`} aria-hidden="true">
-							<PatternSVG pattern={project.data.pattern} />
-						</div>
-						<h3 transition:name={`work-title-${project.id}`}>{project.data.name}</h3>
-						<p class="work-card-subtitle">{project.data.subtitle}</p>
-						<div class="metric-callout metric-callout-small">
-							{m.staticPrefix && <span class="metric-static">{m.staticPrefix}</span>}
-							<span
-								class="metric-value"
-								transition:name={`work-metric-${project.id}`}
-								data-metric
-								data-metric-end={m.end}
-								data-metric-prefix={m.animPrefix}
-								data-metric-suffix={m.animSuffix}
-								data-metric-comma={m.comma ? '1' : ''}
-							>
-								{m.animPrefix}{m.comma ? m.end.toLocaleString() : m.end}{m.animSuffix}
-							</span>
-							<span class="metric-label">{project.data.metricLabel}</span>
-						</div>
-						{project.data.tags && (
-							<div class="tag-list">
-								{project.data.tags.map((tag) => <span class="tag-pill">{tag}</span>)}
-							</div>
-						)}
-					</a>
-				);
-			})}
+		<div id="work-map-view" hidden>
+			<ConstellationMap work={allWork} />
 		</div>
+
+		<script is:inline>
+			(function () {
+				var isMap = location.search.includes('view=map');
+				var gridView = document.getElementById('work-grid-view');
+				var mapView = document.getElementById('work-map-view');
+				if (gridView) gridView.hidden = isMap;
+				if (mapView) mapView.hidden = !isMap;
+				var gridBtn = document.querySelector('.view-toggle-btn[data-view="grid"]');
+				var mapBtn = document.querySelector('.view-toggle-btn[data-view="map"]');
+				if (gridBtn && mapBtn) {
+					gridBtn.classList.toggle('is-active', !isMap);
+					gridBtn.setAttribute('aria-pressed', String(!isMap));
+					mapBtn.classList.toggle('is-active', isMap);
+					mapBtn.setAttribute('aria-pressed', String(isMap));
+				}
+			})();
+		</script>
 	</div>
 </Base>
 
@@ -166,6 +198,61 @@ const allTags = [...new Set(allWork.flatMap((p) => p.data.tags ?? []))];
 		bar.addEventListener('keydown', onKeydown);
 	}
 
+	function syncViewFromUrl() {
+		const isMap = location.search.includes('view=map');
+		const gridView = document.getElementById('work-grid-view');
+		const mapView = document.getElementById('work-map-view');
+		if (gridView) gridView.hidden = isMap;
+		if (mapView) mapView.hidden = !isMap;
+
+		const gridBtn = document.querySelector<HTMLButtonElement>('.view-toggle-btn[data-view="grid"]');
+		const mapBtn = document.querySelector<HTMLButtonElement>('.view-toggle-btn[data-view="map"]');
+		if (gridBtn && mapBtn) {
+			gridBtn.classList.toggle('is-active', !isMap);
+			gridBtn.setAttribute('aria-pressed', String(!isMap));
+			mapBtn.classList.toggle('is-active', isMap);
+			mapBtn.setAttribute('aria-pressed', String(isMap));
+		}
+	}
+
+	function setupViewToggle() {
+		const bar = document.querySelector('.view-toggle-bar');
+		if (!bar) return;
+
+		function onClick(e: MouseEvent) {
+			const target = e.target as Element;
+			const button = target.closest<HTMLButtonElement>('.view-toggle-btn');
+			if (!button) return;
+
+			const view = button.dataset.view;
+			const url = new URL(location.href);
+			if (view === 'map') {
+				url.searchParams.set('view', 'map');
+			} else {
+				url.searchParams.delete('view');
+			}
+			history.pushState({}, '', url);
+			syncViewFromUrl();
+		}
+
+		const w = bar as HTMLElement & { __viewToggleBound?: boolean };
+		if (!w.__viewToggleBound) {
+			bar.addEventListener('click', onClick);
+			w.__viewToggleBound = true;
+		}
+	}
+
+	// The is:inline blocking script handles the very first paint (before
+	// hydration) to avoid a flash of the wrong view. This re-runs the same
+	// sync on every Astro view-transition navigation (including back/forward
+	// to a different ?view= state), since is:inline only runs once on initial
+	// HTML parse.
+	document.addEventListener('astro:page-load', () => {
+		syncViewFromUrl();
+		setupViewToggle();
+	});
+
 	setupTagFilter();
+	setupViewToggle();
 	setupMetricCounters();
 </script>

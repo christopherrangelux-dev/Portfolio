@@ -473,7 +473,15 @@ img {
   color: var(--muted);
 }
 
-/* tag filter bar */
+/* work toolbar: tag filter + grid/map view toggle */
+
+.work-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
 
 .tag-filter-bar {
   display: flex;
@@ -482,10 +490,50 @@ img {
   overflow-x: auto;
   scrollbar-width: none;
   padding-bottom: 0.25rem;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .tag-filter-bar::-webkit-scrollbar {
   display: none;
+}
+
+.view-toggle-bar {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.view-toggle-btn {
+  flex-shrink: 0;
+  font-family: inherit;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0.65rem 0.9rem;
+  min-height: 44px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.view-toggle-btn:hover {
+  border-color: var(--accent-indigo);
+}
+
+.view-toggle-btn.is-active {
+  color: var(--paper);
+  background: var(--accent-indigo);
+  border-color: var(--accent-indigo);
+}
+
+@media (max-width: 600px) {
+  .work-toolbar {
+    flex-direction: column;
+  }
 }
 
 .tag-filter-btn {
