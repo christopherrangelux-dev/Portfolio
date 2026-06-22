@@ -1,0 +1,182 @@
+---
+import Base from '../layouts/Base.astro';
+import { withBase } from '../lib/url';
+---
+
+<Base title="404 — Christopher Rangel" description="You've wandered off the map.">
+	<div class="not-found">
+		<div class="not-found-stars" aria-hidden="true"></div>
+		<div class="not-found-satellite" aria-hidden="true"></div>
+		<div class="container not-found-content">
+			<p class="not-found-code">404</p>
+			<h1>You've wandered off the map.</h1>
+			<p class="not-found-copy">
+				No case study here — but the pattern that brought you this far is worth
+				something. Try the work page, or use &#8984;K to navigate.
+			</p>
+			<nav class="not-found-links">
+				<a href={withBase('work')}>&larr; Back to work</a>
+				<a href={withBase('')}>Home &rarr;</a>
+			</nav>
+		</div>
+	</div>
+</Base>
+
+<style>
+	.not-found {
+		position: relative;
+		overflow: hidden;
+		min-height: calc(100vh - 280px);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.not-found-stars {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 2px;
+		height: 2px;
+		pointer-events: none;
+		--star-max: 0.15;
+		box-shadow:
+			3vw 6vh 0 1px rgba(255, 255, 255, 0.4),
+			9vw 14vh 0 0px rgba(255, 255, 255, 0.3),
+			15vw 4vh 0 1px rgba(255, 255, 255, 0.5),
+			22vw 22vh 0 0px rgba(255, 255, 255, 0.25),
+			28vw 9vh 0 1px rgba(255, 255, 255, 0.4),
+			34vw 30vh 0 0px rgba(255, 255, 255, 0.3),
+			41vw 5vh 0 1px rgba(255, 255, 255, 0.45),
+			47vw 18vh 0 0px rgba(255, 255, 255, 0.35),
+			53vw 35vh 0 1px rgba(255, 255, 255, 0.3),
+			60vw 11vh 0 0px rgba(255, 255, 255, 0.4),
+			66vw 26vh 0 1px rgba(255, 255, 255, 0.3),
+			72vw 7vh 0 0px rgba(255, 255, 255, 0.45),
+			78vw 32vh 0 1px rgba(255, 255, 255, 0.35),
+			84vw 16vh 0 0px rgba(255, 255, 255, 0.3),
+			90vw 38vh 0 1px rgba(255, 255, 255, 0.4),
+			96vw 21vh 0 0px rgba(255, 255, 255, 0.25),
+			6vw 45vh 0 1px rgba(255, 255, 255, 0.3),
+			18vw 52vh 0 0px rgba(255, 255, 255, 0.4),
+			31vw 58vh 0 1px rgba(255, 255, 255, 0.3),
+			44vw 48vh 0 0px rgba(255, 255, 255, 0.45),
+			57vw 62vh 0 1px rgba(255, 255, 255, 0.35),
+			69vw 55vh 0 0px rgba(255, 255, 255, 0.3),
+			81vw 68vh 0 1px rgba(255, 255, 255, 0.4),
+			93vw 50vh 0 0px rgba(255, 255, 255, 0.3),
+			12vw 72vh 0 1px rgba(255, 255, 255, 0.35),
+			25vw 78vh 0 0px rgba(255, 255, 255, 0.4),
+			38vw 85vh 0 1px rgba(255, 255, 255, 0.3),
+			50vw 75vh 0 0px rgba(255, 255, 255, 0.45),
+			63vw 90vh 0 1px rgba(255, 255, 255, 0.3),
+			75vw 82vh 0 0px rgba(255, 255, 255, 0.35),
+			88vw 95vh 0 1px rgba(255, 255, 255, 0.4);
+		animation: site-footer-twinkle 4s ease-in-out infinite alternate;
+	}
+
+	[data-theme='night'] .not-found-stars {
+		--star-max: 1;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.not-found-stars {
+			animation: none;
+			opacity: var(--star-max);
+		}
+	}
+
+	.not-found-satellite {
+		position: absolute;
+		top: 18%;
+		left: -2%;
+		width: 3px;
+		height: 3px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.55);
+		box-shadow: 0 0 4px 1px rgba(255, 255, 255, 0.4);
+		pointer-events: none;
+		opacity: 0;
+	}
+
+	[data-theme='night'] .not-found-satellite {
+		opacity: 1;
+		animation: not-found-satellite-pass 60s linear infinite;
+	}
+
+	@keyframes not-found-satellite-pass {
+		0% {
+			transform: translateX(0);
+			opacity: 0;
+		}
+		2% {
+			opacity: 0.7;
+		}
+		98% {
+			opacity: 0.7;
+		}
+		100% {
+			transform: translateX(104vw);
+			opacity: 0;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		[data-theme='night'] .not-found-satellite {
+			animation: none;
+			opacity: 0.7;
+			left: 50%;
+		}
+	}
+
+	.not-found-content {
+		position: relative;
+		z-index: 1;
+		text-align: center;
+		padding: 4rem 1.5rem;
+	}
+
+	.not-found-code {
+		font-family: var(--mono);
+		font-size: 1rem;
+		letter-spacing: 0.1em;
+		color: var(--muted);
+		margin: 0 0 1rem;
+	}
+
+	.not-found-content h1 {
+		font-size: 2rem;
+		margin: 0 0 1.25rem;
+	}
+
+	.not-found-copy {
+		max-width: 480px;
+		margin: 0 auto 2rem;
+		color: var(--muted);
+	}
+
+	.not-found-links {
+		display: flex;
+		justify-content: center;
+		gap: 1.75rem;
+		flex-wrap: wrap;
+	}
+
+	.not-found-links a {
+		font-size: 0.95rem;
+		font-weight: 500;
+		opacity: 0.75;
+		transition: opacity 0.15s ease;
+	}
+
+	.not-found-links a:hover {
+		opacity: 1;
+		color: var(--accent);
+	}
+
+	@media (max-width: 600px) {
+		.not-found-content h1 {
+			font-size: 1.5rem;
+		}
+	}
+</style>
