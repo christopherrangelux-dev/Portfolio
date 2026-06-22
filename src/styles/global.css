@@ -1474,6 +1474,33 @@ img {
   margin: 0 0 0.2rem;
 }
 
+.pattern-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin: 0.5rem 0 3rem;
+}
+
+@media (max-width: 700px) {
+  .pattern-gallery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.pattern-gallery-item .work-card-visual {
+  margin-bottom: 0.5rem;
+}
+
+.motion-inventory {
+  margin: 0.5rem 0 3rem;
+  padding-left: 1.25rem;
+  max-width: 680px;
+}
+
+.motion-inventory li {
+  margin-bottom: 0.6rem;
+}
+
 .showcase-samples {
   margin: 0.5rem 0 3rem;
 }

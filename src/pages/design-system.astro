@@ -3,15 +3,9 @@ import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import { withBase } from '../lib/url';
 import { parseMetric } from '../lib/metric';
+import PatternSVG from '../components/PatternSVG.astro';
 
-const tokens = [
-	{ name: 'ink', value: '#221f1b' },
-	{ name: 'paper', value: '#fbf7f1' },
-	{ name: 'muted', value: '#8a8170' },
-	{ name: 'accent', value: '#c2752e' },
-	{ name: 'accent-indigo', value: '#382b5f' },
-	{ name: 'border', value: '#e7e0d2' },
-];
+const tokenNames = ['ink', 'paper', 'muted', 'accent', 'accent-indigo', 'border'];
 
 const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 const xdLibrary = work.find((p) => p.id === 'xd-library')!;
@@ -32,12 +26,13 @@ const xdMetric = parseMetric(xdLibrary.data.metric);
 		</section>
 
 		<h2 class="section-title">Color Tokens</h2>
+		<p class="principle-card-meta">Reads the live CSS variables, so these reflect whichever theme is active right now — try the night toggle.</p>
 		<div class="swatch-grid">
-			{tokens.map((token) => (
+			{tokenNames.map((name) => (
 				<div class="swatch">
-					<div class="swatch-color" style={`background: ${token.value};`}></div>
-					<p class="swatch-name">--{token.name}</p>
-					<p class="principle-card-meta">{token.value}</p>
+					<div class="swatch-color" style={`background: var(--${name});`}></div>
+					<p class="swatch-name">--{name}</p>
+					<p class="principle-card-meta" data-token-value={name}></p>
 				</div>
 			))}
 		</div>
@@ -77,6 +72,20 @@ const xdMetric = parseMetric(xdLibrary.data.metric);
 				<p class="work-card-subtitle" style="margin: 0;">A shared-backend architecture for MCP server registration and discovery.</p>
 				<p class="principle-card-meta">.work-card-subtitle, 0.85rem, muted</p>
 			</div>
+		</div>
+
+		<h2 class="section-title">Geometric Patterns</h2>
+		<p class="principle-card-meta">Each case study gets a hand-drawn SVG pattern instead of a screenshot — no stock photography, no placeholder UI.</p>
+		<div class="pattern-gallery">
+			{work.map((project) => (
+				<div class="pattern-gallery-item">
+					<div class="work-card-visual" style={`color: ${project.data.color}`}>
+						<PatternSVG pattern={project.data.pattern} />
+					</div>
+					<p class="swatch-name">{project.data.pattern}</p>
+					<p class="principle-card-meta">{project.data.name}</p>
+				</div>
+			))}
 		</div>
 
 		<h2 class="section-title">Components</h2>
@@ -129,5 +138,43 @@ const xdMetric = parseMetric(xdLibrary.data.metric);
 				<p class="principle-card-meta">.case-study-snapshot</p>
 			</div>
 		</div>
+
+		<h2 class="section-title">Motion &amp; Micro-interactions</h2>
+		<p class="principle-card-meta">
+			A written inventory, not live demos — these are ambient details meant to be noticed in
+			context, not staged out of it. All of it respects <code>prefers-reduced-motion</code>.
+		</p>
+		<ul class="motion-inventory">
+			<li><strong>Cursor lens</strong> — soft radial gradient follows the cursor with an 80ms lag</li>
+			<li><strong>Aperture click</strong> — hexagonal iris SVG flashes at the click point, 180ms</li>
+			<li><strong>Link underlines</strong> — draw left to right on hover, 150ms</li>
+			<li><strong>Metric counters</strong> — count up on first scroll into view, 600ms ease-out</li>
+			<li><strong>Focus ring</strong> — single pulse on keyboard focus, 300ms</li>
+			<li><strong>Film grain</strong> — fades in on photo hover, 200ms</li>
+			<li><strong>Filmstrip scroll bar</strong> — fills as the page scrolls</li>
+			<li><strong>Star field</strong> — slow CSS twinkle in the footer</li>
+			<li><strong>Milky Way parallax</strong> — 4–6px shift against cursor movement on the About page</li>
+		</ul>
 	</div>
 </Base>
+
+<script is:inline>
+	function updateTokenValues() {
+		const styles = getComputedStyle(document.documentElement);
+		document.querySelectorAll('[data-token-value]').forEach((el) => {
+			const name = el.dataset.tokenValue;
+			el.textContent = styles.getPropertyValue(`--${name}`).trim();
+		});
+	}
+
+	document.addEventListener('astro:page-load', updateTokenValues);
+
+	const w = window;
+	if (!w.__designSystemTokensBound) {
+		new MutationObserver(updateTokenValues).observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ['data-theme'],
+		});
+		w.__designSystemTokensBound = true;
+	}
+</script>
