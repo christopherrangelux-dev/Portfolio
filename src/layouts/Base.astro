@@ -3,6 +3,7 @@ import '../styles/global.css';
 import { withBase } from '../lib/url';
 import { ClientRouter } from 'astro:transitions';
 import Lightbox from '../components/Lightbox.astro';
+import CommandPalette from '../components/CommandPalette.astro';
 
 interface Props {
   title: string;
@@ -84,6 +85,7 @@ const isActive = (href: string) => path === navLink(href) || (href === '' && pat
 		</footer>
 
 		<Lightbox />
+		<CommandPalette />
 
 		<script>
 			function closeNav() {

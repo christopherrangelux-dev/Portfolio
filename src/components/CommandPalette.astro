@@ -1,0 +1,179 @@
+---
+import { getCollection } from 'astro:content';
+import { withBase } from '../lib/url';
+
+const navItems = [
+	{ title: 'Home', href: withBase('') },
+	{ title: 'Work', href: withBase('work') },
+	{ title: 'About', href: withBase('about') },
+	{ title: 'Contact', href: withBase('contact') },
+	{ title: 'Resume', href: withBase('resume.pdf') },
+];
+
+const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const workItems = work.map((project) => ({
+	title: project.data.name,
+	href: withBase(`work/${project.id}`),
+}));
+
+const items = [...navItems, ...workItems];
+---
+
+<div class="command-palette-overlay" id="command-palette-overlay">
+	<div class="command-palette" role="dialog" aria-modal="true" aria-label="Command palette">
+		<input
+			type="text"
+			class="command-palette-input"
+			id="command-palette-input"
+			placeholder="Jump to a page or case study…"
+			aria-label="Search"
+			aria-controls="command-palette-list"
+			aria-autocomplete="list"
+			autocomplete="off"
+		/>
+		<ul class="command-palette-list" id="command-palette-list" role="listbox">
+			{items.map((item, i) => (
+				<li
+					class="command-palette-item"
+					id={`command-palette-item-${i}`}
+					role="option"
+					aria-selected="false"
+					data-href={item.href}
+					data-title={item.title.toLowerCase()}
+				>
+					{item.title}
+				</li>
+			))}
+		</ul>
+		<p class="command-palette-empty" hidden>No matches</p>
+		<div class="command-palette-hint">
+			<span><kbd>&uarr;</kbd><kbd>&darr;</kbd> navigate</span>
+			<span><kbd>&crarr;</kbd> select</span>
+			<span><kbd>esc</kbd> close</span>
+		</div>
+	</div>
+</div>
+
+<script>
+	import { navigate } from 'astro:transitions/client';
+
+	let activeIndex = 0;
+	let lastFocused: Element | null = null;
+
+	function overlay() {
+		return document.getElementById('command-palette-overlay');
+	}
+
+	function input() {
+		return document.getElementById('command-palette-input') as HTMLInputElement | null;
+	}
+
+	function allItems() {
+		return Array.from(document.querySelectorAll<HTMLLIElement>('.command-palette-item'));
+	}
+
+	function visibleItems() {
+		return allItems().filter((item) => !item.hidden);
+	}
+
+	function isOpen() {
+		return overlay()?.classList.contains('open') ?? false;
+	}
+
+	function highlight(index: number) {
+		const visible = visibleItems();
+		if (visible.length === 0) return;
+		activeIndex = (index + visible.length) % visible.length;
+		visible.forEach((item, i) => {
+			const active = i === activeIndex;
+			item.classList.toggle('is-active', active);
+			item.setAttribute('aria-selected', String(active));
+		});
+		const activeItem = visible[activeIndex];
+		activeItem.scrollIntoView({ block: 'nearest' });
+		input()?.setAttribute('aria-activedescendant', activeItem.id);
+	}
+
+	function filter(query: string) {
+		const q = query.trim().toLowerCase();
+		allItems().forEach((item) => {
+			item.hidden = q.length > 0 && !item.dataset.title?.includes(q);
+		});
+		const empty = document.querySelector('.command-palette-empty');
+		if (empty) (empty as HTMLElement).hidden = visibleItems().length > 0;
+		highlight(0);
+	}
+
+	function open() {
+		const ov = overlay();
+		if (!ov) return;
+		lastFocused = document.activeElement;
+		ov.classList.add('open');
+		const field = input();
+		if (field) {
+			field.value = '';
+			filter('');
+			field.focus();
+		}
+	}
+
+	function close() {
+		overlay()?.classList.remove('open');
+		if (lastFocused instanceof HTMLElement) lastFocused.focus();
+	}
+
+	function goTo(item: HTMLElement) {
+		const href = item.dataset.href;
+		close();
+		if (href) navigate(href);
+	}
+
+	function onGlobalKeydown(e: KeyboardEvent) {
+		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+			e.preventDefault();
+			isOpen() ? close() : open();
+			return;
+		}
+		if (e.key === 'Escape' && isOpen()) close();
+	}
+
+	function onPaletteKeydown(e: KeyboardEvent) {
+		if (!isOpen()) return;
+		if (e.key === 'ArrowDown') {
+			e.preventDefault();
+			highlight(activeIndex + 1);
+		} else if (e.key === 'ArrowUp') {
+			e.preventDefault();
+			highlight(activeIndex - 1);
+		} else if (e.key === 'Enter') {
+			e.preventDefault();
+			const item = visibleItems()[activeIndex];
+			if (item) goTo(item);
+		}
+	}
+
+	function onInput(e: Event) {
+		const target = e.target as Element;
+		if (target.id !== 'command-palette-input') return;
+		filter((target as HTMLInputElement).value);
+	}
+
+	function onClick(e: MouseEvent) {
+		const target = e.target as Element;
+		const item = target.closest<HTMLElement>('.command-palette-item');
+		if (item) {
+			goTo(item);
+			return;
+		}
+		if (target === overlay()) close();
+	}
+
+	const w = window as typeof window & { __commandPaletteBound?: boolean };
+	if (!w.__commandPaletteBound) {
+		document.addEventListener('keydown', onGlobalKeydown);
+		document.addEventListener('keydown', onPaletteKeydown);
+		document.addEventListener('click', onClick);
+		document.addEventListener('input', onInput);
+		w.__commandPaletteBound = true;
+	}
+</script>
