@@ -1,7 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
 import { withBase } from '../lib/url';
-import patterns from '../content/patterns.json';
 ---
 
 <Base title="About — Christopher Rangel" description="About Christopher Rangel, Product Designer">
@@ -38,18 +37,6 @@ import patterns from '../content/patterns.json';
 				Education with a teaching emphasis, and a Clear Multiple Subject Teaching Credential.
 			</p>
 		</div>
-		<section class="patterns-log">
-			<h2 class="section-title">Patterns I've Noticed Lately</h2>
-			<div class="principles">
-				{patterns.map((entry) => (
-					<div class="principle-card">
-						<p class="principle-card-meta">{entry.date}</p>
-						<h3>{entry.title}</h3>
-						<p>{entry.note}</p>
-					</div>
-				))}
-			</div>
-		</section>
 		<div class="about-photos">
 			<img src={withBase('images/dsc02733.jpg')} alt="Photography by Christopher Rangel" loading="lazy" />
 			<img src={withBase('images/plants.jpg')} alt="Photography by Christopher Rangel" loading="lazy" />
