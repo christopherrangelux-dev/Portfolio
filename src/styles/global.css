@@ -12,6 +12,33 @@
   --max-width: 1100px;
 }
 
+[data-theme='night'] {
+  --ink: #f0ead8;
+  --paper: #15131e;
+  --muted: #a79f8c;
+  --accent: #d98a42;
+  --accent-amber: #d98a42;
+  --accent-indigo: #a48ce0;
+  --border: #2e2a3d;
+}
+
+[data-theme='night'] body {
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+[data-theme='night'] code,
+[data-theme='night'] .tag-pill {
+  background: rgba(164, 140, 224, 0.16);
+}
+
+[data-theme='night'] .permission-graph-detail {
+  background: rgba(164, 140, 224, 0.08);
+}
+
+[data-theme='night'] .work-card .thumb-wrap {
+  background: #211e2c;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -80,6 +107,42 @@ img {
 .site-header .brand {
   font-weight: 700;
   font-size: 1.1rem;
+}
+
+.site-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.theme-toggle-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.theme-toggle-moon {
+  display: none;
+}
+
+[data-theme='night'] .theme-toggle-sun {
+  display: none;
+}
+
+[data-theme='night'] .theme-toggle-moon {
+  display: block;
 }
 
 .nav-toggle {
