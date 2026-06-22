@@ -81,6 +81,7 @@ const groups = [
 
 <script>
 	import { navigate } from 'astro:transitions/client';
+	import { withBase } from '../lib/url';
 
 	let activeIndex = 0;
 	let lastFocused: Element | null = null;
@@ -123,8 +124,158 @@ const groups = [
 		input()?.setAttribute('aria-activedescendant', activeItem.id);
 	}
 
+	function prefersReducedMotion() {
+		return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	}
+
+	function triggerConstellationDraw() {
+		if (prefersReducedMotion()) return;
+
+		const canvas = document.createElement('canvas');
+		canvas.className = 'palette-egg-canvas';
+		const width = window.innerWidth;
+		const height = window.innerHeight;
+		canvas.width = width;
+		canvas.height = height;
+		document.body.appendChild(canvas);
+
+		const ctx = canvas.getContext('2d');
+		if (!ctx) {
+			canvas.remove();
+			return;
+		}
+
+		const pointCount = 14;
+		const points = Array.from({ length: pointCount }, () => ({
+			x: Math.random() * width,
+			y: Math.random() * height,
+		}));
+
+		const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#ffffff';
+
+		function draw(opacity: number) {
+			if (!ctx) return;
+			ctx.clearRect(0, 0, width, height);
+			ctx.lineWidth = 1;
+			for (let i = 0; i < points.length; i++) {
+				const next = points[(i + 1) % points.length];
+				const current = points[i];
+				ctx.strokeStyle = `rgba(255, 255, 255, ${opacity * 0.6})`;
+				ctx.beginPath();
+				ctx.moveTo(current.x, current.y);
+				ctx.lineTo(next.x, next.y);
+				ctx.stroke();
+			}
+			for (const point of points) {
+				ctx.fillStyle = accent;
+				ctx.globalAlpha = opacity;
+				ctx.beginPath();
+				ctx.arc(point.x, point.y, 2, 0, Math.PI * 2);
+				ctx.fill();
+				ctx.globalAlpha = 1;
+			}
+		}
+
+		const fadeInMs = 800;
+		const holdMs = 500;
+		const fadeOutMs = 700;
+		const start = performance.now();
+
+		function tick(now: number) {
+			const elapsed = now - start;
+			let opacity: number;
+			if (elapsed < fadeInMs) {
+				opacity = elapsed / fadeInMs;
+			} else if (elapsed < fadeInMs + holdMs) {
+				opacity = 1;
+			} else if (elapsed < fadeInMs + holdMs + fadeOutMs) {
+				opacity = 1 - (elapsed - fadeInMs - holdMs) / fadeOutMs;
+			} else {
+				opacity = 0;
+			}
+			draw(Math.max(0, Math.min(1, opacity)));
+			if (elapsed < fadeInMs + holdMs + fadeOutMs) {
+				requestAnimationFrame(tick);
+			}
+		}
+
+		requestAnimationFrame(tick);
+
+		setTimeout(() => canvas.remove(), 2000);
+	}
+
+	function triggerStarSpawn() {
+		if (prefersReducedMotion()) return;
+
+		const count = 20 + Math.floor(Math.random() * 11);
+		const stars: HTMLDivElement[] = [];
+
+		for (let i = 0; i < count; i++) {
+			const star = document.createElement('div');
+			star.className = 'palette-egg-star';
+			star.style.left = `${Math.random() * window.innerWidth}px`;
+			star.style.top = `${Math.random() * window.innerHeight}px`;
+			star.style.animationDelay = `${Math.random() * 1.2}s`;
+			document.body.appendChild(star);
+			stars.push(star);
+		}
+
+		setTimeout(() => {
+			stars.forEach((star) => {
+				star.style.animation = 'none';
+				star.style.opacity = '0';
+			});
+		}, 1200);
+
+		setTimeout(() => {
+			stars.forEach((star) => star.remove());
+		}, 1200 + 3000);
+	}
+
+	function showToast(message: string) {
+		const toast = document.createElement('div');
+		toast.className = 'palette-egg-toast';
+		toast.setAttribute('role', 'status');
+		toast.setAttribute('aria-live', 'polite');
+		toast.textContent = `🍞 “${message}”`;
+		document.body.appendChild(toast);
+
+		requestAnimationFrame(() => toast.classList.add('is-visible'));
+
+		setTimeout(() => {
+			toast.classList.remove('is-visible');
+			setTimeout(() => toast.remove(), 300);
+		}, 3000);
+	}
+
+	function triggerNotFound() {
+		navigate(`${withBase('')}this-page-does-not-exist`);
+	}
+
+	function checkEasterEgg(value: string) {
+		const val = value.trim().toLowerCase();
+		if (val === 'patterns') {
+			triggerConstellationDraw();
+			return true;
+		}
+		if (val === 'night sky') {
+			triggerStarSpawn();
+			return true;
+		}
+		if (val === 'bake' || val === 'sourdough') {
+			showToast('Bread is just flour, water, salt, and time.');
+			return true;
+		}
+		if (val === '404' || val === 'lost') {
+			triggerNotFound();
+			return true;
+		}
+		return false;
+	}
+
 	function filter(query: string) {
 		const q = query.trim().toLowerCase();
+		checkEasterEgg(q);
 		allItems().forEach((item) => {
 			item.hidden = q.length > 0 && !item.dataset.search?.includes(q);
 		});

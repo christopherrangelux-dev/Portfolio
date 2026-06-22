@@ -1286,6 +1286,59 @@ img {
   background: rgba(164, 140, 224, 0.16);
 }
 
+/* command palette easter eggs */
+
+.palette-egg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 9997;
+  pointer-events: none;
+}
+
+.palette-egg-star {
+  position: fixed;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #fff;
+  z-index: 9997;
+  pointer-events: none;
+  opacity: 0;
+  animation: palette-egg-twinkle 1.4s ease-in-out infinite;
+  transition: opacity 3s ease;
+}
+
+@keyframes palette-egg-twinkle {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.palette-egg-toast {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translate(-50%, 0.5rem);
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.85rem 1.5rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+  z-index: 9998;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.palette-egg-toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
 /* now / colophon / uses pages */
 
 .page-meta {
