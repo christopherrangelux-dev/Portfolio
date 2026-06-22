@@ -6,6 +6,7 @@ import Lightbox from '../components/Lightbox.astro';
 import CommandPalette from '../components/CommandPalette.astro';
 import CursorLens from '../components/CursorLens.astro';
 import ScrollProgress from '../components/ScrollProgress.astro';
+import { getSeason } from '../lib/season';
 
 interface Props {
   title: string;
@@ -27,9 +28,15 @@ const navLink = (href: string) => withBase(href);
 const isActive = (href: string) => path === navLink(href) || (href === '' && path === withBase('/'));
 
 const GA_MEASUREMENT_ID = 'G-NWPBLHXZBS';
+
+// Computed at build time only — baked into the static HTML for every
+// visitor. Unlike data-theme (day/night), which is a per-visitor runtime
+// preference read from localStorage, the season is the same for everyone
+// until the next build.
+const season = getSeason();
 ---
 
-<html lang="en">
+<html lang="en" data-season={season}>
 	<head>
 		<script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} is:inline></script>
 		<script is:inline define:vars={{ GA_MEASUREMENT_ID }}>

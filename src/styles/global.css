@@ -22,6 +22,54 @@
   --border: #2e2a3d;
 }
 
+/*
+ * Seasonal accent shift — computed at build time from the current date
+ * (see src/lib/season.ts), baked into the static HTML via [data-season] on
+ * <html>. Placed after both :root and [data-theme='night'] above so it wins
+ * regardless of which theme is active (selector specificity ties at one
+ * attribute selector each, so source order decides) — this intentionally
+ * collapses the day/night accent distinction to one flat color per season.
+ *
+ * Colors and ~contrast notes (see build doc Section 6 / task spec):
+ *   spring  --accent #5B8DB8 (sky blue)        --accent-indigo #b95f30 (terracotta, darkened from doc's D4845A — see below)
+ *   summer  --accent #C4622D (amber/terracotta) --accent-indigo #3d78cd (blue, lightened from doc's 2B5EA7 — see below)
+ *   autumn  --accent #bc5d1a (rust/sienna, lightened from doc's 8B4513 — see below) --accent-indigo #C4622D
+ *   winter  --accent #4A6FA5 (steel blue)      --accent-indigo #8B7355 (warm taupe)
+ *
+ * --accent and --accent-indigo are both used as real text color in a few
+ * places (principle-card-emphasis h3, command-palette-item.is-active,
+ * not-found-links a:hover, constellation-tooltip-metric, code, tag-pill,
+ * work-card-link), always against --paper. Checked WCAG contrast of the
+ * doc's literal hex values against both --paper values; three combinations
+ * fell well below a reasonable floor and were nudged (kept in the same hue
+ * family, balanced so the single shared hex clears both day and night):
+ *   - autumn --accent 8B4513 vs night paper #15131e was 2.59:1 -> lightened to bc5d1a (~4.1-4.2:1 both themes)
+ *   - spring --accent-indigo D4845A vs day paper #fbf7f1 was 2.71:1 -> darkened to b95f30 (~4.15:1 both themes)
+ *   - summer --accent-indigo 2B5EA7 vs night paper #15131e was 2.85:1 -> lightened to 3d78cd (~4.1-4.2:1 both themes)
+ * All other combinations were already at or above this site's existing
+ * accent-as-text precedent (the current default day accent #c2752e is
+ * ~3.35:1 against day paper) and were left untouched.
+ */
+[data-season='spring'] {
+  --accent: #5b8db8;
+  --accent-indigo: #b95f30;
+}
+
+[data-season='summer'] {
+  --accent: #c4622d;
+  --accent-indigo: #3d78cd;
+}
+
+[data-season='autumn'] {
+  --accent: #bc5d1a;
+  --accent-indigo: #c4622d;
+}
+
+[data-season='winter'] {
+  --accent: #4a6fa5;
+  --accent-indigo: #8b7355;
+}
+
 [data-theme='night'] body {
   transition: background 0.2s ease, color 0.2s ease;
 }
@@ -374,6 +422,60 @@ img {
   --star-max: 1;
 }
 
+/*
+ * Seasonal footer star field — brightness via --star-max, count via a
+ * winter-only ::after with its own box-shadow dots. Night mode is already
+ * at the --star-max ceiling of 1, so winter brightness can't (and doesn't
+ * need to) go higher there; day mode has headroom in both directions.
+ */
+[data-season='winter'] .site-footer::before {
+  --star-max: 0.22;
+}
+
+/* same one-attribute-selector specificity as [data-theme='night'] above —
+   without this, source order would let winter's day-mode brightness
+   incorrectly override night mode's ceiling of 1 */
+[data-theme='night'][data-season='winter'] .site-footer::before {
+  --star-max: 1;
+}
+
+[data-season='summer'] .site-footer::before {
+  --star-max: 0.1;
+}
+
+[data-theme='night'][data-season='summer'] .site-footer::before {
+  --star-max: 0.85;
+}
+
+[data-season='winter'] .site-footer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 2px;
+  pointer-events: none;
+  /* custom properties don't cascade between sibling pseudo-elements, so
+     --star-max is redeclared here to match ::before's winter value */
+  --star-max: 0.22;
+  box-shadow:
+    80px 38px 0 0px rgba(255, 255, 255, 0.35),
+    370px 5px 0 1px rgba(255, 255, 255, 0.4),
+    880px 36px 0 0px rgba(255, 255, 255, 0.3);
+  animation: site-footer-twinkle 4s ease-in-out infinite alternate;
+}
+
+[data-theme='night'][data-season='winter'] .site-footer::after {
+  --star-max: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-season='winter'] .site-footer::after {
+    animation: none;
+    opacity: 0.35;
+  }
+}
+
 @keyframes site-footer-twinkle {
   0% {
     opacity: calc(var(--star-max) * 0.4);
@@ -689,6 +791,29 @@ img {
 
 [data-theme='night'] .work-card-pattern-bg .pattern-svg {
   opacity: 0.1;
+}
+
+/*
+ * Seasonal pattern opacity (Tier-2 supporting card background only — Tier-1
+ * featured card's .work-card-visual pattern is a different, more prominent
+ * visual role and isn't touched here). Spring/summer keep the default
+ * 0.14 / 0.1 above; only autumn (more visible) and winter (more subtle)
+ * get season-scoped overrides, per the build doc.
+ */
+[data-season='autumn'] .work-card-pattern-bg .pattern-svg {
+  opacity: 0.2;
+}
+
+[data-theme='night'][data-season='autumn'] .work-card-pattern-bg .pattern-svg {
+  opacity: 0.16;
+}
+
+[data-season='winter'] .work-card-pattern-bg .pattern-svg {
+  opacity: 0.1;
+}
+
+[data-theme='night'][data-season='winter'] .work-card-pattern-bg .pattern-svg {
+  opacity: 0.08;
 }
 
 .work-card-supporting h3,

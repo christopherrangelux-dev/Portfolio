@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 6 * * *' # 6am UTC daily — keeps seasonal colors fresh across solstice/equinox boundaries with no code change
 
 permissions:
   contents: read

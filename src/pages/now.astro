@@ -1,12 +1,16 @@
 ---
 import Base from '../layouts/Base.astro';
+import { getSeason } from '../lib/season';
+
+const season = getSeason();
+const seasonLabel = season.charAt(0).toUpperCase() + season.slice(1);
 ---
 
 <Base title="Now — Christopher Rangel" description="What Christopher Rangel is designing, baking, photographing, and learning right now">
 	<div class="container">
 		<section class="hero">
 			<h1>Now</h1>
-			<p class="page-meta">Last updated: June 2026</p>
+			<p class="page-meta">Last updated: June 2026 &middot; {seasonLabel}</p>
 		</section>
 		<div class="prose">
 			<h3>Designing</h3>
