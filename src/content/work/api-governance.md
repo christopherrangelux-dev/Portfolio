@@ -2,7 +2,6 @@
 name: "API Governance"
 title: "API Governance: Surfacing Evidence, Not Just Verdicts"
 subtitle: "Cutting platform debt 25% by pairing dormant-API evidence with a clear action path across an 11,000-endpoint platform."
-thumbnail: "cover-api-governance.png"
 order: 3
 tags: ["Platform Governance", "Data Trust", "Developer Tooling"]
 snapshot:
@@ -10,6 +9,10 @@ snapshot:
   timeline: "2024–Present"
   tools: "Figma, FigJam, React (recreation)"
   team: "Solo design, cross-functional engineering & data partners"
+metric: "25%"
+metricLabel: "platform debt reduction"
+color: "#5c5347"
+pattern: dot-matrix
 ---
 
 ## The Problem

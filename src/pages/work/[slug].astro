@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
 import { withBase } from '../../lib/url';
+import { parseMetric } from '../../lib/metric';
 
 export async function getStaticPaths() {
 	const work = await getCollection('work');
@@ -18,13 +19,35 @@ const allWork = (await getCollection('work')).sort((a, b) => a.data.order - b.da
 const currentIndex = allWork.findIndex((p) => p.id === project.id);
 const prevProject = allWork[(currentIndex - 1 + allWork.length) % allWork.length];
 const nextProject = allWork[(currentIndex + 1) % allWork.length];
+const m = parseMetric(project.data.metric);
 ---
 
-<Base title={`${project.data.title} — Christopher Rangel`} description={project.data.subtitle}>
+<Base title={`${project.data.title} — Christopher Rangel`} description={project.data.subtitle} image={`og/${project.id}.png`}>
+	<style define:vars={{ accentColor: project.data.color }}>
+		::selection {
+			background-color: color-mix(in srgb, var(--accentColor) 40%, transparent);
+			color: inherit;
+		}
+	</style>
 	<a class="back-link" href={withBase('')}>&larr; Back to all work</a>
 	<div class="case-study-header container">
-		<h1>{project.data.title}</h1>
+		<h1 transition:name={`work-title-${project.id}`}>{project.data.title}</h1>
 		<p class="subtitle">{project.data.subtitle}</p>
+		<div class="metric-callout">
+			{m.staticPrefix && <span class="metric-static">{m.staticPrefix}</span>}
+			<span
+				class="metric-value"
+				transition:name={`work-metric-${project.id}`}
+				data-metric
+				data-metric-end={m.end}
+				data-metric-prefix={m.animPrefix}
+				data-metric-suffix={m.animSuffix}
+				data-metric-comma={m.comma ? '1' : ''}
+			>
+				{m.animPrefix}{m.comma ? m.end.toLocaleString() : m.end}{m.animSuffix}
+			</span>
+			<span class="metric-label">{project.data.metricLabel}</span>
+		</div>
 		{project.data.snapshot && (
 			<dl class="case-study-snapshot">
 				<div><dt>Role</dt><dd>{project.data.snapshot.role}</dd></div>
@@ -58,3 +81,9 @@ const nextProject = allWork[(currentIndex + 1) % allWork.length];
 		</nav>
 	)}
 </Base>
+
+<script>
+	import { setupMetricCounters } from '../../lib/metricCounter';
+
+	setupMetricCounters();
+</script>

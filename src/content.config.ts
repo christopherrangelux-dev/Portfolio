@@ -7,7 +7,6 @@ const work = defineCollection({
     name: z.string(),
     title: z.string(),
     subtitle: z.string(),
-    thumbnail: z.string(),
     order: z.number(),
     featured: z.boolean().optional(),
     tags: z.array(z.string()).optional(),
@@ -19,6 +18,10 @@ const work = defineCollection({
         team: z.string(),
       })
       .optional(),
+    metric: z.string(),
+    metricLabel: z.string(),
+    color: z.string(),
+    pattern: z.enum(['node-graph', 'path-motif', 'dot-matrix', 'stacked-bars', 'branch']),
   }),
 });
 

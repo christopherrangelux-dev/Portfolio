@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import { withBase } from '../lib/url';
+import { parseMetric } from '../lib/metric';
 
 const tokens = [
 	{ name: 'ink', value: '#221f1b' },
@@ -14,6 +15,7 @@ const tokens = [
 
 const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 const xdLibrary = work.find((p) => p.id === 'xd-library')!;
+const xdMetric = parseMetric(xdLibrary.data.metric);
 ---
 
 <Base
@@ -99,14 +101,20 @@ const xdLibrary = work.find((p) => p.id === 'xd-library')!;
 			</div>
 
 			<div class="showcase-sample">
-				<a class="work-card" href={withBase(`work/${xdLibrary.id}`)} style="max-width: 320px; display: block;">
-					<div class="thumb-wrap">
-						<img src={withBase(`images/${xdLibrary.data.thumbnail}`)} alt={xdLibrary.data.name} loading="lazy" />
-					</div>
+				<a class="work-card work-card-supporting" href={withBase(`work/${xdLibrary.id}`)} style={`max-width: 320px; display: block; --card-color: ${xdLibrary.data.color}`}>
 					<h3>{xdLibrary.data.name}</h3>
 					<p class="work-card-subtitle">{xdLibrary.data.subtitle}</p>
 				</a>
-				<p class="principle-card-meta">.work-card</p>
+				<p class="principle-card-meta">.work-card-supporting</p>
+			</div>
+
+			<div class="showcase-sample">
+				<div class="metric-callout">
+					{xdMetric.staticPrefix && <span class="metric-static">{xdMetric.staticPrefix}</span>}
+					<span class="metric-value">{xdMetric.animPrefix}{xdMetric.comma ? xdMetric.end.toLocaleString() : xdMetric.end}{xdMetric.animSuffix}</span>
+					<span class="metric-label">{xdLibrary.data.metricLabel}</span>
+				</div>
+				<p class="principle-card-meta">.metric-callout</p>
 			</div>
 
 			<div class="showcase-sample">

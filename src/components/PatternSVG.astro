@@ -1,0 +1,92 @@
+---
+interface Props {
+	pattern: 'node-graph' | 'path-motif' | 'dot-matrix' | 'stacked-bars' | 'branch';
+}
+
+const { pattern } = Astro.props as Props;
+
+const nodes = [
+	{ x: 40, y: 40, r: 3 },
+	{ x: 120, y: 25, r: 3 },
+	{ x: 200, y: 55, r: 5 },
+	{ x: 280, y: 30, r: 3 },
+	{ x: 350, y: 50, r: 3 },
+	{ x: 70, y: 120, r: 3 },
+	{ x: 160, y: 140, r: 4 },
+	{ x: 240, y: 130, r: 3 },
+	{ x: 320, y: 150, r: 3 },
+	{ x: 380, y: 110, r: 3 },
+];
+
+const edges = [
+	[0, 1], [1, 2], [2, 3], [3, 4],
+	[2, 5], [2, 6], [6, 7], [7, 8], [8, 9],
+	[5, 6], [1, 5], [3, 7],
+];
+
+const dotCols = 8;
+const dotRows = 6;
+const dots = Array.from({ length: dotCols * dotRows }, (_, i) => {
+	const col = i % dotCols;
+	const row = Math.floor(i / dotCols);
+	return {
+		x: 30 + col * 48,
+		y: 18 + row * 28,
+		dormant: (col + row) % 3 === 0,
+	};
+});
+---
+
+{pattern === 'node-graph' && (
+	<svg viewBox="0 0 400 180" class="pattern-svg" aria-hidden="true">
+		{edges.map(([a, b]) => (
+			<line x1={nodes[a].x} y1={nodes[a].y} x2={nodes[b].x} y2={nodes[b].y} stroke="currentColor" stroke-width="1" />
+		))}
+		{nodes.map((n) => (
+			<circle cx={n.x} cy={n.y} r={n.r} fill="currentColor" />
+		))}
+	</svg>
+)}
+
+{pattern === 'path-motif' && (
+	<svg viewBox="0 0 400 180" class="pattern-svg" aria-hidden="true">
+		<path
+			d="M0,90 C50,60 90,120 140,90 C190,60 230,120 280,90 C320,65 360,110 400,90"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-dasharray="6 5"
+		/>
+		<path d="M140,90 L120,50 M140,90 L160,130" fill="none" stroke="currentColor" stroke-width="1.5" />
+		<path d="M260,95 L240,55 M260,95 L280,135" fill="none" stroke="currentColor" stroke-width="1.5" />
+		<path d="M340,93 L320,55 M340,93 L360,135" fill="none" stroke="currentColor" stroke-width="1.5" />
+	</svg>
+)}
+
+{pattern === 'dot-matrix' && (
+	<svg viewBox="0 0 400 180" class="pattern-svg" aria-hidden="true">
+		{dots.map((d) => (
+			<circle cx={d.x} cy={d.y} r="3.5" fill="currentColor" opacity={d.dormant ? 0.3 : 1} />
+		))}
+	</svg>
+)}
+
+{pattern === 'stacked-bars' && (
+	<svg viewBox="0 0 400 180" class="pattern-svg" aria-hidden="true">
+		<rect x="40" y="45" width="220" height="22" rx="3" fill="currentColor" />
+		<rect x="40" y="84" width="150" height="22" rx="3" fill="currentColor" opacity="0.75" />
+		<rect x="40" y="123" width="280" height="22" rx="3" fill="currentColor" opacity="0.5" />
+	</svg>
+)}
+
+{pattern === 'branch' && (
+	<svg viewBox="0 0 400 180" class="pattern-svg" aria-hidden="true">
+		<path
+			d="M200,180 L200,110 C200,110 165,90 135,68 M200,110 C200,110 235,85 268,58 M150,85 C135,72 122,63 108,57 M140,75 C148,58 158,42 153,30 M255,65 C270,52 284,42 298,36 M228,80 C232,60 222,46 213,32"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+			stroke-linecap="round"
+		/>
+	</svg>
+)}

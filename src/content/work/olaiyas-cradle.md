@@ -2,7 +2,6 @@
 name: "Olaiya's Cradle"
 title: "Olaiya's Cradle: Stepping Into a Lead Role to Secure $50K in Funding"
 subtitle: "A pro bono service design audit that secured $50K in funding and became a reusable toolkit for future engagements."
-thumbnail: "cover-olaiyas-cradle.png"
 order: 5
 tags: ["Service Design", "Nonprofit", "Pro Bono"]
 snapshot:
@@ -10,6 +9,10 @@ snapshot:
   timeline: "Feb–May 2024"
   tools: "Figma, FigJam, service blueprinting"
   team: "Capital One Pro Bono cross-functional team"
+metric: "$50K"
+metricLabel: "funding secured"
+color: "#4f6b4a"
+pattern: branch
 ---
 
 ## The Problem

@@ -7,16 +7,27 @@ const navItems = [
 	{ title: 'Work', href: withBase('work') },
 	{ title: 'About', href: withBase('about') },
 	{ title: 'Contact', href: withBase('contact') },
-	{ title: 'Resume', href: withBase('resume.pdf') },
 ];
 
 const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
 const workItems = work.map((project) => ({
 	title: project.data.name,
 	href: withBase(`work/${project.id}`),
+	search: [project.data.name, project.data.title, project.data.subtitle, (project.data.tags ?? []).join(' '), project.data.metric, project.data.metricLabel]
+		.join(' ')
+		.toLowerCase(),
 }));
 
-const items = [...navItems, ...workItems];
+const actionItems = [
+	{ title: 'Toggle theme', action: 'toggle-theme' },
+	{ title: 'View Resume', href: withBase('resume.pdf') },
+];
+
+const groups = [
+	{ label: 'Navigation', items: navItems },
+	{ label: 'Case Studies', items: workItems },
+	{ label: 'Actions', items: actionItems },
+];
 ---
 
 <div class="command-palette-overlay" id="command-palette-overlay">
@@ -25,24 +36,31 @@ const items = [...navItems, ...workItems];
 			type="text"
 			class="command-palette-input"
 			id="command-palette-input"
-			placeholder="Jump to a page or case study…"
+			placeholder="Jump to a page, case study, or action…"
 			aria-label="Search"
 			aria-controls="command-palette-list"
 			aria-autocomplete="list"
 			autocomplete="off"
 		/>
 		<ul class="command-palette-list" id="command-palette-list" role="listbox">
-			{items.map((item, i) => (
-				<li
-					class="command-palette-item"
-					id={`command-palette-item-${i}`}
-					role="option"
-					aria-selected="false"
-					data-href={item.href}
-					data-title={item.title.toLowerCase()}
-				>
-					{item.title}
-				</li>
+			{groups.map((group, gi) => (
+				<>
+					<li class="command-palette-group-label" data-group={`group-${gi}`}>{group.label}</li>
+					{group.items.map((item, i) => (
+						<li
+							class="command-palette-item"
+							id={`command-palette-item-${gi}-${i}`}
+							role="option"
+							aria-selected="false"
+							data-group={`group-${gi}`}
+							data-href={'href' in item ? item.href : undefined}
+							data-action={'action' in item ? item.action : undefined}
+							data-search={'search' in item ? item.search : item.title.toLowerCase()}
+						>
+							{item.title}
+						</li>
+					))}
+				</>
 			))}
 		</ul>
 		<p class="command-palette-empty" hidden>No matches</p>
@@ -72,6 +90,10 @@ const items = [...navItems, ...workItems];
 		return Array.from(document.querySelectorAll<HTMLLIElement>('.command-palette-item'));
 	}
 
+	function allGroupLabels() {
+		return Array.from(document.querySelectorAll<HTMLLIElement>('.command-palette-group-label'));
+	}
+
 	function visibleItems() {
 		return allItems().filter((item) => !item.hidden);
 	}
@@ -97,7 +119,12 @@ const items = [...navItems, ...workItems];
 	function filter(query: string) {
 		const q = query.trim().toLowerCase();
 		allItems().forEach((item) => {
-			item.hidden = q.length > 0 && !item.dataset.title?.includes(q);
+			item.hidden = q.length > 0 && !item.dataset.search?.includes(q);
+		});
+		allGroupLabels().forEach((label) => {
+			const group = label.dataset.group;
+			const hasVisible = allItems().some((item) => item.dataset.group === group && !item.hidden);
+			label.hidden = !hasVisible;
 		});
 		const empty = document.querySelector('.command-palette-empty');
 		if (empty) (empty as HTMLElement).hidden = visibleItems().length > 0;
@@ -122,10 +149,18 @@ const items = [...navItems, ...workItems];
 		if (lastFocused instanceof HTMLElement) lastFocused.focus();
 	}
 
+	function runAction(action: string) {
+		if (action === 'toggle-theme') {
+			document.querySelector('.theme-toggle')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+		}
+	}
+
 	function goTo(item: HTMLElement) {
 		const href = item.dataset.href;
+		const action = item.dataset.action;
 		close();
 		if (href) navigate(href);
+		else if (action) runAction(action);
 	}
 
 	function onGlobalKeydown(e: KeyboardEvent) {
@@ -174,6 +209,7 @@ const items = [...navItems, ...workItems];
 		document.addEventListener('keydown', onPaletteKeydown);
 		document.addEventListener('click', onClick);
 		document.addEventListener('input', onInput);
+		document.addEventListener('command-palette:open', open);
 		w.__commandPaletteBound = true;
 	}
 </script>

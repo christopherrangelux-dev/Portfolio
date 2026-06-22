@@ -2,7 +2,6 @@
 name: "XD Library"
 title: "The XD Library: A Resource Hub Organized the Way Designers Actually Think"
 subtitle: "1,000+ viewers in two weeks, 54 contributions in three months, built by matching the IA to how design specialists categorize their own work."
-thumbnail: "cover-xd-library.png"
 order: 4
 featured: true
 tags: ["Design Systems", "Information Architecture", "Design Ops"]
@@ -11,6 +10,10 @@ snapshot:
   timeline: "Aug 2023–Aug 2024"
   tools: "Figma, FigJam, React (recreation)"
   team: "Solo design, design-org stakeholders"
+metric: "1,000+"
+metricLabel: "viewers in 2 weeks"
+color: "#a3503f"
+pattern: stacked-bars
 ---
 
 ## The Problem

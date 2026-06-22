@@ -38,12 +38,51 @@ import { withBase } from '../lib/url';
 			</p>
 		</div>
 		<div class="about-photos">
-			<img src={withBase('images/dsc02733.jpg')} alt="Photography by Christopher Rangel" loading="lazy" />
-			<img src={withBase('images/plants.jpg')} alt="Photography by Christopher Rangel" loading="lazy" />
-			<img src={withBase('images/laguna-sunset.jpg')} alt="Laguna sunset" loading="lazy" />
-			<img src={withBase('images/milky-way.jpg')} alt="The Milky Way, astrophotography by Christopher Rangel" loading="lazy" />
-			<img src={withBase('images/top-of-stairwell.jpg')} alt="Top of stairwell" loading="lazy" />
-			<img src={withBase('images/bottom-of-stairwell.jpg')} alt="Bottom of stairwell" loading="lazy" />
+			<div class="photo-item">
+				<img src={withBase('images/dsc02733.jpg')} alt="Photography by Christopher Rangel" loading="lazy" />
+			</div>
+			<div class="photo-item about-photo-tall">
+				<img src={withBase('images/moonrise.jpg')} alt="A full moon rising through trees over a neighborhood" loading="lazy" />
+			</div>
+			<div class="photo-item">
+				<img src={withBase('images/cherry-blossoms.jpg')} alt="Cherry blossoms in bloom" loading="lazy" />
+			</div>
+			<div class="photo-item milky-way-container">
+				<img class="milky-way-img" src={withBase('images/milky-way.jpg')} alt="The Milky Way, astrophotography by Christopher Rangel" loading="lazy" />
+			</div>
+			<div class="photo-item">
+				<img src={withBase('images/azaleas.jpg')} alt="Pink azalea blossoms in close-up" loading="lazy" />
+			</div>
+			<div class="photo-item about-photo-wide">
+				<img src={withBase('images/fall-foliage.jpg')} alt="Autumn trees in fall foliage" loading="lazy" />
+			</div>
 		</div>
 	</div>
 </Base>
+
+<script>
+	function setupMilkyWayParallax() {
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		if (window.matchMedia('(hover: none)').matches) return;
+
+		let raf = 0;
+		document.addEventListener('mousemove', (e) => {
+			if (raf) return;
+			raf = requestAnimationFrame(() => {
+				const img = document.querySelector<HTMLElement>('.milky-way-img');
+				if (img) {
+					const x = (e.clientX / window.innerWidth - 0.5) * -6;
+					const y = (e.clientY / window.innerHeight - 0.5) * -6;
+					img.style.transform = `translate(${x}px, ${y}px)`;
+				}
+				raf = 0;
+			});
+		});
+	}
+
+	const w = window as typeof window & { __milkyWayBound?: boolean };
+	if (!w.__milkyWayBound) {
+		setupMilkyWayParallax();
+		w.__milkyWayBound = true;
+	}
+</script>

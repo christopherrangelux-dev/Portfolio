@@ -4,14 +4,18 @@ import { withBase } from '../lib/url';
 import { ClientRouter } from 'astro:transitions';
 import Lightbox from '../components/Lightbox.astro';
 import CommandPalette from '../components/CommandPalette.astro';
+import CursorLens from '../components/CursorLens.astro';
+import ScrollProgress from '../components/ScrollProgress.astro';
 
 interface Props {
   title: string;
   description?: string;
+  image?: string;
 }
 
-const { title, description = 'Christopher Rangel — Product Designer' } = Astro.props;
+const { title, description = 'Christopher Rangel — Product Designer', image = 'og/home.png' } = Astro.props;
 const path = Astro.url.pathname;
+const ogImageUrl = new URL(withBase(image), Astro.site).toString();
 
 const navLink = (href: string) => withBase(href);
 const isActive = (href: string) => path === navLink(href) || (href === '' && path === withBase('/'));
@@ -37,9 +41,18 @@ const isActive = (href: string) => path === navLink(href) || (href === '' && pat
 		<meta name="description" content={description} />
 		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+		<meta property="og:title" content={title} />
+		<meta property="og:description" content={description} />
+		<meta property="og:image" content={ogImageUrl} />
+		<meta property="og:type" content="website" />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={title} />
+		<meta name="twitter:description" content={description} />
+		<meta name="twitter:image" content={ogImageUrl} />
 		<ClientRouter />
 	</head>
 	<body>
+		<ScrollProgress />
 		<header class="site-header">
 			<div class="container">
 				<a class="brand" href={navLink('')}>
@@ -55,6 +68,13 @@ const isActive = (href: string) => path === navLink(href) || (href === '' && pat
 					Christopher Rangel
 				</a>
 				<div class="site-header-controls">
+					<button class="cmdk-hint" type="button" aria-label="Open command palette">
+						<span class="cmdk-hint-kbd"><kbd>&#8984;</kbd><kbd>K</kbd></span>
+						<svg class="cmdk-hint-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<circle cx="11" cy="11" r="7"></circle>
+							<line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+						</svg>
+					</button>
 					<button class="theme-toggle" aria-label="Night theme" aria-pressed="false">
 						<svg class="theme-toggle-icon theme-toggle-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
 							<circle cx="12" cy="12" r="4"></circle>
@@ -97,6 +117,7 @@ const isActive = (href: string) => path === navLink(href) || (href === '' && pat
 
 		<Lightbox />
 		<CommandPalette />
+		<CursorLens />
 
 		<script>
 			function closeNav() {
@@ -112,6 +133,11 @@ const isActive = (href: string) => path === navLink(href) || (href === '' && pat
 
 			function onClick(e: MouseEvent) {
 				const target = e.target as Element;
+
+				if (target.closest('.cmdk-hint')) {
+					document.dispatchEvent(new CustomEvent('command-palette:open'));
+					return;
+				}
 
 				if (target.closest('.theme-toggle')) {
 					setTheme(document.documentElement.dataset.theme === 'night' ? 'day' : 'night');

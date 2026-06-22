@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import { withBase } from '../lib/url';
+import { parseMetric } from '../lib/metric';
 
 const allWork = await getCollection('work');
 const featured = allWork.filter((p) => p.data.featured).sort((a, b) => a.data.order - b.data.order);
@@ -34,7 +35,7 @@ const featured = allWork.filter((p) => p.data.featured).sort((a, b) => a.data.or
 					the data, not just the decision.
 				</p>
 			</div>
-			<div class="principle-card">
+			<div class="principle-card principle-card-emphasis">
 				<h3>Patterns, Wherever They Hide</h3>
 				<p>
 					Whether it's a leaf vein, a night sky, or an API platform, I notice structure.
@@ -50,15 +51,25 @@ const featured = allWork.filter((p) => p.data.featured).sort((a, b) => a.data.or
 
 	<div class="container">
 		<h2 class="section-title">Featured Work</h2>
-		<div class="work-grid">
-			{featured.map((project) => (
-				<a class="work-card" href={withBase(`work/${project.id}`)}>
-					<div class="thumb-wrap">
-						<img src={withBase(`images/${project.data.thumbnail}`)} alt={project.data.name} loading="lazy" />
-					</div>
-					<h3>{project.data.name}</h3>
-				</a>
-			))}
+		<div class="work-grid-mini">
+			{featured.map((project) => {
+				const m = parseMetric(project.data.metric);
+				return (
+					<a class="work-card work-card-mini" href={withBase(`work/${project.id}`)} style={`--card-color: ${project.data.color}`}>
+						<h3>{project.data.name}</h3>
+						<div class="metric-callout metric-callout-small">
+							{m.staticPrefix && <span class="metric-static">{m.staticPrefix}</span>}
+							<span class="metric-value">{m.animPrefix}{m.comma ? m.end.toLocaleString() : m.end}{m.animSuffix}</span>
+							<span class="metric-label">{project.data.metricLabel}</span>
+						</div>
+						{project.data.tags && (
+							<div class="tag-list">
+								{project.data.tags.map((tag) => <span class="tag-pill">{tag}</span>)}
+							</div>
+						)}
+					</a>
+				);
+			})}
 		</div>
 		<p><a href={withBase('work')} style="border-bottom: 1px solid var(--ink);">See all work &rarr;</a></p>
 

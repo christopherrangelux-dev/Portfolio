@@ -1,0 +1,75 @@
+---
+---
+
+<div id="scroll-progress" aria-hidden="true">
+	<div class="scroll-progress-perf"></div>
+	<div class="scroll-progress-track">
+		<div class="scroll-progress-fill"></div>
+	</div>
+	<div class="scroll-progress-perf"></div>
+</div>
+
+<style>
+	#scroll-progress {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		z-index: 9998;
+		pointer-events: none;
+	}
+
+	.scroll-progress-perf {
+		height: 3px;
+		background-image: repeating-linear-gradient(to right, var(--muted) 0 2px, transparent 2px 8px);
+		opacity: 0.5;
+	}
+
+	.scroll-progress-track {
+		position: relative;
+		height: 6px;
+		background: var(--border);
+	}
+
+	.scroll-progress-fill {
+		position: absolute;
+		inset: 0;
+		width: calc(var(--scroll-pct, 0) * 100%);
+		background: var(--accent);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		#scroll-progress {
+			display: none;
+		}
+	}
+</style>
+
+<script>
+	function setupScrollProgress() {
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+		let raf = 0;
+		function update() {
+			const bar = document.getElementById('scroll-progress');
+			if (!bar) return;
+			const max = document.body.scrollHeight - window.innerHeight;
+			const pct = max > 0 ? Math.min(window.scrollY / max, 1) : 0;
+			bar.style.setProperty('--scroll-pct', String(pct));
+			raf = 0;
+		}
+
+		window.addEventListener('scroll', () => {
+			if (raf) return;
+			raf = requestAnimationFrame(update);
+		});
+		document.addEventListener('astro:page-load', update);
+		update();
+	}
+
+	const w = window as typeof window & { __scrollProgressBound?: boolean };
+	if (!w.__scrollProgressBound) {
+		setupScrollProgress();
+		w.__scrollProgressBound = true;
+	}
+</script>

@@ -2,7 +2,6 @@
 name: "Self-Service Workflow"
 title: "Self-Service Workflow: From 53% to 96% Completion"
 subtitle: "Rebuilding a confusing multi-touch credential request process into one guided change-order flow that scaled completion from 53% to 96%."
-thumbnail: "cover-self-service-workflow.png"
 order: 2
 featured: true
 tags: ["Workflow Design", "Developer Tooling", "Self-Service UX"]
@@ -11,6 +10,10 @@ snapshot:
   timeline: "Aug 2024–Present"
   tools: "Figma, FigJam, React (recreation)"
   team: "Solo design, cross-functional engineering partners"
+metric: "53% → 96%"
+metricLabel: "completion rate"
+color: "#c2752e"
+pattern: path-motif
 ---
 
 ## The Problem

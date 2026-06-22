@@ -2,30 +2,170 @@
 import Base from '../../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import { withBase } from '../../lib/url';
+import { parseMetric } from '../../lib/metric';
+import PatternSVG from '../../components/PatternSVG.astro';
 
-const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const allWork = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+// Tier 1 is the two most senior/complex pieces (lowest `order`), independent of the
+// `featured` flag, which drives a separate set of picks on the home page.
+const featured = allWork.slice(0, 2);
+const supporting = allWork.slice(2);
+const allTags = [...new Set(allWork.flatMap((p) => p.data.tags ?? []))];
 ---
 
 <Base title="Work — Christopher Rangel" description="Case studies by Christopher Rangel, Product Designer">
 	<div class="container">
-		<section class="hero">
+		<section class="hero work-hero">
 			<h1>Work</h1>
+			<p>
+				Five case studies in systems design, from AI infrastructure to service design for
+				nonprofits.
+			</p>
+			<p class="work-count">5 projects</p>
 		</section>
-		<div class="work-grid">
-			{work.map((project) => (
-				<a class="work-card" href={withBase(`work/${project.id}`)}>
-					<div class="thumb-wrap">
-						<img src={withBase(`images/${project.data.thumbnail}`)} alt={project.data.name} loading="lazy" />
-					</div>
-					<h3>{project.data.name}</h3>
-					<p class="work-card-subtitle">{project.data.subtitle}</p>
-					{project.data.tags && (
-						<div class="tag-list">
-							{project.data.tags.map((tag) => <span class="tag-pill">{tag}</span>)}
-						</div>
-					)}
-				</a>
+
+		<div class="tag-filter-bar" role="toolbar" aria-label="Filter projects by tag">
+			<button type="button" class="tag-filter-btn is-active" data-tag="all" aria-pressed="true">All</button>
+			{allTags.map((tag) => (
+				<button type="button" class="tag-filter-btn" data-tag={tag} aria-pressed="false">{tag}</button>
 			))}
+		</div>
+
+		<div class="work-tier work-tier-1">
+			{featured.map((project) => {
+				const m = parseMetric(project.data.metric);
+				return (
+					<a
+						class="work-card work-card-featured"
+						href={withBase(`work/${project.id}`)}
+						data-tags={(project.data.tags ?? []).join('|')}
+						style={`--card-color: ${project.data.color}`}
+					>
+						<div class="work-card-visual" style={`color: ${project.data.color}`}>
+							<PatternSVG pattern={project.data.pattern} />
+						</div>
+						<h3 transition:name={`work-title-${project.id}`}>{project.data.name}</h3>
+						<p class="work-card-subtitle">{project.data.subtitle}</p>
+						<div class="metric-callout">
+							{m.staticPrefix && <span class="metric-static">{m.staticPrefix}</span>}
+							<span
+								class="metric-value"
+								transition:name={`work-metric-${project.id}`}
+								data-metric
+								data-metric-end={m.end}
+								data-metric-prefix={m.animPrefix}
+								data-metric-suffix={m.animSuffix}
+								data-metric-comma={m.comma ? '1' : ''}
+							>
+								{m.animPrefix}{m.comma ? m.end.toLocaleString() : m.end}{m.animSuffix}
+							</span>
+							<span class="metric-label">{project.data.metricLabel}</span>
+						</div>
+						{project.data.tags && (
+							<div class="tag-list">
+								{project.data.tags.map((tag) => <span class="tag-pill">{tag}</span>)}
+							</div>
+						)}
+						<span class="work-card-link">View case study &rarr;</span>
+					</a>
+				);
+			})}
+		</div>
+
+		<div class="work-tier work-tier-2">
+			{supporting.map((project) => {
+				const m = parseMetric(project.data.metric);
+				return (
+					<a
+						class="work-card work-card-supporting"
+						href={withBase(`work/${project.id}`)}
+						data-tags={(project.data.tags ?? []).join('|')}
+						style={`--card-color: ${project.data.color}`}
+					>
+						<div class="work-card-pattern-bg" style={`color: ${project.data.color}`} aria-hidden="true">
+							<PatternSVG pattern={project.data.pattern} />
+						</div>
+						<h3 transition:name={`work-title-${project.id}`}>{project.data.name}</h3>
+						<p class="work-card-subtitle">{project.data.subtitle}</p>
+						<div class="metric-callout metric-callout-small">
+							{m.staticPrefix && <span class="metric-static">{m.staticPrefix}</span>}
+							<span
+								class="metric-value"
+								transition:name={`work-metric-${project.id}`}
+								data-metric
+								data-metric-end={m.end}
+								data-metric-prefix={m.animPrefix}
+								data-metric-suffix={m.animSuffix}
+								data-metric-comma={m.comma ? '1' : ''}
+							>
+								{m.animPrefix}{m.comma ? m.end.toLocaleString() : m.end}{m.animSuffix}
+							</span>
+							<span class="metric-label">{project.data.metricLabel}</span>
+						</div>
+						{project.data.tags && (
+							<div class="tag-list">
+								{project.data.tags.map((tag) => <span class="tag-pill">{tag}</span>)}
+							</div>
+						)}
+					</a>
+				);
+			})}
 		</div>
 	</div>
 </Base>
+
+<script>
+	import { setupMetricCounters } from '../../lib/metricCounter';
+
+	function setupTagFilter() {
+		const bar = document.querySelector('.tag-filter-bar');
+		if (!bar) return;
+
+		const buttons = Array.from(bar.querySelectorAll<HTMLButtonElement>('.tag-filter-btn'));
+		const cards = Array.from(document.querySelectorAll<HTMLElement>('.work-card'));
+		let activeIndex = 0;
+
+		function applyFilter(tag: string) {
+			cards.forEach((card) => {
+				const tags = card.dataset.tags?.split('|') ?? [];
+				const show = tag === 'all' || tags.includes(tag);
+				card.classList.toggle('is-filtered-out', !show);
+			});
+		}
+
+		function setActive(button: HTMLButtonElement) {
+			buttons.forEach((b) => {
+				b.classList.toggle('is-active', b === button);
+				b.setAttribute('aria-pressed', String(b === button));
+			});
+			applyFilter(button.dataset.tag ?? 'all');
+		}
+
+		function onClick(e: MouseEvent) {
+			const target = e.target as Element;
+			const button = target.closest<HTMLButtonElement>('.tag-filter-btn');
+			if (button) {
+				activeIndex = buttons.indexOf(button);
+				setActive(button);
+			}
+		}
+
+		function onKeydown(e: KeyboardEvent) {
+			if (!buttons.includes(document.activeElement as HTMLButtonElement)) return;
+			if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+				e.preventDefault();
+				activeIndex = (activeIndex + (e.key === 'ArrowRight' ? 1 : -1) + buttons.length) % buttons.length;
+				buttons[activeIndex].focus();
+			} else if (e.key === 'Enter' || e.key === ' ') {
+				e.preventDefault();
+				setActive(document.activeElement as HTMLButtonElement);
+			}
+		}
+
+		bar.addEventListener('click', onClick);
+		bar.addEventListener('keydown', onKeydown);
+	}
+
+	setupTagFilter();
+	setupMetricCounters();
+</script>

@@ -1,0 +1,121 @@
+---
+---
+
+<div id="cursor-lens" aria-hidden="true"></div>
+
+<style>
+	@property --cx {
+		syntax: '<length>';
+		inherits: false;
+		initial-value: -500px;
+	}
+
+	@property --cy {
+		syntax: '<length>';
+		inherits: false;
+		initial-value: -500px;
+	}
+
+	#cursor-lens {
+		position: fixed;
+		inset: 0;
+		pointer-events: none;
+		z-index: 9999;
+		mix-blend-mode: soft-light;
+		opacity: 0.4;
+		background: radial-gradient(350px circle at var(--cx, -500px) var(--cy, -500px), rgba(255, 245, 220, 0.6), transparent 70%);
+		transition: --cx 80ms ease-out, --cy 80ms ease-out;
+	}
+
+	[data-theme='night'] #cursor-lens {
+		opacity: 0.25;
+		background: radial-gradient(350px circle at var(--cx, -500px) var(--cy, -500px), rgba(200, 215, 240, 0.5), transparent 70%);
+	}
+
+	@media (hover: none), (prefers-reduced-motion: reduce) {
+		#cursor-lens {
+			display: none;
+		}
+	}
+
+	.cursor-lens-shutter {
+		position: fixed;
+		width: 60px;
+		height: 60px;
+		pointer-events: none;
+		z-index: 9999;
+		animation: cursor-lens-shutter-fire 180ms ease-out forwards;
+	}
+
+	@keyframes cursor-lens-shutter-fire {
+		0% {
+			transform: translate(-50%, -50%) scale(0.6);
+			opacity: 1;
+		}
+		55% {
+			transform: translate(-50%, -50%) scale(1);
+			opacity: 1;
+		}
+		100% {
+			transform: translate(-50%, -50%) scale(0);
+			opacity: 0;
+		}
+	}
+</style>
+
+<script>
+	function hexagonPoints(cx: number, cy: number, r: number) {
+		const pts: string[] = [];
+		for (let i = 0; i < 6; i++) {
+			const angle = (Math.PI / 3) * i - Math.PI / 2;
+			pts.push(`${cx + r * Math.cos(angle)},${cy + r * Math.sin(angle)}`);
+		}
+		return pts.join(' ');
+	}
+
+	function spawnShutter(x: number, y: number) {
+		const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+		svg.setAttribute('viewBox', '0 0 60 60');
+		svg.setAttribute('class', 'cursor-lens-shutter');
+		svg.style.left = `${x}px`;
+		svg.style.top = `${y}px`;
+
+		const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+		polygon.setAttribute('points', hexagonPoints(30, 30, 22));
+		polygon.setAttribute('fill', 'none');
+		polygon.setAttribute('stroke', 'white');
+		polygon.setAttribute('stroke-opacity', '0.7');
+		polygon.setAttribute('stroke-width', '2');
+		svg.appendChild(polygon);
+
+		document.body.appendChild(svg);
+		setTimeout(() => svg.remove(), 200);
+	}
+
+	function setupCursorLens() {
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+		if (!window.matchMedia('(hover: none)').matches) {
+			let raf = 0;
+			document.addEventListener('mousemove', (e) => {
+				if (raf) return;
+				raf = requestAnimationFrame(() => {
+					const lens = document.getElementById('cursor-lens');
+					lens?.style.setProperty('--cx', `${e.clientX}px`);
+					lens?.style.setProperty('--cy', `${e.clientY}px`);
+					raf = 0;
+				});
+			});
+		}
+
+		document.addEventListener('pointerdown', (e) => {
+			spawnShutter(e.clientX, e.clientY);
+		});
+	}
+
+	const w = window as typeof window & { __cursorLensBound?: boolean };
+	if (!w.__cursorLensBound) {
+		setupCursorLens();
+		w.__cursorLensBound = true;
+	}
+</script>
