@@ -105,8 +105,17 @@ img {
 }
 
 .site-header .brand {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   font-weight: 700;
   font-size: 1.1rem;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
 }
 
 .site-header-controls {
