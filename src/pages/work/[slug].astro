@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
 import { withBase } from '../../lib/url';
 import { parseMetric } from '../../lib/metric';
+import ReadingProgressRing from '../../components/ReadingProgressRing.astro';
 
 export async function getStaticPaths() {
 	const work = await getCollection('work');
@@ -22,13 +23,19 @@ const nextProject = allWork[(currentIndex + 1) % allWork.length];
 const m = parseMetric(project.data.metric);
 ---
 
-<Base title={`${project.data.title} — Christopher Rangel`} description={project.data.subtitle} image={`og/${project.id}.png`}>
+<Base
+	title={`${project.data.title} — Christopher Rangel`}
+	description={project.data.subtitle}
+	image={`og/${project.id}.png`}
+	hideScrollProgress={true}
+>
 	<style define:vars={{ accentColor: project.data.color }}>
 		::selection {
 			background-color: color-mix(in srgb, var(--accentColor) 40%, transparent);
 			color: inherit;
 		}
 	</style>
+	<ReadingProgressRing accentColor={project.data.color} />
 	<a class="back-link" href={withBase('work')}>&larr; Back to all work</a>
 	<div class="case-study-header container">
 		<h1 transition:name={`work-title-${project.id}`}>{project.data.title}</h1>

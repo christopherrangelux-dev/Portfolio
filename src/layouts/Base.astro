@@ -11,9 +11,15 @@ interface Props {
   title: string;
   description?: string;
   image?: string;
+  hideScrollProgress?: boolean;
 }
 
-const { title, description = 'Christopher Rangel — Product Designer', image = 'og/home.png' } = Astro.props;
+const {
+  title,
+  description = 'Christopher Rangel — Product Designer',
+  image = 'og/home.png',
+  hideScrollProgress = false,
+} = Astro.props;
 const path = Astro.url.pathname;
 const ogImageUrl = new URL(withBase(image), Astro.site).toString();
 
@@ -78,7 +84,7 @@ const GA_MEASUREMENT_ID = 'G-NWPBLHXZBS';
 		<ClientRouter />
 	</head>
 	<body>
-		<ScrollProgress />
+		{!hideScrollProgress && <ScrollProgress />}
 		<header class="site-header">
 			<div class="container">
 				<a class="brand" href={navLink('')}>
