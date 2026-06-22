@@ -285,6 +285,14 @@ img {
   font-size: 1.05rem;
 }
 
+.principle-card-meta {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  margin: 0 0 0.5rem;
+}
+
 .principle-card p {
   color: var(--muted);
   font-size: 0.92rem;
