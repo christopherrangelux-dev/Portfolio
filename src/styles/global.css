@@ -350,7 +350,10 @@ img {
 .site-footer::before {
   content: '';
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 2px;
   pointer-events: none;
   --star-max: 0.15;
   box-shadow:
