@@ -19,7 +19,7 @@ Youthwork, was dropping, and it wasn't clear where the service was breaking down
 
 ## The Process
 
-This was a Capital One Pro Bono engagement — a small cross-functional team partnered with the
+This was a Capital One Pro Bono engagement: a small cross-functional team partnered with the
 nonprofit to audit how the program actually worked, not just how it was supposed to work. Early
 on, it was clear the assigned engineering lead wasn't equipped to lead the project, so I stepped
 up as the de facto lead: building the project timeline, delegating the blueprint and journey-map
@@ -30,7 +30,7 @@ deliverables, and setting up the research interviews myself.
 ## The Decision
 
 Rather than default to a generic research readout, the team built a service blueprint and journey
-map that made the program's frontstage/backstage gaps visible — and traced those gaps directly to
+map that made the program's frontstage/backstage gaps visible, and traced those gaps directly to
 a funding case stakeholders could act on.
 
 ![Service roadmap excerpt (representative recreation)](/images/figma-mock-portal-oc.png)

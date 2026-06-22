@@ -1,7 +1,7 @@
 ---
 name: "MCP Server Registration"
 title: "MCP Registry: One Shared Backend Instead of a Dozen Siloed Ones"
-subtitle: "A shared-backend architecture for MCP server registration and discovery — adopted by 80%+ of developers across 5 enterprise-approved servers."
+subtitle: "A shared-backend architecture for MCP server registration and discovery, adopted by 80%+ of developers across 5 enterprise-approved servers."
 thumbnail: "cover-mcp-server-registration.png"
 order: 1
 featured: true
@@ -18,13 +18,13 @@ import PermissionGraph from '../../components/PermissionGraph.astro';
 ## The Problem
 
 There was no standardized way to register a new MCP (Model Context Protocol) server, so every
-team solved discovery differently — or didn't solve it at all. AI agents and the developers
+team solved discovery differently, or didn't solve it at all. AI agents and the developers
 building them had no reliable way to find out what servers existed or how to access them safely.
 
 ## The Process
 
 **[Explore the live, interactive demo →](https://christopherrangelux-dev.github.io/nexus-ops-mcp/)**
-*A representative recreation, genericized and rebuilt in React — not the real internal tool.*
+*A representative recreation, genericized and rebuilt in React, not the real internal tool.*
 
 The work started as an information architecture problem: design a registration form and a
 metadata schema clear enough for both humans and AI agents to use. Partway through, it became
@@ -34,9 +34,9 @@ clear the registration form wasn't the real problem.
 
 There were two options: keep refining the registration form so each data product could register
 its own MCP server in isolation, or consolidate registration into one shared backend that every
-team plugged into. We chose the shared backend — a server registered once became automatically
+team plugged into. We chose the shared backend: a server registered once became automatically
 discoverable everywhere, instead of requiring manual registration team by team. That shift turned
-the original design problem (a form) into a systems problem (where capability lives) — and solving
+the original design problem (a form) into a systems problem (where capability lives), and solving
 the systems problem made the form mostly unnecessary.
 
 <PermissionGraph />
@@ -45,7 +45,7 @@ From there, the work extended beyond registration into the human side: a search-
 experience so developers could find a server, see what it does, and request access directly,
 instead of hunting through docs or asking around.
 
-![MCP Server Directory — the human-facing discovery layer (representative recreation)](/images/mcp-discovery-directory.png)
+![MCP Server Directory: the human-facing discovery layer (representative recreation)](/images/mcp-discovery-directory.png)
 
 ## The Outcome
 

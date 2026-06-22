@@ -1,7 +1,7 @@
 ---
 name: "API Governance"
 title: "API Governance: Surfacing Evidence, Not Just Verdicts"
-subtitle: "Cutting platform debt 25% by pairing dormant-API evidence with a clear action path — across an 11,000-endpoint platform."
+subtitle: "Cutting platform debt 25% by pairing dormant-API evidence with a clear action path across an 11,000-endpoint platform."
 thumbnail: "cover-api-governance.png"
 order: 3
 tags: ["Platform Governance", "Data Trust", "Developer Tooling"]
@@ -15,18 +15,18 @@ snapshot:
 ## The Problem
 
 The platform had grown to roughly 11,000 API endpoints, and nobody had a reliable way to tell
-which ones were still in use. Dormant endpoints accumulated quietly — nothing forced teams to
+which ones were still in use. Dormant endpoints accumulated quietly: nothing forced teams to
 know about them, let alone act, so the platform kept carrying technical debt no one could see
 clearly enough to remove.
 
 ## The Process
 
 **[Explore the live, interactive demo →](https://christopherrangelux-dev.github.io/nexus-ops/)**
-*The same platform as the Self-Service Workflow case study, viewed through a governance lens — the
+*The same platform as the Self-Service Workflow case study, viewed through a governance lens: the
 API catalog's data-sensitivity classification and the approvals dashboard's risk scoring are the
 same "surface the evidence" thinking this case study is about.*
 
-Generating a dormancy verdict for each endpoint wasn't the hard part — usage data already existed.
+Generating a dormancy verdict for each endpoint wasn't the hard part. Usage data already existed.
 The hard part was getting teams to trust the verdict enough to actually act on it.
 
 ## The Decision
@@ -36,7 +36,7 @@ flag, so a team could see *why* an endpoint was being called out instead of taki
 faith. Second, pairing that evidence with a clear, simple action path, so finding out an endpoint
 was dormant and doing something about it weren't two disconnected steps.
 
-![Evidence behind an access decision — scopes, risk level, and policy context surfaced together, not just a verdict (representative recreation)](/images/api-governance-evidence.png)
+![Evidence behind an access decision: scopes, risk level, and policy context surfaced together, not just a verdict (representative recreation)](/images/api-governance-evidence.png)
 
 ## The Outcome
 
@@ -46,6 +46,6 @@ was dormant and doing something about it weren't two disconnected steps.
 
 ## Reflection
 
-Of the five case studies here, this is the most data-heavy — the interesting design problem
+Of the five case studies here, this is the most data-heavy: the interesting design problem
 wasn't the UI, it was figuring out what evidence actually builds trust, versus what just produces
 another dashboard nobody acts on.
