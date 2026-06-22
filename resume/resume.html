@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Christopher Rangel — Resume</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+  @page { size: Letter; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0.32in 0.6in 0.4in;
+    font-family: 'Lora', Georgia, serif;
+    color: #221f1b;
+    font-size: 9.4pt;
+    line-height: 1.18;
+    background: #ffffff;
+  }
+  .header { text-align: center; margin-bottom: 0.12in; }
+  .name {
+    font-size: 21pt;
+    font-weight: 700;
+    margin: 0 0 0.03in;
+    letter-spacing: 0.01em;
+  }
+  .role {
+    color: #c2752e;
+    font-size: 9.6pt;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 0.06in;
+  }
+  .contact {
+    color: #8a8170;
+    font-size: 9pt;
+    margin: 0;
+  }
+  .contact a { color: #8a8170; text-decoration: none; }
+  hr.top {
+    border: none;
+    border-top: 1.5px solid #c2752e;
+    margin: 0.1in 0 0.1in;
+  }
+  h2.section {
+    color: #382b5f;
+    font-size: 10.2pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0.06in 0 0.04in;
+    padding-bottom: 0.02in;
+    border-bottom: 1px solid #e7e0d2;
+  }
+  h2.section:first-of-type { margin-top: 0; }
+  p.summary { margin: 0 0 0.02in; text-align: justify; }
+  .job { margin-bottom: 0.05in; }
+  .job:last-child { margin-bottom: 0; }
+  .job-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.2in;
+  }
+  .job-title { font-weight: 700; font-size: 9.9pt; }
+  .job-date { color: #8a8170; font-size: 9pt; white-space: nowrap; }
+  .job-company { color: #8a8170; font-size: 9pt; margin: 0.01in 0 0.03in; }
+  ul.bullets { margin: 0; padding-left: 0.2in; }
+  ul.bullets li { margin-bottom: 0.02in; }
+  ul.bullets li:last-child { margin-bottom: 0; }
+  .skills p { margin: 0 0 0.05in; }
+  .skills p:last-child { margin-bottom: 0; }
+  .skills b { font-weight: 700; }
+  table.edu { width: 100%; border-collapse: collapse; }
+  table.edu td { padding: 0.01in 0; vertical-align: baseline; }
+  table.edu td.degree { font-weight: 700; }
+  table.edu td.school { color: #8a8170; text-align: right; }
+</style>
+</head>
+<body>
+
+  <div class="header">
+    <p class="name">Christopher Rangel</p>
+    <p class="role">Product Designer &amp; Service Designer</p>
+    <p class="contact">christopherrangelux-dev.github.io/Portfolio &middot; christopherrangelUX@gmail.com &middot; LinkedIn</p>
+  </div>
+  <hr class="top" />
+
+  <h2 class="section">Professional Summary</h2>
+  <p class="summary">
+    Product &amp; Service Designer with a track record of owning complex initiatives end-to-end, from architecting
+    AI-agent developer tooling (MCP) to scaling enterprise Design Systems for 1,000+ partners. Drove self-service
+    adoption from 53% to 96% and cut platform technical debt by ~25%, while using AI-assisted research synthesis
+    to compress research-to-PRD timelines to under 14 days. Trusted to align cross-functional stakeholders and
+    secure $50K+ in program investment for foundational design initiatives.
+  </p>
+
+  <h2 class="section">Work Experience</h2>
+
+  <div class="job">
+    <div class="job-row">
+      <span class="job-title">Product Designer, Developer Experiences</span>
+      <span class="job-date">August 2024 &ndash; Present</span>
+    </div>
+    <p class="job-company">Capital One &middot; Richmond, VA</p>
+    <ul class="bullets">
+      <li>Architected a scalable metadata framework and Information Architecture (IA) for AI-agent server registration (MCP &ndash; Model Context Protocol), ensuring seamless discovery for LLM-based tools.</li>
+      <li>Owned end-to-end design of the self-service credential and approval workflow for API, App, and Entitlement management, ensuring 100% owner attribution and scaling self-service completion from 53% to 96%.</li>
+      <li>Drove platform-wide API governance, reducing dormant/inactive endpoints by ~25% (11,000 &rarr; ~8,000) and cutting manual support tickets by 25% via self-service UI configurations.</li>
+      <li>Leveraged AI-assisted workflows to synthesize technical stakeholder research into finalized PRDs and proof-of-concept prototypes within 14 days, validating complex backend logic ahead of engineering handoff.</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-row">
+      <span class="job-title">Service Designer, Research and Design Ops</span>
+      <span class="job-date">August 2023 &ndash; August 2024</span>
+    </div>
+    <p class="job-company">Capital One &middot; Richmond, VA</p>
+    <ul class="bullets">
+      <li>Launched and scaled the enterprise XD Design System (design tokens, UI patterns, WCAG accessibility documentation), reaching 1,000+ viewers within two weeks and growing to 54 new contributions within 3 months.</li>
+      <li>Facilitated enterprise-wide HCD workshops for 1,000+ Product and Tech partners, embedding Design within the Product Development Lifecycle and increasing cross-functional partnership maturity.</li>
+      <li>Led a Service Design audit through Capital One's Pro Bono program, conducting end-to-end research and stakeholder communication that secured a $50,000 grant for Olaiya's Cradle.</li>
+      <li>Mentored design interns and provided consulting strategy services to the Design Development Program, increasing NPS by 103%.</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-row">
+      <span class="job-title">UX Designer, Freelance / Consulting</span>
+      <span class="job-date">2022 &ndash; Present</span>
+    </div>
+    <ul class="bullets">
+      <li>Designed and launched a B2B website that secured corporate rental leasing business for a client; provides informal design consulting and mentorship to junior designers.</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-row">
+      <span class="job-title">Academic Instructor, UC Riverside</span>
+      <span class="job-date">2019 &ndash; 2023</span>
+    </div>
+    <ul class="bullets">
+      <li>Co-led a department-wide certificate program for adult learners pursuing a specialized teaching certificate, coaching 80+ learners and indirectly impacting +60,000 K&ndash;12 students across four school districts.</li>
+    </ul>
+  </div>
+
+  <div class="job">
+    <div class="job-row">
+      <span class="job-title">Elementary School Lead Teacher, Riverside USD</span>
+      <span class="job-date">2017 &ndash; 2023</span>
+    </div>
+    <ul class="bullets">
+      <li>Redesigned learning experiences that grew reading proficiency from below-grade-level baselines to 2nd-grade proficiency or higher within a single school year, and closed a significant math achievement deficit through technology-integrated instruction.</li>
+    </ul>
+  </div>
+
+  <h2 class="section">Volunteer Experience</h2>
+  <div class="job">
+    <div class="job-row">
+      <span class="job-title">Design Lead, Sasha Bruce Youthwork</span>
+      <span class="job-date">Sept 2024 &ndash; Dec 2024</span>
+    </div>
+    <ul class="bullets">
+      <li>Led a team of 6 designers in a Service Design audit of the Independent Living Program, delivering longevity recommendations for continued service delivery.</li>
+    </ul>
+  </div>
+
+  <h2 class="section">Technical Proficiencies &amp; Tooling</h2>
+  <div class="skills">
+    <p><b>Design &amp; Strategy:</b> Information Architecture, Service Design Blueprinting, Design Systems &amp; WCAG Accessibility, HCD Research &amp; Workshop Facilitation</p>
+    <p><b>Technical &amp; Code:</b> HTML, CSS, JavaScript, TypeScript, React, Astro, Radix UI, shadcn/ui, GitHub Actions/CI-CD</p>
+    <p><b>AI Tooling:</b> Claude Code + Figma MCP workflows, Gemini &amp; Gems, AI-assisted research synthesis</p>
+  </div>
+
+  <h2 class="section">Education</h2>
+  <table class="edu">
+    <tr>
+      <td class="degree">Master's of Education, General Education</td>
+      <td class="school">University of California, Riverside</td>
+    </tr>
+    <tr>
+      <td class="degree">Bachelor of Arts, Liberal Studies</td>
+      <td class="school">University of California, Riverside</td>
+    </tr>
+  </table>
+
+</body>
+</html>
