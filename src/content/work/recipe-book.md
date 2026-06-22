@@ -26,7 +26,7 @@ whatever got it online that day.
 
 ## The Process
 
-**[Browse the recipes →](/Portfolio/recipes)**
+**[Browse the recipes →](/recipes)**
 
 Early projects are worth revisiting not because they're bad, but because the gap between then and
 now is visible. The HTML is fine. The recipes are good. What's missing is everything underneath: a
