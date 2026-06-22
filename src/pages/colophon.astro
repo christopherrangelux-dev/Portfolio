@@ -1,0 +1,48 @@
+---
+import Base from '../layouts/Base.astro';
+import { withBase } from '../lib/url';
+---
+
+<Base title="Colophon — Christopher Rangel" description="How this site was made">
+	<div class="container">
+		<section class="hero">
+			<h1>Colophon</h1>
+		</section>
+		<div class="prose">
+			<p>This site is built with Astro v6, deployed on GitHub Pages. Written by hand, no templates.</p>
+
+			<h3>Type</h3>
+			<p>
+				Set in Lora throughout, for body copy and headings alike. Code, tags, and metric
+				labels use the system monospace stack. The full scale lives on the
+				<a href={withBase('design-system')} style="border-bottom: 1px solid var(--ink);">design system page</a>,
+				rendered as itself rather than redrawn as static images.
+			</p>
+
+			<h3>Photography</h3>
+			<p>
+				Shot on a Sony A6000 with a variety of lenses. I lean toward lower apertures outside
+				of portraits. The kind of focus a plant needs is nothing like the kind a person
+				needs. Edited in Lightroom, with occasional trips to Photoshop.
+			</p>
+
+			<h3>Built with</h3>
+			<ul>
+				<li>Astro 6</li>
+				<li>MDX for case study content</li>
+				<li>astro-og-canvas for per-page Open Graph images</li>
+				<li>GitHub Pages, deployed via GitHub Actions</li>
+				<li>No analytics, no trackers</li>
+			</ul>
+
+			<h3>What I learned making this</h3>
+			<p>
+				Moving off Squarespace, I underestimated how much flexibility I'd get back.
+				Hand-building the work page's geometric SVG patterns instead of reaching for stock
+				thumbnails was the moment it really clicked: there's no platform ceiling here, just
+				whatever I'm willing to build. Astro's content collections kept that flexibility from
+				turning into chaos: one typed schema that every case study has to follow.
+			</p>
+		</div>
+	</div>
+</Base>

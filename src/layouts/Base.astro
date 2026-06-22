@@ -98,6 +98,7 @@ const isActive = (href: string) => path === navLink(href) || (href === '' && pat
 						<a href={navLink('')} class={isActive('') ? 'active' : ''}>Home</a>
 						<a href={navLink('work')} class={isActive('work') ? 'active' : ''}>Work</a>
 						<a href={navLink('about')} class={isActive('about') ? 'active' : ''}>About</a>
+						<a href={navLink('photos')} class={isActive('photos') ? 'active' : ''}>Photos</a>
 						<a href={navLink('contact')} class={isActive('contact') ? 'active' : ''}>Contact</a>
 						<a href={withBase('resume.pdf')} target="_blank" rel="noopener">Resume</a>
 					</nav>
@@ -111,7 +112,12 @@ const isActive = (href: string) => path === navLink(href) || (href === '' && pat
 
 		<footer class="site-footer">
 			<div class="container">
-				<p>&copy; {new Date().getFullYear()} Christopher Rangel. Built with Astro, deployed on GitHub Pages.</p>
+				<p>
+					&copy; {new Date().getFullYear()} Christopher Rangel. Built with Astro, deployed on GitHub Pages.
+					&middot; <a href={navLink('colophon')}>Colophon</a>
+					&middot; <a href={navLink('now')}>Now</a>
+					&middot; <a href={navLink('uses')}>Uses</a>
+				</p>
 			</div>
 		</footer>
 
