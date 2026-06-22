@@ -1,0 +1,409 @@
+---
+// Real Night Sky Background — renders the actual current night sky (real
+// star positions, computed client-side) behind the home page hero. See
+// portfolio-build-doc-v2.md, Section 5, for the full rationale. This is a
+// plain Astro component (no client framework), so there's no real
+// client:visible directive available — the inline <script> below mimics
+// that behavior itself via IntersectionObserver, deferring all astronomy
+// math + canvas paint until the hero actually scrolls into view, so it
+// never blocks initial page read.
+import stars from '../data/stars.json';
+
+const starsJson = JSON.stringify(stars);
+---
+
+<canvas id="night-sky" class="night-sky" aria-hidden="true" data-stars={starsJson}></canvas>
+
+<style>
+	.night-sky {
+		position: absolute;
+		inset: 0;
+		z-index: 0;
+		pointer-events: none;
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+</style>
+
+<style is:global>
+	/* Tooltip — single shared instance created at runtime, same convention
+	   as the constellation map / design-system annotation layer. is:global
+	   because it's appended directly to document.body, not rendered by
+	   Astro, so it never gets the scoped data-astro-cid attribute. */
+	.night-sky-tooltip {
+		position: fixed;
+		z-index: 60;
+		max-width: 220px;
+		padding: 0.6rem 0.8rem;
+		background: var(--paper);
+		border: 1px solid var(--border);
+		border-radius: 6px;
+		box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+		font-size: 0.8rem;
+		line-height: 1.4;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 150ms ease;
+	}
+
+	.night-sky-tooltip.is-open {
+		opacity: 1;
+	}
+
+	.night-sky-tooltip-name {
+		margin: 0;
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.night-sky-tooltip-con {
+		margin: 0.15rem 0 0;
+		color: var(--muted);
+		font-size: 0.74rem;
+		text-transform: uppercase;
+		letter-spacing: 0.03em;
+	}
+</style>
+
+<script>
+	import { getAltAz } from '../lib/skyMath';
+
+	interface StarEntry {
+		name: string;
+		named: boolean;
+		con: string;
+		ra: number;
+		dec: number;
+		mag: number;
+		tooltip: boolean;
+	}
+
+	interface ProjectedStar extends StarEntry {
+		alt: number;
+		az: number;
+		x: number;
+		y: number;
+		radius: number;
+	}
+
+	const RICHMOND_VA = { lat: 37.5407, lon: -77.436 };
+	const GEOLOCATION_DELAY_MS = 3000;
+
+	const MILKY_WAY_WAYPOINTS: Array<{ ra: number; dec: number }> = [
+		{ ra: 17.76, dec: -28.94 }, // galactic center, Sagittarius
+		{ ra: 18.9, dec: -8 }, // Aquila/Scutum
+		{ ra: 20.3, dec: 35 }, // Cygnus
+		{ ra: 21.13, dec: 48.3 }, // Cygnus/Cepheus border
+		{ ra: 23.5, dec: 61 }, // Cassiopeia
+		{ ra: 2.5, dec: 60 }, // Perseus
+		{ ra: 5.76, dec: 28.94 }, // galactic anticenter, Auriga/Taurus border
+		{ ra: 7.3, dec: 5 }, // Orion/Gemini edge
+		{ ra: 8.9, dec: -23 }, // Puppis
+		{ ra: 10.4, dec: -58 }, // Carina
+		{ ra: 12.8, dec: -63 }, // Crux/Centaurus
+		{ ra: 16.0, dec: -55 }, // Norma
+	];
+
+	function clamp(value: number, min: number, max: number): number {
+		return Math.max(min, Math.min(max, value));
+	}
+
+	function starRadius(mag: number): number {
+		return clamp(2.5 - (mag - 1) * 0.4, 0.4, 4);
+	}
+
+	function starOpacity(mag: number): number {
+		return clamp(1.1 - mag * 0.15, 0.25, 1);
+	}
+
+	function setupNightSky() {
+		const canvas = document.getElementById('night-sky') as HTMLCanvasElement | null;
+		const hero = canvas?.closest('.hero') as HTMLElement | null;
+		if (!canvas || !hero) return;
+
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		let stars: StarEntry[] = [];
+		try {
+			stars = JSON.parse(canvas.dataset.stars ?? '[]');
+		} catch {
+			stars = [];
+		}
+
+		let observer = { lat: RICHMOND_VA.lat, lon: RICHMOND_VA.lon };
+		let projectedStars: ProjectedStar[] = [];
+		let milkyWayAltAz: Array<{ alt: number; az: number } | null> = [];
+		let renderedAt: Date | null = null;
+
+		function resizeCanvas() {
+			if (!canvas || !ctx) return;
+			const rect = hero!.getBoundingClientRect();
+			const dpr = window.devicePixelRatio || 1;
+			canvas.width = Math.max(1, Math.round(rect.width * dpr));
+			canvas.height = Math.max(1, Math.round(rect.height * dpr));
+			ctx.scale(dpr, dpr);
+		}
+
+		function project(alt: number, az: number, width: number, height: number) {
+			return {
+				x: (az / 360) * width,
+				y: height * (1 - alt / 90),
+			};
+		}
+
+		function computeSky() {
+			const now = new Date();
+			renderedAt = now;
+
+			projectedStars = [];
+			for (const s of stars) {
+				const { alt, az } = getAltAz(s.ra, s.dec, now, observer.lat, observer.lon);
+				if (alt <= 0) continue;
+				projectedStars.push({
+					...s,
+					alt,
+					az,
+					x: 0,
+					y: 0,
+					radius: starRadius(s.mag),
+				});
+			}
+
+			milkyWayAltAz = MILKY_WAY_WAYPOINTS.map((wp) => {
+				const { alt, az } = getAltAz(wp.ra, wp.dec, now, observer.lat, observer.lon);
+				if (alt <= -10) return null;
+				return { alt, az };
+			});
+		}
+
+		function draw() {
+			if (!canvas || !ctx) return;
+			const dpr = window.devicePixelRatio || 1;
+			const width = canvas.width / dpr;
+			const height = canvas.height / dpr;
+
+			ctx.clearRect(0, 0, width, height);
+
+			const isNight = document.documentElement.dataset.theme === 'night';
+
+			// Milky Way band first, under the stars.
+			const wayPoints = milkyWayAltAz.map((raw) => {
+				if (!raw) return null;
+				return { ...project(raw.alt, raw.az, width, height), az: raw.az };
+			});
+
+			ctx.save();
+			ctx.lineCap = 'round';
+			const milkyWayColor = isNight ? '255, 255, 255' : '120, 110, 100';
+			const strokeLayers = [
+				{ width: 70, alpha: 0.035 },
+				{ width: 45, alpha: 0.045 },
+				{ width: 24, alpha: 0.05 },
+			];
+			for (const layer of strokeLayers) {
+				ctx.lineWidth = layer.width;
+				ctx.strokeStyle = `rgba(${milkyWayColor}, ${layer.alpha})`;
+				for (let i = 0; i < wayPoints.length - 1; i++) {
+					const a = wayPoints[i];
+					const b = wayPoints[i + 1];
+					if (!a || !b) continue;
+					// Don't connect across the 360/0 azimuth seam.
+					if (Math.abs(a.az - b.az) > 180) continue;
+					ctx.beginPath();
+					ctx.moveTo(a.x, a.y);
+					ctx.lineTo(b.x, b.y);
+					ctx.stroke();
+				}
+			}
+			ctx.restore();
+
+			// Stars on top.
+			const starColor = isNight ? '255, 255, 255' : '150, 140, 125';
+			for (const s of projectedStars) {
+				const { x, y } = project(s.alt, s.az, width, height);
+				s.x = x;
+				s.y = y;
+				ctx.beginPath();
+				ctx.fillStyle = `rgba(${starColor}, ${starOpacity(s.mag)})`;
+				ctx.arc(x, y, s.radius, 0, Math.PI * 2);
+				ctx.fill();
+			}
+		}
+
+		function renderOnce() {
+			resizeCanvas();
+			computeSky();
+			draw();
+
+			// Debug hook only — read by manual/automated verification (e.g. the
+			// run-portfolio driver's `eval`), never used by the feature itself.
+			(window as typeof window & { __nightSkyDebug?: unknown }).__nightSkyDebug = {
+				observer,
+				renderedAt: renderedAt?.toISOString(),
+				visibleStarCount: projectedStars.length,
+				tooltipStars: projectedStars
+					.filter((s) => s.tooltip)
+					.map((s) => ({ name: s.name, con: s.con, x: s.x, y: s.y, alt: s.alt, az: s.az })),
+			};
+		}
+
+		// ---- Tooltip handling for the 21 named/tooltip stars ----
+		const isTouch = window.matchMedia('(hover: none)').matches;
+
+		function getTooltip(): HTMLDivElement {
+			let tooltip = document.querySelector<HTMLDivElement>('.night-sky-tooltip');
+			if (!tooltip || !document.body.contains(tooltip)) {
+				tooltip = document.createElement('div');
+				tooltip.className = 'night-sky-tooltip';
+				tooltip.setAttribute('role', 'tooltip');
+				document.body.appendChild(tooltip);
+			}
+			return tooltip;
+		}
+
+		function escapeHtml(str: string): string {
+			const div = document.createElement('div');
+			div.textContent = str;
+			return div.innerHTML;
+		}
+
+		function findStarNear(clientX: number, clientY: number): ProjectedStar | null {
+			const rect = canvas!.getBoundingClientRect();
+			const px = clientX - rect.left;
+			const py = clientY - rect.top;
+			const hitRadius = isTouch ? 14 : 8;
+			let closest: ProjectedStar | null = null;
+			let closestDist = Infinity;
+			for (const s of projectedStars) {
+				if (!s.tooltip) continue;
+				const dx = s.x - px;
+				const dy = s.y - py;
+				const dist = Math.sqrt(dx * dx + dy * dy);
+				if (dist <= hitRadius && dist < closestDist) {
+					closest = s;
+					closestDist = dist;
+				}
+			}
+			return closest;
+		}
+
+		function openTooltip(star: ProjectedStar, clientX: number, clientY: number) {
+			const tooltip = getTooltip();
+			tooltip.innerHTML = `
+				<p class="night-sky-tooltip-name">${escapeHtml(star.name)}</p>
+				<p class="night-sky-tooltip-con">${escapeHtml(star.con)}</p>
+			`;
+			tooltip.classList.add('is-open');
+			const tooltipRect = tooltip.getBoundingClientRect();
+			const margin = 8;
+			let left = clientX - tooltipRect.width / 2;
+			left = Math.max(margin, Math.min(left, window.innerWidth - tooltipRect.width - margin));
+			let top = clientY - tooltipRect.height - margin - 10;
+			if (top < margin) top = clientY + margin + 10;
+			tooltip.style.left = `${left}px`;
+			tooltip.style.top = `${top}px`;
+		}
+
+		function closeTooltip() {
+			getTooltip().classList.remove('is-open');
+		}
+
+		if (!isTouch) {
+			canvas.style.pointerEvents = 'auto';
+			canvas.addEventListener('mousemove', (e) => {
+				const star = findStarNear(e.clientX, e.clientY);
+				if (star) {
+					openTooltip(star, e.clientX, e.clientY);
+				} else {
+					closeTooltip();
+				}
+			});
+			canvas.addEventListener('mouseleave', closeTooltip);
+		} else {
+			canvas.style.pointerEvents = 'auto';
+			canvas.addEventListener('touchstart', (e) => {
+				const touch = e.touches[0];
+				if (!touch) return;
+				const star = findStarNear(touch.clientX, touch.clientY);
+				if (star) {
+					openTooltip(star, touch.clientX, touch.clientY);
+				} else {
+					closeTooltip();
+				}
+			});
+			document.addEventListener('touchstart', (e) => {
+				if (!(e.target as Element)?.closest?.('#night-sky')) closeTooltip();
+			});
+		}
+
+		// ---- Geolocation: passive, 3s-delayed, two-tier fallback ----
+		let resolved = false;
+
+		function resolveWith(lat: number, lon: number) {
+			if (resolved) return;
+			resolved = true;
+			observer = { lat, lon };
+			renderOnce();
+		}
+
+		window.setTimeout(() => {
+			if (resolved) return;
+			if (!('geolocation' in navigator)) {
+				resolveWith(RICHMOND_VA.lat, RICHMOND_VA.lon);
+				return;
+			}
+			navigator.geolocation.getCurrentPosition(
+				(pos) => {
+					resolveWith(pos.coords.latitude, pos.coords.longitude);
+				},
+				() => {
+					resolveWith(RICHMOND_VA.lat, RICHMOND_VA.lon);
+				},
+				{ timeout: 5000 }
+			);
+		}, GEOLOCATION_DELAY_MS);
+
+		// Resize: recompute screen-space only by re-running the full pipeline
+		// (cheap — ~200 stars, no network); avoids stale alt/az -> wrong x/y.
+		let resizeTimer: number | undefined;
+		window.addEventListener('resize', () => {
+			window.clearTimeout(resizeTimer);
+			resizeTimer = window.setTimeout(() => {
+				if (renderedAt) renderOnce();
+			}, 150);
+		});
+
+		// Theme toggle: redraw with cached alt/az, no recompute needed.
+		const themeObserver = new MutationObserver(() => {
+			if (renderedAt) draw();
+		});
+		themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+	}
+
+	function deferUntilVisible(setup: () => void) {
+		const canvas = document.getElementById('night-sky');
+		const hero = canvas?.closest('.hero');
+		if (!hero || !('IntersectionObserver' in window)) {
+			setup();
+			return;
+		}
+		const io = new IntersectionObserver(
+			(entries) => {
+				if (entries.some((e) => e.isIntersecting)) {
+					io.disconnect();
+					setup();
+				}
+			},
+			{ threshold: 0.01 }
+		);
+		io.observe(hero);
+	}
+
+	const w = window as typeof window & { __nightSkyBound?: boolean };
+	if (!w.__nightSkyBound) {
+		w.__nightSkyBound = true;
+		deferUntilVisible(setupNightSky);
+	}
+</script>
