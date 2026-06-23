@@ -86,15 +86,15 @@ const screenshotSrc = withBase('images/self-service-change-order.png');
 		</div>
 
 		<figure class="evidence-trial-screenshot">
-			<img src={screenshotSrc} alt="The change-order side panel: select a change type, fill in just the fields it needs, submit (representative recreation) — Design B, the real winning pattern" width="1280" height="745" loading="lazy" />
+			<img src={screenshotSrc} alt="Design B, the real winning pattern: the change-order side panel where you select a change type, fill in just the fields it needs, and submit (representative recreation)" width="1280" height="745" loading="lazy" />
 			<figcaption>Design B: the real Self-Service Workflow change-order panel.</figcaption>
 		</figure>
 
 		<p class="evidence-trial-why">
 			Design B won because it redesigned the <em>flow</em>, not the screens: fewer steps to
 			cross, and no ambiguity left about who owned a request. Design A's screens weren't
-			broken individually&mdash;the problem was how many of them, and how much uncertainty,
-			a user had to get through.
+			broken individually. The problem was how many of them, and how much uncertainty, a
+			user had to get through.
 		</p>
 
 		<button type="button" class="evidence-trial-action" id="evidence-trial-reset" data-action="reset">
@@ -102,11 +102,11 @@ const screenshotSrc = withBase('images/self-service-change-order.png');
 		</button>
 	</div>
 
-	<figcaption class="evidence-trial-caption">Guess first, then run the simulation&mdash;the result replays a real, completed outcome.</figcaption>
+	<figcaption class="evidence-trial-caption">Guess first, then run the simulation. The result replays a real, completed outcome.</figcaption>
 </figure>
 
 <script>
-	import { setupMetricCounters } from '../lib/metricCounter';
+	import { animateMetric } from '../lib/metricCounter';
 
 	type Choice = 'a' | 'b';
 
@@ -209,7 +209,26 @@ const screenshotSrc = withBase('images/self-service-change-order.png');
 
 			setLive('Simulation complete. Design B is the real winner: 53% to 96% completion.');
 
-			setupMetricCounters();
+			animateResultMetrics();
+		});
+	}
+
+	function animateResultMetrics() {
+		// Scoped to this component's own result panel — calling the page-global
+		// setupMetricCounters() here would spin up a fresh IntersectionObserver
+		// over every [data-metric] element on the page, including the case
+		// study's own hero counter, and could replay it if the visitor scrolls
+		// back up while this component's observer is still alive.
+		const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const result = $('evidence-trial-result');
+		const metrics = result?.querySelectorAll<HTMLElement>('[data-metric]') ?? [];
+		metrics.forEach((el) => {
+			if (reduceMotion) {
+				const end = el.dataset.metricEnd ?? '0';
+				el.textContent = (el.dataset.metricPrefix ?? '') + end + (el.dataset.metricSuffix ?? '');
+			} else {
+				animateMetric(el);
+			}
 		});
 	}
 
@@ -281,3 +300,237 @@ const screenshotSrc = withBase('images/self-service-change-order.png');
 		w.__evidenceTrialBound = true;
 	}
 </script>
+
+<style>
+	.evidence-trial {
+		margin: 2rem 0;
+	}
+
+	.evidence-trial-designs {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+		margin-bottom: 1.25rem;
+	}
+
+	.evidence-trial-design {
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 1rem 1.1rem;
+		background: var(--paper);
+	}
+
+	.evidence-trial-design h4 {
+		margin: 0 0 0.6rem;
+		font-size: 0.95rem;
+	}
+
+	.evidence-trial-design ul {
+		margin: 0;
+		padding-left: 1.1rem;
+		font-size: 0.88rem;
+		color: var(--muted);
+	}
+
+	.evidence-trial-design li {
+		margin-bottom: 0.35rem;
+	}
+
+	.evidence-trial-guess {
+		text-align: center;
+	}
+
+	.evidence-trial-prompt {
+		margin: 0 0 0.75rem;
+		font-weight: 600;
+	}
+
+	.evidence-trial-guess-buttons {
+		display: flex;
+		justify-content: center;
+		gap: 0.75rem;
+	}
+
+	.evidence-trial-guess-btn {
+		background: var(--paper);
+		color: var(--ink);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 0.6rem 1.25rem;
+		font-family: inherit;
+		font-size: 0.9rem;
+		cursor: pointer;
+		transition: border-color 0.15s ease, opacity 0.15s ease;
+	}
+
+	.evidence-trial-guess-btn:hover {
+		border-color: var(--accent);
+	}
+
+	.evidence-trial-guess-btn:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+
+	.evidence-trial-guess-btn:disabled {
+		cursor: default;
+		opacity: 0.5;
+	}
+
+	.evidence-trial-guess-btn.is-selected {
+		border-color: var(--accent);
+		color: var(--accent);
+		opacity: 1;
+	}
+
+	.evidence-trial-live {
+		margin: 0.75rem auto 0;
+		font-size: 0.85rem;
+		color: var(--muted);
+		text-align: center;
+		min-height: 1.2em;
+	}
+
+	.evidence-trial-action {
+		display: block;
+		margin: 0.75rem auto 0;
+		background: var(--ink);
+		color: var(--paper);
+		border: 1px solid var(--ink);
+		border-radius: 8px;
+		padding: 0.6rem 1.25rem;
+		font-family: inherit;
+		font-size: 0.9rem;
+		cursor: pointer;
+		transition: opacity 0.15s ease;
+	}
+
+	.evidence-trial-action[hidden] {
+		display: none;
+	}
+
+	.evidence-trial-action:hover {
+		opacity: 0.85;
+	}
+
+	.evidence-trial-action:disabled {
+		cursor: default;
+		opacity: 0.6;
+	}
+
+	.evidence-trial-action:focus-visible {
+		outline: 2px solid var(--accent);
+		outline-offset: 2px;
+	}
+
+	.evidence-trial-result {
+		margin-top: 1.25rem;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 1.25rem;
+		background: color-mix(in srgb, var(--accent-indigo) 4%, transparent);
+	}
+
+	.evidence-trial-verdict {
+		margin: 0 0 1rem;
+		font-weight: 600;
+	}
+
+	.evidence-trial-verdict.is-correct {
+		color: var(--accent);
+	}
+
+	.evidence-trial-metrics {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.5rem;
+		align-items: flex-start;
+		margin-bottom: 1rem;
+	}
+
+	.evidence-trial-metric-primary {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.evidence-trial-metric-primary .evidence-trial-metric-value {
+		font-size: 2.25rem;
+		font-weight: 600;
+		color: var(--accent);
+		line-height: 1.1;
+	}
+
+	.evidence-trial-metrics-secondary {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.25rem;
+	}
+
+	.evidence-trial-metric-secondary {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.evidence-trial-metric-secondary .evidence-trial-metric-value {
+		font-size: 1.4rem;
+		font-weight: 600;
+		line-height: 1.1;
+	}
+
+	.evidence-trial-metric-label {
+		font-size: 0.78rem;
+		color: var(--muted);
+	}
+
+	.evidence-trial-screenshot {
+		margin: 1rem 0;
+	}
+
+	.evidence-trial-screenshot img {
+		width: 100%;
+		border-radius: 8px;
+		cursor: zoom-in;
+	}
+
+	.evidence-trial-screenshot figcaption {
+		margin-top: 0.5rem;
+		font-size: 0.8rem;
+		color: var(--muted);
+		text-align: center;
+	}
+
+	.evidence-trial-why {
+		font-size: 0.92rem;
+	}
+
+	#evidence-trial-reset {
+		margin-top: 1rem;
+	}
+
+	.evidence-trial-caption {
+		margin-top: 0.75rem;
+		font-size: 0.8rem;
+		color: var(--muted);
+		text-align: center;
+	}
+
+	@media (max-width: 480px) {
+		.evidence-trial-designs {
+			grid-template-columns: 1fr;
+		}
+
+		.evidence-trial-guess-buttons {
+			flex-direction: column;
+		}
+
+		.evidence-trial-guess-btn {
+			width: 100%;
+			min-height: 44px;
+		}
+
+		.evidence-trial-action {
+			width: 100%;
+			min-height: 44px;
+		}
+	}
+</style>

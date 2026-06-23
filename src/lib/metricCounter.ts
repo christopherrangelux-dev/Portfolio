@@ -1,4 +1,4 @@
-function animateMetric(el: HTMLElement) {
+export function animateMetric(el: HTMLElement) {
 	const target = parseFloat(el.dataset.metricEnd ?? '0');
 	const prefix = el.dataset.metricPrefix ?? '';
 	const suffix = el.dataset.metricSuffix ?? '';
