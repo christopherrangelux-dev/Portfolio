@@ -88,10 +88,29 @@ function walkSrcFiles(dir) {
 // ---------------------------------------------------------------------------
 
 const HEX_LITERAL_REGEX = /#[0-9a-f]{3}(?:[0-9a-f]{3})?\b/gi;
-const VAR_TOKEN_REGEX = /var\(\s*--[a-z0-9-]+/gi;
+// Matches rgb()/rgba() with the classic comma syntax used throughout this
+// codebase (e.g. `rgba(56, 43, 95, 0.06)`) — a token's hex value re-expressed
+// in decimal is just as much a drift case as the hex literal itself.
+const RGB_LITERAL_REGEX = /rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*(?:,\s*[\d.]+\s*)?\)/gi;
+
+function hexToRgbKey(hex) {
+  const h = hex.slice(1);
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `${r},${g},${b}`;
+}
 
 function findColorFindings(files, tokens) {
   const tokensByValue = new Map(tokens.map((t) => [t.value, t.name]));
+  const tokensByRgbKey = new Map(tokens.map((t) => [hexToRgbKey(t.value), t.name]));
+  // Only count var(...) usages of the color tokens themselves — global.css's
+  // :root also has non-color custom properties (--mono, --max-width) that
+  // would otherwise inflate a metric meant to measure color-token adoption.
+  const colorVarRegex = new RegExp(
+    `var\\(\\s*(${tokens.map((t) => t.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|')})\\b`,
+    'gi'
+  );
   const findings = [];
   let realTokenUsageCount = 0;
 
@@ -99,10 +118,8 @@ function findColorFindings(files, tokens) {
     const content = readFileSync(file, 'utf8');
     const relPath = relative(REPO_ROOT, file);
 
-    // Count real var(--token) usages in this file (any token, not just color
-    // tokens — but since our token list here is color-only, this directly
-    // doubles as "real token-based color declarations").
-    const varMatches = content.match(VAR_TOKEN_REGEX) ?? [];
+    // Count real var(--color-token) usages in this file.
+    const varMatches = content.match(colorVarRegex) ?? [];
     realTokenUsageCount += varMatches.length;
 
     // Find every hex literal in the file.
@@ -115,6 +132,22 @@ function findColorFindings(files, tokens) {
           file: relPath,
           propertyType: 'color',
           literal: literal.toLowerCase(),
+          matchedToken,
+        });
+      }
+    }
+
+    // Find every rgb()/rgba() literal whose color channels match a token's
+    // value, even with a fractional alpha — the alpha doesn't change which
+    // base color it duplicates.
+    for (const match of content.matchAll(RGB_LITERAL_REGEX)) {
+      const key = `${parseInt(match[1], 10)},${parseInt(match[2], 10)},${parseInt(match[3], 10)}`;
+      const matchedToken = tokensByRgbKey.get(key);
+      if (matchedToken) {
+        findings.push({
+          file: relPath,
+          propertyType: 'color',
+          literal: match[0],
           matchedToken,
         });
       }

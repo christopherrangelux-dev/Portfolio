@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-06-23T11:01:20.976Z",
-  "totalFilesScanned": 23,
+  "timestamp": "2026-06-23T11:10:09.364Z",
+  "totalFilesScanned": 24,
   "tokens": [
     {
       "name": "--ink",
@@ -37,12 +37,18 @@
       "propertyType": "color",
       "literal": "#c2752e",
       "matchedToken": "--accent-amber"
+    },
+    {
+      "file": "src/pages/design-system.astro",
+      "propertyType": "color",
+      "literal": "rgba(56, 43, 95, 0.08)",
+      "matchedToken": "--accent-indigo"
     }
   ],
-  "tokenAdoptionRate": 99,
-  "designDebtScore": 72,
+  "tokenAdoptionRate": 97,
+  "designDebtScore": 63,
   "spacingFindings": {
-    "count": 50,
+    "count": 76,
     "distinctValues": [
       "1px",
       "4px",
@@ -50,16 +56,20 @@
       "16px",
       "24px",
       "320px",
+      "0.15rem",
+      "0.2rem",
       "0.25rem",
       "0.3rem",
       "0.35rem",
       "0.4rem",
+      "0.45rem",
       "0.5rem",
       "0.6rem",
       "0.65rem",
       "0.75rem",
       "0.9rem",
       "1rem",
+      "1.1rem",
       "1.25rem",
       "1.5rem",
       "1.75rem",
@@ -70,6 +80,7 @@
     ],
     "files": [
       "src/components/ConstellationMap.astro",
+      "src/components/DebtScanChart.astro",
       "src/components/ReadingProgressRing.astro",
       "src/pages/404.astro",
       "src/pages/about.astro",
