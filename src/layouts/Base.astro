@@ -65,14 +65,23 @@ const season = getSeason();
 		<meta charset="utf-8" />
 		<script is:inline>
 			(function () {
-				var stored = localStorage.getItem('theme');
-				var theme =
-					stored === 'night' || stored === 'day'
-						? stored
-						: window.matchMedia('(prefers-color-scheme: dark)').matches
-							? 'night'
-							: 'day';
-				document.documentElement.dataset.theme = theme;
+				function applyStoredTheme() {
+					var stored = localStorage.getItem('theme');
+					var theme =
+						stored === 'night' || stored === 'day'
+							? stored
+							: window.matchMedia('(prefers-color-scheme: dark)').matches
+								? 'night'
+								: 'day';
+					document.documentElement.dataset.theme = theme;
+				}
+				applyStoredTheme();
+				// View Transitions resets <html> attributes to match each new page's
+				// static markup on client-side navigation, wiping this runtime-only
+				// attribute. astro:after-swap fires right after that reset and before
+				// the new page paints, so reapplying here avoids a flash back to the
+				// default theme.
+				document.addEventListener('astro:after-swap', applyStoredTheme);
 			})();
 		</script>
 		<link rel="icon" type="image/svg+xml" href={withBase('favicon.svg')} />
