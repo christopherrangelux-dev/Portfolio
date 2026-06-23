@@ -1,6 +1,6 @@
 ---
 interface Props {
-	pattern: 'node-graph' | 'path-motif' | 'dot-matrix' | 'stacked-bars' | 'branch' | 'lattice';
+	pattern: 'node-graph' | 'path-motif' | 'dot-matrix' | 'stacked-bars' | 'branch' | 'lattice' | 'merge';
 }
 
 const { pattern } = Astro.props as Props;
@@ -101,5 +101,28 @@ const latticeOffsets = Array.from({ length: 8 }, (_, i) => i * 80);
 			stroke-width="2"
 			stroke-linecap="round"
 		/>
+	</svg>
+)}
+
+{pattern === 'merge' && (
+	<svg viewBox="0 0 400 180" class="pattern-svg" aria-hidden="true">
+		<path
+			d="M0,90 L120,90 C150,90 150,140 180,140 L220,140 C250,140 250,90 280,90 L400,90"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+		/>
+		<path
+			d="M0,40 L160,40 C190,40 190,90 220,90"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="2"
+		/>
+		<circle cx="120" cy="90" r="5" fill="currentColor" />
+		<circle cx="180" cy="140" r="5" fill="currentColor" />
+		<circle cx="220" cy="140" r="5" fill="currentColor" />
+		<circle cx="280" cy="90" r="5" fill="currentColor" />
+		<circle cx="160" cy="40" r="5" fill="currentColor" />
+		<circle cx="220" cy="90" r="5" fill="currentColor" />
 	</svg>
 )}

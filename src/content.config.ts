@@ -21,7 +21,7 @@ const work = defineCollection({
     metric: z.string(),
     metricLabel: z.string(),
     color: z.string(),
-    pattern: z.enum(['node-graph', 'path-motif', 'dot-matrix', 'stacked-bars', 'branch', 'lattice']),
+    pattern: z.enum(['node-graph', 'path-motif', 'dot-matrix', 'stacked-bars', 'branch', 'lattice', 'merge']),
   }),
 });
 

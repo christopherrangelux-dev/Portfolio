@@ -1,0 +1,57 @@
+---
+name: "Branch Theory"
+title: "Branch Theory: Git Concepts You Can Click Instead of Memorize"
+subtitle: "An interactive Git simulator that turns commits, branches, and merge conflicts into something a designer can click through and actually understand."
+order: 7
+featured: false
+tags: ["Interactive Tool", "Design Education", "Vanilla JS"]
+snapshot:
+  role: "Designer & Developer"
+  timeline: "2026"
+  tools: "Astro, SVG, vanilla JS"
+  team: "Solo"
+metric: "0 → 1"
+metricLabel: "merge conflict resolved, hands-on"
+color: "#4a4f7a"
+pattern: merge
+---
+
+import BranchGraph from '../../components/BranchGraph.astro';
+
+## The Problem
+
+Designers increasingly work next to Git-backed, AI-assisted coding tools, reviewing pull requests,
+watching an agent branch and merge changes, sometimes touching a repo themselves. But most design
+education never covers what a commit, a branch, or a merge conflict actually is. The vocabulary
+gets used around designers constantly; the mental model rarely gets taught to them.
+
+## The Process
+
+<BranchGraph />
+
+Most explanations of Git reach for terminal commands or abstract diagrams, neither of which means
+much to someone who's never typed `git merge`. The goal here was something a designer would
+recognize immediately: a design token, an accent color, being changed by two different people in
+two different places, the way it actually happens in real production work.
+
+## The Decision
+
+Build one guided scenario, not a sandbox. A visitor commits to main, branches off, edits the same
+color value differently on both branches, then merges; the merge produces a real, correctly
+modeled three-way conflict (both branches diverging from the same parent commit, touching the same
+property), not a scripted "pretend conflict." They resolve it themselves, choosing one branch's
+value, the other's, or a blend of both. One playthrough, one guaranteed teaching moment, a reset
+button to replay it.
+
+## The Outcome
+
+- A fixed-scenario, click-through Git simulator embedded directly in this portfolio, no terminal, no external app
+- A real three-way merge conflict, detected the same way Git detects one: two commits sharing a parent, touching the same property with different values
+- Full keyboard and screen-reader support, since the audience this is for is exactly the audience that benefits most from not already needing to know keyboard shortcuts
+
+## Reflection
+
+The hardest part wasn't the Git semantics, it was picking what to leave out. A freeform sandbox
+would have been more "realistic" and far less useful: most learning happens in the first
+guaranteed conflict, not the fifth optional one. Constraining the scope to one scenario, one
+conflict, one replay button is what makes the lesson land.

@@ -1,0 +1,347 @@
+---
+// Lane y-positions (% of canvas height) — single source of truth, also read
+// by the client script below. Commit data and action labels live only in
+// the script since this component renders entirely client-side (no initial
+// server-rendered state, unlike PermissionGraph's frontmatter-driven nodes).
+const lanes = {
+	main: 20,
+	feature: 45,
+};
+---
+
+<figure class="branch-graph" aria-label="Branch Theory: an interactive Git merge-conflict simulator (representative teaching tool)">
+	<div class="branch-graph-canvas">
+		<svg class="branch-graph-lines" id="branch-graph-lines" viewBox="0 0 100 60" preserveAspectRatio="none" aria-hidden="true"></svg>
+
+		<div class="branch-graph-nodes" id="branch-graph-nodes"></div>
+
+		<span class="branch-graph-lane-label" style={`left: 2%; top: ${lanes.main}%;`}>main</span>
+		<span class="branch-graph-lane-label branch-graph-lane-label-feature" id="branch-graph-feature-label" style={`left: 2%; top: ${lanes.feature}%;`} hidden>feature</span>
+	</div>
+
+	<p class="branch-graph-live" id="branch-graph-live" aria-live="polite"></p>
+
+	<button
+		type="button"
+		class="branch-graph-action"
+		id="branch-graph-action"
+		data-action="advance"
+		aria-expanded="false"
+		aria-controls="branch-graph-conflict"
+	>
+		Commit to main →
+	</button>
+
+	<div class="branch-graph-conflict" id="branch-graph-conflict" aria-expanded="false" hidden>
+		<p class="branch-graph-conflict-title">Merge conflict: <code>--accent</code></p>
+		<p class="branch-graph-conflict-row">main changed it to: <span class="branch-graph-swatch" id="branch-graph-main-swatch"></span> <code id="branch-graph-main-value"></code></p>
+		<p class="branch-graph-conflict-row">feature changed it to: <span class="branch-graph-swatch" id="branch-graph-feature-swatch"></span> <code id="branch-graph-feature-value"></code></p>
+		<div class="branch-graph-resolutions">
+			<button type="button" class="branch-graph-resolve" data-action="resolve" data-choice="main">Keep main's</button>
+			<button type="button" class="branch-graph-resolve" data-action="resolve" data-choice="feature">Keep feature's</button>
+			<button type="button" class="branch-graph-resolve" data-action="resolve" data-choice="blend">Blend</button>
+		</div>
+	</div>
+
+	<figcaption>Click through committing, branching, and resolving a real merge conflict (representative teaching tool).</figcaption>
+</figure>
+
+<script>
+	interface CommitData {
+		step: number;
+		id: string;
+		lane: 'main' | 'feature';
+		x: number;
+		parent: string | null;
+		value: string;
+		message: string;
+	}
+
+	const lanes: Record<'main' | 'feature', number> = { main: 20, feature: 45 };
+
+	const commits: CommitData[] = [
+		{ step: 0, id: 'c0', lane: 'main', x: 10, parent: null, value: '#c2752e', message: 'Initial commit' },
+		{ step: 1, id: 'c1', lane: 'main', x: 30, parent: 'c0', value: '#d9893f', message: 'Update accent for launch' },
+		{ step: 3, id: 'f1', lane: 'feature', x: 50, parent: 'c1', value: '#4a4f7a', message: 'Try a cooler accent for winter' },
+		{ step: 4, id: 'c2', lane: 'main', x: 50, parent: 'c1', value: '#b5631f', message: 'Bump accent for new brand pass' },
+	];
+
+	const actionLabels: Record<number, string> = {
+		0: 'Commit to main →',
+		1: 'Branch off main →',
+		2: 'Commit to feature/seasonal-accent →',
+		3: 'Meanwhile, commit to main →',
+		4: 'Merge feature → main',
+	};
+
+	const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+	let currentStep = 0;
+	let mergeValue: string | null = null;
+
+	function commitById(id: string): CommitData | undefined {
+		return commits.find((c) => c.id === id);
+	}
+
+	function hasConflict(): boolean {
+		const c2 = commitById('c2');
+		const f1 = commitById('f1');
+		if (!c2 || !f1) return false;
+		return c2.parent === f1.parent && c2.value !== f1.value;
+	}
+
+	function blendHex(a: string, b: string): string {
+		const pa = a.replace('#', '');
+		const pb = b.replace('#', '');
+		const channels = [0, 2, 4].map((i) => {
+			const va = parseInt(pa.slice(i, i + 2), 16);
+			const vb = parseInt(pb.slice(i, i + 2), 16);
+			return Math.round((va + vb) / 2);
+		});
+		return '#' + channels.map((c) => c.toString(16).padStart(2, '0')).join('');
+	}
+
+	function makeNode(commit: CommitData): HTMLButtonElement {
+		const button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'branch-graph-node';
+		button.dataset.commit = commit.id;
+		button.setAttribute('style', `left:${commit.x}%; top:${lanes[commit.lane]}%; background:${commit.value};`);
+		button.setAttribute('aria-label', `${commit.message} (${commit.value})`);
+		if (!reduceMotion) {
+			button.classList.add('branch-graph-node-enter');
+			requestAnimationFrame(() => {
+				requestAnimationFrame(() => button.classList.remove('branch-graph-node-enter'));
+			});
+		}
+		return button;
+	}
+
+	function makeLine(x1: number, y1: number, x2: number, y2: number, conflict = false): SVGLineElement {
+		const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+		line.setAttribute('x1', String(x1));
+		line.setAttribute('y1', String(y1));
+		line.setAttribute('x2', String(x2));
+		line.setAttribute('y2', String(y2));
+		if (conflict) line.setAttribute('data-conflict', 'true');
+		return line;
+	}
+
+	function render() {
+		const nodesLayer = document.getElementById('branch-graph-nodes');
+		const linesLayer = document.getElementById('branch-graph-lines');
+		const featureLabel = document.getElementById('branch-graph-feature-label');
+		const action = document.getElementById('branch-graph-action') as HTMLButtonElement | null;
+		const live = document.getElementById('branch-graph-live');
+		const conflictPanel = document.getElementById('branch-graph-conflict');
+		if (!nodesLayer || !linesLayer || !featureLabel || !action || !live || !conflictPanel) return;
+
+		nodesLayer.innerHTML = '';
+		linesLayer.innerHTML = '';
+
+		const visibleCommits = commits.filter((c) => c.step <= currentStep);
+		const branchRevealed = currentStep >= 2;
+		const merged = currentStep >= 6 && mergeValue !== null;
+
+		featureLabel.hidden = !branchRevealed;
+
+		// Draw edges between consecutive commits sharing the same lane.
+		const mainCommits = visibleCommits.filter((c) => c.lane === 'main').sort((a, b) => a.x - b.x);
+		for (let i = 0; i < mainCommits.length - 1; i++) {
+			const a = mainCommits[i];
+			const b = mainCommits[i + 1];
+			linesLayer.appendChild(makeLine(a.x, lanes.main, b.x, lanes.main));
+		}
+
+		const featureCommits = visibleCommits.filter((c) => c.lane === 'feature').sort((a, b) => a.x - b.x);
+		if (branchRevealed) {
+			// Branch line from c1 down into the feature lane.
+			const c1 = commitById('c1');
+			if (c1) {
+				linesLayer.appendChild(makeLine(c1.x, lanes.main, c1.x, lanes.feature));
+				const firstFeature = featureCommits[0];
+				if (firstFeature) {
+					linesLayer.appendChild(makeLine(c1.x, lanes.feature, firstFeature.x, lanes.feature));
+				} else {
+					linesLayer.appendChild(makeLine(c1.x, lanes.feature, c1.x + 1, lanes.feature));
+				}
+			}
+		}
+		for (let i = 0; i < featureCommits.length - 1; i++) {
+			const a = featureCommits[i];
+			const b = featureCommits[i + 1];
+			linesLayer.appendChild(makeLine(a.x, lanes.feature, b.x, lanes.feature));
+		}
+
+		// Merge node + lines once resolved.
+		if (merged) {
+			const c2 = commitById('c2');
+			const f1 = commitById('f1');
+			if (c2) linesLayer.appendChild(makeLine(c2.x, lanes.main, 70, lanes.main, true));
+			if (f1) linesLayer.appendChild(makeLine(f1.x, lanes.feature, 70, lanes.main, true));
+		}
+
+		// Render commit nodes.
+		visibleCommits.forEach((c) => nodesLayer.appendChild(makeNode(c)));
+		if (merged && mergeValue) {
+			nodesLayer.appendChild(
+				makeNode({ step: 7, id: 'm1', lane: 'main', x: 70, parent: 'c2', value: mergeValue, message: 'Merge feature into main' })
+			);
+		}
+
+		// Action button / conflict panel state.
+		if (currentStep >= 6 && !merged) {
+			const dismissed = conflictPanel.hidden;
+			action.hidden = !dismissed;
+			if (dismissed) {
+				action.textContent = 'Resolve conflict →';
+				action.dataset.action = 'reopen-conflict';
+			}
+		} else if (merged) {
+			conflictPanel.hidden = true;
+			action.hidden = false;
+			action.textContent = 'Replay ↻';
+			action.dataset.action = 'reset';
+		} else {
+			conflictPanel.hidden = true;
+			action.hidden = false;
+			action.textContent = actionLabels[currentStep] ?? 'Continue →';
+			action.dataset.action = 'advance';
+		}
+
+		// Live region announcement.
+		const justRevealed = commits.find((c) => c.step === currentStep);
+		if (currentStep === 0) {
+			live.textContent = 'Committed to main: Initial commit';
+		} else if (justRevealed && justRevealed.lane === 'main') {
+			live.textContent = `Committed to main: ${justRevealed.message}`;
+		} else if (justRevealed && justRevealed.lane === 'feature') {
+			live.textContent = `Committed to feature/seasonal-accent: ${justRevealed.message}`;
+		} else if (currentStep === 2) {
+			live.textContent = 'Branched off main as feature/seasonal-accent';
+		} else if (currentStep >= 6 && !merged) {
+			live.textContent = 'Merge conflict: both branches changed --accent since their shared parent commit.';
+		} else if (merged) {
+			live.textContent = `Merge resolved: --accent is now ${mergeValue}`;
+		}
+	}
+
+	function openConflict() {
+		const c2 = commitById('c2');
+		const f1 = commitById('f1');
+		if (!c2 || !f1) return;
+		const conflictPanel = document.getElementById('branch-graph-conflict');
+		const action = document.getElementById('branch-graph-action');
+		if (!conflictPanel) return;
+
+		const mainSwatch = document.getElementById('branch-graph-main-swatch');
+		const featureSwatch = document.getElementById('branch-graph-feature-swatch');
+		const mainValue = document.getElementById('branch-graph-main-value');
+		const featureValue = document.getElementById('branch-graph-feature-value');
+		if (mainSwatch) mainSwatch.setAttribute('style', `background:${c2.value};`);
+		if (featureSwatch) featureSwatch.setAttribute('style', `background:${f1.value};`);
+		if (mainValue) mainValue.textContent = c2.value;
+		if (featureValue) featureValue.textContent = f1.value;
+
+		conflictPanel.hidden = false;
+		conflictPanel.setAttribute('aria-expanded', 'true');
+		if (action) {
+			action.setAttribute('aria-expanded', 'true');
+			action.hidden = true;
+		}
+	}
+
+	function closeConflict() {
+		const conflictPanel = document.getElementById('branch-graph-conflict');
+		const action = document.getElementById('branch-graph-action');
+		if (!conflictPanel || conflictPanel.hidden) return;
+		conflictPanel.hidden = true;
+		conflictPanel.setAttribute('aria-expanded', 'false');
+		if (action) action.setAttribute('aria-expanded', 'false');
+		render();
+	}
+
+	function advanceStep() {
+		const next = currentStep + 1;
+		if (next === 5) {
+			// Step 5: merge attempt. Check for conflict.
+			currentStep = 5;
+			if (hasConflict()) {
+				currentStep = 6;
+				render();
+				openConflict();
+				return;
+			}
+			// No conflict (shouldn't happen in this fixed scenario, but keep it correct).
+			currentStep = 7;
+			mergeValue = commitById('c2')?.value ?? null;
+			render();
+			return;
+		}
+		currentStep = next;
+		render();
+	}
+
+	function resolveConflict(choice: string) {
+		const c2 = commitById('c2');
+		const f1 = commitById('f1');
+		if (!c2 || !f1) return;
+
+		if (choice === 'main') mergeValue = c2.value;
+		else if (choice === 'feature') mergeValue = f1.value;
+		else if (choice === 'blend') mergeValue = blendHex(c2.value, f1.value);
+
+		currentStep = 7;
+		const conflictPanel = document.getElementById('branch-graph-conflict');
+		const action = document.getElementById('branch-graph-action');
+		if (conflictPanel) conflictPanel.setAttribute('aria-expanded', 'false');
+		if (action) action.setAttribute('aria-expanded', 'false');
+		render();
+	}
+
+	function resetDemo() {
+		currentStep = 0;
+		mergeValue = null;
+		const conflictPanel = document.getElementById('branch-graph-conflict');
+		const action = document.getElementById('branch-graph-action');
+		if (conflictPanel) conflictPanel.setAttribute('aria-expanded', 'false');
+		if (action) action.setAttribute('aria-expanded', 'false');
+		render();
+	}
+
+	function onClick(e: MouseEvent) {
+		const target = e.target as Element;
+
+		const resolveButton = target.closest<HTMLElement>('[data-action="resolve"]');
+		if (resolveButton) {
+			const choice = resolveButton.dataset.choice;
+			if (choice) resolveConflict(choice);
+			return;
+		}
+
+		const actionButton = target.closest<HTMLElement>('#branch-graph-action');
+		if (actionButton) {
+			const action = actionButton.dataset.action;
+			if (action === 'reset') resetDemo();
+			else if (action === 'reopen-conflict') openConflict();
+			else advanceStep();
+			return;
+		}
+
+		if (!target.closest('.branch-graph')) closeConflict();
+	}
+
+	function onKeydown(e: KeyboardEvent) {
+		if (e.key !== 'Escape') return;
+		closeConflict();
+	}
+
+	render();
+
+	const w = window as typeof window & { __branchGraphBound?: boolean };
+	if (!w.__branchGraphBound) {
+		document.addEventListener('click', onClick);
+		document.addEventListener('keydown', onKeydown);
+		w.__branchGraphBound = true;
+	}
+</script>
