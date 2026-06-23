@@ -43,6 +43,20 @@ const lanes = {
 		</div>
 	</div>
 
+	<div class="branch-graph-translate" id="branch-graph-translate" aria-expanded="false" hidden>
+		<p class="branch-graph-translate-title">Same resolution, two audiences:</p>
+		<div class="branch-graph-translate-cards">
+			<div class="branch-graph-translate-card">
+				<h4>For designers</h4>
+				<p id="branch-graph-translate-designer"></p>
+			</div>
+			<div class="branch-graph-translate-card branch-graph-translate-card-dev">
+				<h4>For developers</h4>
+				<pre id="branch-graph-translate-dev"></pre>
+			</div>
+		</div>
+	</div>
+
 	<figcaption>Click through committing, branching, and resolving a real merge conflict (representative teaching tool).</figcaption>
 </figure>
 
@@ -76,8 +90,11 @@ const lanes = {
 
 	const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+	type Resolution = 'main' | 'feature' | 'blend';
+
 	let currentStep = 0;
 	let mergeValue: string | null = null;
+	let resolutionChoice: Resolution | null = null;
 
 	function commitById(id: string): CommitData | undefined {
 		return commits.find((c) => c.id === id);
@@ -134,7 +151,8 @@ const lanes = {
 		const action = document.getElementById('branch-graph-action') as HTMLButtonElement | null;
 		const live = document.getElementById('branch-graph-live');
 		const conflictPanel = document.getElementById('branch-graph-conflict');
-		if (!nodesLayer || !linesLayer || !featureLabel || !action || !live || !conflictPanel) return;
+		const translatePanel = document.getElementById('branch-graph-translate');
+		if (!nodesLayer || !linesLayer || !featureLabel || !action || !live || !conflictPanel || !translatePanel) return;
 
 		nodesLayer.innerHTML = '';
 		linesLayer.innerHTML = '';
@@ -142,6 +160,10 @@ const lanes = {
 		const visibleCommits = commits.filter((c) => c.step <= currentStep);
 		const branchRevealed = currentStep >= 2;
 		const merged = currentStep >= 6 && mergeValue !== null;
+		const translated = currentStep >= 8;
+
+		translatePanel.hidden = !translated;
+		translatePanel.setAttribute('aria-expanded', String(translated));
 
 		featureLabel.hidden = !branchRevealed;
 
@@ -197,7 +219,12 @@ const lanes = {
 				action.textContent = 'Resolve conflict →';
 				action.dataset.action = 'reopen-conflict';
 			}
-		} else if (merged) {
+		} else if (merged && !translated) {
+			conflictPanel.hidden = true;
+			action.hidden = false;
+			action.textContent = 'Translate this resolution →';
+			action.dataset.action = 'translate';
+		} else if (translated) {
 			conflictPanel.hidden = true;
 			action.hidden = false;
 			action.textContent = 'Replay ↻';
@@ -221,6 +248,8 @@ const lanes = {
 			live.textContent = 'Branched off main as feature/seasonal-accent';
 		} else if (currentStep >= 6 && !merged) {
 			live.textContent = 'Merge conflict: both branches changed --accent since their shared parent commit.';
+		} else if (translated) {
+			live.textContent = 'Translated for both audiences: what this resolution means for designers, and the commit message a developer would actually see.';
 		} else if (merged) {
 			live.textContent = `Merge resolved: --accent is now ${mergeValue}`;
 		}
@@ -291,6 +320,7 @@ const lanes = {
 		else if (choice === 'feature') mergeValue = f1.value;
 		else if (choice === 'blend') mergeValue = blendHex(c2.value, f1.value);
 
+		resolutionChoice = choice as Resolution;
 		currentStep = 7;
 		const conflictPanel = document.getElementById('branch-graph-conflict');
 		const action = document.getElementById('branch-graph-action');
@@ -299,9 +329,41 @@ const lanes = {
 		render();
 	}
 
+	function populateTranslation(choice: Resolution) {
+		const c2 = commitById('c2');
+		const f1 = commitById('f1');
+		if (!c2 || !f1 || !mergeValue) return;
+
+		const designerEl = document.getElementById('branch-graph-translate-designer');
+		const devEl = document.getElementById('branch-graph-translate-dev');
+
+		const designerCopy: Record<Resolution, string> = {
+			main: `You kept main's accent. The launch color (${c2.value}) stays as the one everyone sees — feature's seasonal idea (${f1.value}) didn't make it in this time, but it's still sitting on its own branch if you want to revisit it.`,
+			feature: `You went with feature's accent instead of main's. The seasonal color (${f1.value}) is now what everyone sees, replacing the launch color (${c2.value}) that was there a moment ago.`,
+			blend: `Neither version won outright — you blended them. The accent is now ${mergeValue}, a color neither branch actually had on its own, splitting the difference between main's ${c2.value} and feature's ${f1.value}.`,
+		};
+
+		const devCopy: Record<Resolution, string> = {
+			main: `Merge branch 'feature/seasonal-accent' into main\n\nResolved conflicting --accent: kept ours (${c2.value}). Theirs (${f1.value}) was discarded.`,
+			feature: `Merge branch 'feature/seasonal-accent' into main\n\nResolved conflicting --accent: took theirs (${f1.value}) over ours (${c2.value}).`,
+			blend: `Merge branch 'feature/seasonal-accent' into main\n\nResolved conflicting --accent: manually merged, ours (${c2.value}) + theirs (${f1.value}) → ${mergeValue}.`,
+		};
+
+		if (designerEl) designerEl.textContent = designerCopy[choice];
+		if (devEl) devEl.textContent = devCopy[choice];
+	}
+
+	function advanceToTranslation() {
+		if (!resolutionChoice) return;
+		currentStep = 8;
+		populateTranslation(resolutionChoice);
+		render();
+	}
+
 	function resetDemo() {
 		currentStep = 0;
 		mergeValue = null;
+		resolutionChoice = null;
 		const conflictPanel = document.getElementById('branch-graph-conflict');
 		const action = document.getElementById('branch-graph-action');
 		if (conflictPanel) conflictPanel.setAttribute('aria-expanded', 'false');
@@ -324,6 +386,7 @@ const lanes = {
 			const action = actionButton.dataset.action;
 			if (action === 'reset') resetDemo();
 			else if (action === 'reopen-conflict') openConflict();
+			else if (action === 'translate') advanceToTranslation();
 			else advanceStep();
 			return;
 		}
