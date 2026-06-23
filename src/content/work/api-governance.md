@@ -25,9 +25,8 @@ clearly enough to remove.
 ## The Process
 
 **[Explore the live, interactive demo →](https://christopherrangelux-dev.github.io/nexus-ops/)**
-*The same platform as the Self-Service Workflow case study, viewed through a governance lens: the
-API catalog's data-sensitivity classification and the approvals dashboard's risk scoring are the
-same "surface the evidence" thinking this case study is about.*
+*Open an API's console and look at Dormancy & Evidence: the verdict, the usage evidence behind
+it, and the deactivate action live together — not three disconnected steps.*
 
 Generating a dormancy verdict for each endpoint wasn't the hard part. Usage data already existed.
 The hard part was getting teams to trust the verdict enough to actually act on it.
@@ -39,7 +38,7 @@ flag, so a team could see *why* an endpoint was being called out instead of taki
 faith. Second, pairing that evidence with a clear, simple action path, so finding out an endpoint
 was dormant and doing something about it weren't two disconnected steps.
 
-![Evidence behind an access decision: scopes, risk level, and policy context surfaced together, not just a verdict (representative recreation)](/images/api-governance-evidence.png)
+![A dormant endpoint's verdict, the usage evidence behind it, and the deactivate action shown together in one panel (representative recreation)](/images/api-governance-evidence.png)
 
 ## The Outcome
 
