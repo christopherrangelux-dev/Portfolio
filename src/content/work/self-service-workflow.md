@@ -49,6 +49,8 @@ became one guided path.
 - 100% owner attribution on requests
 - Manual support tickets cut 25% via self-service UI configuration
 
+![An app owner's own Pending Requests view: every outstanding request tied to their application, with nothing left to chase down manually (representative recreation)](/images/self-service-pending-requests.png)
+
 ## Reflection
 
 This case study is a good example of why "redesign the screen" and "redesign the flow" are
