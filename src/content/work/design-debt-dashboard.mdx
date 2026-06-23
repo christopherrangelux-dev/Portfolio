@@ -1,0 +1,97 @@
+---
+name: "Design Debt Dashboard"
+title: "Design Debt Dashboard: Auditing a Design System Against Itself"
+subtitle: "A build-time scanner that checks this portfolio's own source for design-token drift, instead of proving the idea against a mock file."
+order: 8
+tags: ["Design Systems", "Tooling", "Data Trust"]
+snapshot:
+  role: "Designer & Developer"
+  timeline: "2026"
+  tools: "Node.js, Astro"
+  team: "Solo"
+metric: "99%"
+metricLabel: "color declarations using a real token"
+color: "#5e6660"
+pattern: stacked-bars
+---
+
+import DebtScanChart from '../../components/DebtScanChart.astro';
+
+## The Problem
+
+Design systems decay the moment they ship. A token gets defined once, with real intention behind
+it, and then nothing keeps checking whether anyone actually used it. Six months later half the
+codebase still calls `var(--accent)` and the other half has quietly reintroduced `#c2752e` as a
+literal, usually because someone was moving fast in a file that wasn't open next to the token
+sheet. No tooling catches this by default; lint rules for arbitrary hex literals exist but aren't
+on by default, and nobody adds them retroactively to a system that already feels "done."
+
+This is also the code-side sibling of a paused Figma-plugin concept elsewhere in this portfolio:
+the same drift problem, but on the production side of the handoff instead of the design-file side.
+
+## The Process
+
+I didn't want to demo this against a synthetic fixture file built to produce a clean before/after.
+That's the easy version, and it proves nothing about whether the idea holds up against a real,
+organically-grown codebase. So the scanner points at this portfolio's own `src/` directory: the
+same repo this case study lives in, scanned at the moment I'm writing this sentence.
+
+<DebtScanChart />
+
+The mechanics are intentionally plain. A small Node script reads the seven color tokens out of
+`global.css`'s `:root` block (the single source of truth, not a duplicated literal list living
+somewhere else), then walks every `.astro` and `.css` file under `src/` — excluding `global.css`
+itself, since that file is where tokens and their legitimate theme/season re-definitions live, not
+a drift target. For every hex color literal it finds, it checks whether the normalized value
+matches a token's value. If it does, and it isn't already written as `var(--token-name)`, that's a
+drift finding. Separately, it inventories hardcoded `px`/`rem` values used in spacing-shaped
+declarations — margin, padding, gap, inset, and the four directional properties — without scoring
+them against anything, because there is no spacing token in this system to violate.
+
+It's read-only. It doesn't rewrite anything or propose a one-click fix; auto-remediation is a
+different, riskier tool than the one I wanted to build first.
+
+## The Decision
+
+The harder design decision wasn't the regex, it was what to do with the spacing data once I had
+it. A token-vs-drift table is satisfying because it has a clear pass/fail shape. Spacing has no
+such shape here — there's no `--space-sm` to compare a hardcoded `1.5rem` against, so "23 distinct
+spacing values across 8 files" isn't a violation count, it's just a description of a gap. I decided
+not to force it into the same scored framing as the color findings. The dashboard says so directly:
+this section isn't a score, it's an honest admission that the system stops at color.
+
+I also kept the scan itself manual rather than wiring it into `astro build`. A build-blocking
+design-debt gate is a reasonable thing to want eventually, but bolting one on before establishing
+what "acceptable drift" even means for this codebase would just be noise on every deploy. Better to
+let the number move only when someone deliberately asks the question.
+
+## The Outcome
+
+Run against this repo's actual `src/` directory, the scan found:
+
+- **99% Token Adoption Rate** — of 70 total color declarations that should resolve to a token, 69
+  correctly reference `var(--token-name)` and 1 is a hardcoded literal that duplicates a token value
+- **1 color drift finding**: a `#c2752e` literal in `BranchGraph.astro`'s demo commit data, which
+  happens to match `--accent`/`--accent-amber` — not a coincidence; the component fabricates a
+  fictional commit history for a teaching demo, and the realistic-looking accent color it invented
+  for that fiction turned out to be this site's actual accent
+- **A Design Debt Score of 72** — a simple composite (100 minus a penalty per drift finding, minus
+  a smaller penalty per distinct hardcoded spacing value), included as a secondary summary number;
+  the raw counts above are the more honest read
+- **50 hardcoded spacing declarations, 23 distinct px/rem values, across 8 files** — no score
+  attached, because there's no spacing token system yet to measure adoption against
+
+I expected more color drift than this. One finding, in a component that's explicitly about
+fictional data, is a genuinely clean result for a same-color-family token set this small. I didn't
+expect that, and I'm not going to pretend the number is more dramatic than it is.
+
+## Reflection
+
+The spacing finding is the uncomfortable one, and it's the part I almost framed more gently. 23
+distinct spacing values with nothing to check them against is a real gap, not a stylistic choice —
+it means every `1.5rem` versus `1.25rem` decision in this codebase has been made independently,
+file by file, with no system enforcing consistency the way the color tokens do. Calling that "23
+distinct values, 8 files" instead of scoring it felt like underselling it at first. But scoring it
+against nothing would have been worse: a fake number with false precision is exactly the kind of
+dashboard-for-its-own-sake this case study is arguing against. The self-referential angle only
+works if I hold the tool to its own standard — report what's true, not what makes a tidier chart.

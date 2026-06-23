@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-06-23T11:01:20.976Z",
+  "totalFilesScanned": 23,
+  "tokens": [
+    {
+      "name": "--ink",
+      "value": "#221f1b"
+    },
+    {
+      "name": "--paper",
+      "value": "#fbf7f1"
+    },
+    {
+      "name": "--muted",
+      "value": "#8a8170"
+    },
+    {
+      "name": "--accent",
+      "value": "#c2752e"
+    },
+    {
+      "name": "--accent-amber",
+      "value": "#c2752e"
+    },
+    {
+      "name": "--accent-indigo",
+      "value": "#382b5f"
+    },
+    {
+      "name": "--border",
+      "value": "#e7e0d2"
+    }
+  ],
+  "colorFindings": [
+    {
+      "file": "src/components/BranchGraph.astro",
+      "propertyType": "color",
+      "literal": "#c2752e",
+      "matchedToken": "--accent-amber"
+    }
+  ],
+  "tokenAdoptionRate": 99,
+  "designDebtScore": 72,
+  "spacingFindings": {
+    "count": 50,
+    "distinctValues": [
+      "1px",
+      "4px",
+      "8px",
+      "16px",
+      "24px",
+      "320px",
+      "0.25rem",
+      "0.3rem",
+      "0.35rem",
+      "0.4rem",
+      "0.5rem",
+      "0.6rem",
+      "0.65rem",
+      "0.75rem",
+      "0.9rem",
+      "1rem",
+      "1.25rem",
+      "1.5rem",
+      "1.75rem",
+      "2rem",
+      "2.5rem",
+      "3rem",
+      "4rem"
+    ],
+    "files": [
+      "src/components/ConstellationMap.astro",
+      "src/components/ReadingProgressRing.astro",
+      "src/pages/404.astro",
+      "src/pages/about.astro",
+      "src/pages/colophon.astro",
+      "src/pages/contact.astro",
+      "src/pages/design-system.astro",
+      "src/pages/index.astro"
+    ]
+  }
+}

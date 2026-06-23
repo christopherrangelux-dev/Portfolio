@@ -1,0 +1,250 @@
+---
+import scanData from '../data/design-debt-scan.json';
+
+const { timestamp, totalFilesScanned, colorFindings, tokenAdoptionRate, designDebtScore, spacingFindings } =
+	scanData;
+
+const formattedTimestamp = new Date(timestamp).toLocaleString('en-US', {
+	dateStyle: 'medium',
+	timeStyle: 'short',
+});
+---
+
+<figure class="debt-scan" aria-label="Design Debt Dashboard scan results for this portfolio's own source code">
+	<div class="debt-scan-summary">
+		<div class="debt-scan-stat">
+			<span class="debt-scan-stat-value">{designDebtScore}</span>
+			<span class="debt-scan-stat-label">Design Debt Score</span>
+		</div>
+		<div class="debt-scan-stat">
+			<span class="debt-scan-stat-value">{tokenAdoptionRate}%</span>
+			<span class="debt-scan-stat-label">Token Adoption Rate</span>
+		</div>
+		<div class="debt-scan-stat debt-scan-stat-muted">
+			<span class="debt-scan-stat-value">{totalFilesScanned}</span>
+			<span class="debt-scan-stat-label">Files Scanned</span>
+		</div>
+	</div>
+
+	<div class="debt-scan-section">
+		<h4 class="debt-scan-section-title">Color drift</h4>
+		{colorFindings.length === 0 ? (
+			<p class="debt-scan-empty">No color drift found — every hex literal in the scanned files is either token-free by choice or already routed through <code>var(--token)</code>.</p>
+		) : (
+			<table class="debt-scan-table">
+				<thead>
+					<tr>
+						<th scope="col">File</th>
+						<th scope="col">Literal</th>
+						<th scope="col">Matches token</th>
+					</tr>
+				</thead>
+				<tbody>
+					{colorFindings.map((finding) => (
+						<tr>
+							<td><code>{finding.file}</code></td>
+							<td>
+								<span class="debt-scan-swatch" style={`background:${finding.literal}`}></span>
+								<code>{finding.literal}</code>
+							</td>
+							<td><code>{finding.matchedToken}</code></td>
+						</tr>
+					))}
+				</tbody>
+			</table>
+		)}
+	</div>
+
+	<div class="debt-scan-section">
+		<h4 class="debt-scan-section-title">Spacing — no token system exists yet</h4>
+		<p class="debt-scan-gap-note">
+			{spacingFindings.count} hardcoded spacing declarations across {spacingFindings.distinctValues.length} distinct
+			px/rem values were found in {spacingFindings.files.length} files. There's no spacing token to compare these
+			against, so this isn't scored — the absence of a system here is itself the finding.
+		</p>
+		<details class="debt-scan-details">
+			<summary>Show distinct values and files</summary>
+			<div class="debt-scan-details-body">
+				<p class="debt-scan-details-label">Distinct values</p>
+				<div class="debt-scan-value-list">
+					{spacingFindings.distinctValues.map((value) => (
+						<code class="debt-scan-value-pill">{value}</code>
+					))}
+				</div>
+				<p class="debt-scan-details-label">Files</p>
+				<ul class="debt-scan-file-list">
+					{spacingFindings.files.map((file) => (
+						<li><code>{file}</code></li>
+					))}
+				</ul>
+			</div>
+		</details>
+	</div>
+
+	<figcaption>Scan last run {formattedTimestamp} — triggered manually via <code>node scripts/scan-design-debt.mjs</code>, not on every build.</figcaption>
+</figure>
+
+<style>
+	.debt-scan {
+		margin: 2rem 0;
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		padding: 1.5rem;
+	}
+
+	.debt-scan-summary {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1.5rem;
+		margin-bottom: 1.75rem;
+		padding-bottom: 1.5rem;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.debt-scan-stat {
+		display: flex;
+		flex-direction: column;
+		gap: 0.2rem;
+	}
+
+	.debt-scan-stat-value {
+		font-size: clamp(1.6rem, 4vw, 2.2rem);
+		font-variant-numeric: tabular-nums;
+		letter-spacing: -0.01em;
+		font-weight: 600;
+		color: var(--ink);
+	}
+
+	.debt-scan-stat-muted .debt-scan-stat-value {
+		color: var(--muted);
+		font-size: clamp(1.2rem, 3vw, 1.5rem);
+	}
+
+	.debt-scan-stat-label {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--muted);
+	}
+
+	.debt-scan-section {
+		margin-bottom: 1.75rem;
+	}
+
+	.debt-scan-section:last-of-type {
+		margin-bottom: 0.75rem;
+	}
+
+	.debt-scan-section-title {
+		font-size: 0.95rem;
+		margin: 0 0 0.75rem;
+	}
+
+	.debt-scan-empty {
+		color: var(--muted);
+		font-size: 0.9rem;
+		margin: 0;
+	}
+
+	.debt-scan-table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.85rem;
+	}
+
+	.debt-scan-table th,
+	.debt-scan-table td {
+		text-align: left;
+		padding: 0.5rem 0.6rem;
+		border-bottom: 1px solid var(--border);
+	}
+
+	.debt-scan-table th {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--muted);
+	}
+
+	.debt-scan-swatch {
+		display: inline-block;
+		width: 0.8rem;
+		height: 0.8rem;
+		border-radius: 50%;
+		border: 1px solid var(--border);
+		margin-right: 0.4rem;
+		vertical-align: middle;
+	}
+
+	.debt-scan-gap-note {
+		color: var(--muted);
+		font-size: 0.9rem;
+		margin: 0 0 0.75rem;
+	}
+
+	.debt-scan-details summary {
+		cursor: pointer;
+		font-size: 0.85rem;
+		color: var(--accent-indigo);
+	}
+
+	.debt-scan-details-body {
+		margin-top: 0.75rem;
+	}
+
+	.debt-scan-details-label {
+		font-size: 0.7rem;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--muted);
+		margin: 0.75rem 0 0.4rem;
+	}
+
+	.debt-scan-value-list {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.4rem;
+	}
+
+	.debt-scan-value-pill {
+		font-size: 0.78rem;
+		background: rgba(56, 43, 95, 0.06);
+		border-radius: 4px;
+		padding: 0.15rem 0.45rem;
+	}
+
+	[data-theme='night'] .debt-scan-value-pill {
+		background: rgba(164, 140, 224, 0.16);
+	}
+
+	.debt-scan-file-list {
+		margin: 0;
+		padding-left: 1.25rem;
+		font-size: 0.85rem;
+		color: var(--muted);
+	}
+
+	.debt-scan-file-list li {
+		margin-bottom: 0.25rem;
+	}
+
+	.debt-scan figcaption {
+		margin-top: 0.5rem;
+		font-size: 0.8rem;
+		color: var(--muted);
+	}
+
+	@media (max-width: 480px) {
+		.debt-scan {
+			padding: 1.1rem;
+		}
+
+		.debt-scan-summary {
+			gap: 1.1rem;
+		}
+
+		.debt-scan-table {
+			font-size: 0.78rem;
+		}
+	}
+</style>
