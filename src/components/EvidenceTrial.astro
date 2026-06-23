@@ -1,0 +1,283 @@
+---
+import { withBase } from '../lib/url';
+
+const screenshotSrc = withBase('images/self-service-change-order.png');
+---
+
+<figure class="evidence-trial" aria-label="Evidence Engine: guess which real design won, then run the simulation to see the real outcome">
+	<div class="evidence-trial-designs" id="evidence-trial-designs">
+		<div class="evidence-trial-design">
+			<h4>Design A</h4>
+			<ul>
+				<li>Multi-touch process</li>
+				<li>Manual back-and-forth with asset owners</li>
+				<li>Unclear ownership on requests</li>
+				<li>Slow, confusing flow</li>
+			</ul>
+		</div>
+		<div class="evidence-trial-design">
+			<h4>Design B</h4>
+			<ul>
+				<li>One guided change-order pattern</li>
+				<li>Select the asset, a side panel opens</li>
+				<li>Dropdown of available metadata changes</li>
+				<li>Add fields, submit, get confirmation</li>
+			</ul>
+		</div>
+	</div>
+
+	<div class="evidence-trial-guess" id="evidence-trial-guess">
+		<p class="evidence-trial-prompt">Which one do you think performed better?</p>
+		<div class="evidence-trial-guess-buttons">
+			<button type="button" class="evidence-trial-guess-btn" data-action="guess" data-choice="a">Design A</button>
+			<button type="button" class="evidence-trial-guess-btn" data-action="guess" data-choice="b">Design B</button>
+		</div>
+	</div>
+
+	<p class="evidence-trial-live" id="evidence-trial-live" aria-live="polite"></p>
+
+	<button
+		type="button"
+		class="evidence-trial-action"
+		id="evidence-trial-action"
+		data-action="run"
+		hidden
+	>
+		Run the simulation →
+	</button>
+
+	<div class="evidence-trial-result" id="evidence-trial-result" aria-expanded="false" hidden>
+		<p class="evidence-trial-verdict" id="evidence-trial-verdict"></p>
+
+		<div class="evidence-trial-metrics">
+			<div class="evidence-trial-metric-primary">
+				<span
+					class="evidence-trial-metric-value"
+					id="evidence-trial-primary-metric"
+					data-metric
+					data-metric-end="96"
+					data-metric-prefix=""
+					data-metric-suffix="%"
+				>0%</span>
+				<span class="evidence-trial-metric-label">completion rate (from 53%)</span>
+			</div>
+			<div class="evidence-trial-metrics-secondary">
+				<div class="evidence-trial-metric-secondary">
+					<span
+						class="evidence-trial-metric-value"
+						data-metric
+						data-metric-end="100"
+						data-metric-prefix=""
+						data-metric-suffix="%"
+					>0%</span>
+					<span class="evidence-trial-metric-label">owner attribution on requests</span>
+				</div>
+				<div class="evidence-trial-metric-secondary">
+					<span
+						class="evidence-trial-metric-value"
+						data-metric
+						data-metric-end="25"
+						data-metric-prefix="-"
+						data-metric-suffix="%"
+					>-0%</span>
+					<span class="evidence-trial-metric-label">manual support tickets</span>
+				</div>
+			</div>
+		</div>
+
+		<figure class="evidence-trial-screenshot">
+			<img src={screenshotSrc} alt="The change-order side panel: select a change type, fill in just the fields it needs, submit (representative recreation) — Design B, the real winning pattern" width="1280" height="745" loading="lazy" />
+			<figcaption>Design B: the real Self-Service Workflow change-order panel.</figcaption>
+		</figure>
+
+		<p class="evidence-trial-why">
+			Design B won because it redesigned the <em>flow</em>, not the screens: fewer steps to
+			cross, and no ambiguity left about who owned a request. Design A's screens weren't
+			broken individually&mdash;the problem was how many of them, and how much uncertainty,
+			a user had to get through.
+		</p>
+
+		<button type="button" class="evidence-trial-action" id="evidence-trial-reset" data-action="reset">
+			Replay ↻
+		</button>
+	</div>
+
+	<figcaption class="evidence-trial-caption">Guess first, then run the simulation&mdash;the result replays a real, completed outcome.</figcaption>
+</figure>
+
+<script>
+	import { setupMetricCounters } from '../lib/metricCounter';
+
+	type Choice = 'a' | 'b';
+
+	let guess: Choice | null = null;
+	let running = false;
+
+	function $(id: string): HTMLElement | null {
+		return document.getElementById(id);
+	}
+
+	function setLive(message: string) {
+		const live = $('evidence-trial-live');
+		if (live) live.textContent = message;
+	}
+
+	function onGuess(choice: Choice) {
+		if (guess) return;
+		guess = choice;
+
+		const guessPanel = $('evidence-trial-guess');
+		const buttons = guessPanel?.querySelectorAll<HTMLButtonElement>('.evidence-trial-guess-btn');
+		buttons?.forEach((btn) => {
+			btn.disabled = true;
+			btn.classList.toggle('is-selected', btn.dataset.choice === choice);
+		});
+
+		const action = $('evidence-trial-action') as HTMLButtonElement | null;
+		if (action) {
+			action.hidden = false;
+			action.dataset.action = 'run';
+			action.textContent = 'Run the simulation →';
+		}
+
+		setLive(`Guess locked in: Design ${choice.toUpperCase()}. Ready to run the simulation.`);
+	}
+
+	function flickerThenSettle(el: HTMLElement, finalText: string, onDone: () => void) {
+		const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		if (reduceMotion) {
+			el.textContent = finalText;
+			onDone();
+			return;
+		}
+
+		const flickerValues = [62, 71, 58, 84, 67, 90];
+		let i = 0;
+		const interval = window.setInterval(() => {
+			el.textContent = `${flickerValues[i % flickerValues.length]}%`;
+			i++;
+			if (i >= flickerValues.length) {
+				window.clearInterval(interval);
+				el.textContent = finalText;
+				onDone();
+			}
+		}, 90);
+	}
+
+	function runSimulation() {
+		if (running || !guess) return;
+		running = true;
+
+		const action = $('evidence-trial-action') as HTMLButtonElement | null;
+		if (action) {
+			action.disabled = true;
+			action.textContent = 'Running…';
+		}
+
+		setLive('Running the simulation…');
+
+		const primary = $('evidence-trial-primary-metric');
+		if (!primary) return;
+
+		flickerThenSettle(primary, '0%', () => {
+			// Restore the real data-metric attributes (flicker overwrote textContent only)
+			// and let setupMetricCounters animate every counter in the result panel.
+			primary.dataset.metricEnd = '96';
+			primary.textContent = '0%';
+
+			const result = $('evidence-trial-result');
+			const designs = $('evidence-trial-designs');
+			const guessPanel = $('evidence-trial-guess');
+			const verdict = $('evidence-trial-verdict');
+
+			if (action) action.hidden = true;
+			if (designs) designs.hidden = true;
+			if (guessPanel) guessPanel.hidden = true;
+
+			if (result) {
+				result.hidden = false;
+				result.setAttribute('aria-expanded', 'true');
+			}
+
+			if (verdict) {
+				const correct = guess === 'b';
+				verdict.textContent = correct
+					? 'Design B really did win: your guess matched the real outcome.'
+					: 'Design B actually won, real completion scaled 53% → 96%, even though you guessed Design A.';
+				verdict.classList.toggle('is-correct', correct);
+			}
+
+			setLive('Simulation complete. Design B is the real winner: 53% to 96% completion.');
+
+			setupMetricCounters();
+		});
+	}
+
+	function resetDemo() {
+		guess = null;
+		running = false;
+
+		const designs = $('evidence-trial-designs');
+		const guessPanel = $('evidence-trial-guess');
+		const result = $('evidence-trial-result');
+		const action = $('evidence-trial-action') as HTMLButtonElement | null;
+
+		if (designs) designs.hidden = false;
+		if (guessPanel) guessPanel.hidden = false;
+		if (result) {
+			result.hidden = true;
+			result.setAttribute('aria-expanded', 'false');
+		}
+		if (action) {
+			action.hidden = true;
+			action.disabled = false;
+			action.dataset.action = 'run';
+			action.textContent = 'Run the simulation →';
+		}
+
+		const buttons = guessPanel?.querySelectorAll<HTMLButtonElement>('.evidence-trial-guess-btn');
+		buttons?.forEach((btn) => {
+			btn.disabled = false;
+			btn.classList.remove('is-selected');
+		});
+
+		const primary = $('evidence-trial-primary-metric');
+		if (primary) primary.textContent = '0%';
+		document.querySelectorAll<HTMLElement>('.evidence-trial-metric-value').forEach((el) => {
+			const suffix = el.dataset.metricSuffix ?? '';
+			el.textContent = (el.dataset.metricPrefix ?? '') + '0' + suffix;
+		});
+
+		setLive('Reset. Make a new guess.');
+	}
+
+	function onClick(e: MouseEvent) {
+		const target = e.target as Element;
+		if (!target.closest('.evidence-trial')) return;
+
+		const guessBtn = target.closest<HTMLElement>('[data-action="guess"]');
+		if (guessBtn) {
+			const choice = guessBtn.dataset.choice as Choice | undefined;
+			if (choice) onGuess(choice);
+			return;
+		}
+
+		const actionBtn = target.closest<HTMLElement>('[data-action="run"]');
+		if (actionBtn) {
+			runSimulation();
+			return;
+		}
+
+		const resetBtn = target.closest<HTMLElement>('[data-action="reset"]');
+		if (resetBtn) {
+			resetDemo();
+			return;
+		}
+	}
+
+	const w = window as typeof window & { __evidenceTrialBound?: boolean };
+	if (!w.__evidenceTrialBound) {
+		document.addEventListener('click', onClick);
+		w.__evidenceTrialBound = true;
+	}
+</script>
