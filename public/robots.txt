@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://christopherrangelux-dev.github.io/Portfolio/sitemap-index.xml
+Sitemap: https://chrisrangelux.com/sitemap-index.xml
