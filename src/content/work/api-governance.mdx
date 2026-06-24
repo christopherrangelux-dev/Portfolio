@@ -15,6 +15,8 @@ color: "#5c5347"
 pattern: dot-matrix
 ---
 
+import DemoPreviewCard from '../../components/DemoPreviewCard.astro';
+
 ## The Problem
 
 The platform had grown to roughly 11,000 API endpoints, and nobody had a reliable way to tell
@@ -24,7 +26,11 @@ clearly enough to remove.
 
 ## The Process
 
-**[Explore the live, interactive demo →](https://christopherrangelux-dev.github.io/nexus-ops/)**
+<DemoPreviewCard
+	href="https://christopherrangelux-dev.github.io/nexus-ops/"
+	image="/images/api-governance-hero.png"
+	alt="API Catalog: browsable APIs with scopes, owners, and access policies (representative recreation)"
+/>
 *Open an API's console and look at Dormancy & Evidence: the verdict, the usage evidence behind
 it, and the deactivate action live together — not three disconnected steps.*
 

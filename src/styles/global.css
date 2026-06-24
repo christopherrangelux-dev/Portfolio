@@ -1001,6 +1001,57 @@ img {
   cursor: zoom-in;
 }
 
+.demo-preview {
+  display: block;
+  position: relative;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.demo-preview:hover,
+.demo-preview:focus-visible {
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.16);
+  transform: translateY(-2px);
+}
+
+.case-study-body .demo-preview img {
+  display: block;
+  width: 100%;
+  margin: 0;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.demo-preview-cta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 1rem;
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: #fbf7f1;
+  background: linear-gradient(to top, rgba(20, 17, 12, 0.72), rgba(20, 17, 12, 0));
+}
+
+.demo-preview-arrow {
+  flex-shrink: 0;
+  font-size: 1.05rem;
+  transition: transform 0.2s ease;
+}
+
+.demo-preview:hover .demo-preview-arrow,
+.demo-preview:focus-visible .demo-preview-arrow {
+  transform: translate(2px, -2px);
+}
+
 .back-link {
   display: inline-block;
   margin: 2rem 1.5rem 0;

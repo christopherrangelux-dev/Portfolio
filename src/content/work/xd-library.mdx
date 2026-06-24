@@ -16,6 +16,8 @@ color: "#a3503f"
 pattern: stacked-bars
 ---
 
+import DemoPreviewCard from '../../components/DemoPreviewCard.astro';
+
 ## The Problem
 
 Design resources (tokens, UI patterns, accessibility documentation) were scattered across tools,
@@ -25,7 +27,11 @@ meant constant reinvention and inconsistency across teams.
 
 ## The Process
 
-**[Explore the live, interactive demo →](https://christopherrangelux-dev.github.io/xd-library/)**
+<DemoPreviewCard
+	href="https://christopherrangelux-dev.github.io/xd-library/"
+	image="/images/xd-library-hero.png"
+	alt="XD Library's Process Vault: taxonomy explorer, service map, and governance playbook (representative recreation)"
+/>
 *Open a resource to see its full detail and review history — not just the card preview.*
 
 Centralizing the content was the easy part. The harder problem was structuring it so designers

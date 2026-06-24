@@ -17,6 +17,7 @@ pattern: node-graph
 ---
 
 import PermissionGraph from '../../components/PermissionGraph.astro';
+import DemoPreviewCard from '../../components/DemoPreviewCard.astro';
 
 ## The Problem
 
@@ -26,7 +27,11 @@ building them had no reliable way to find out what servers existed or how to acc
 
 ## The Process
 
-**[Explore the live, interactive demo →](https://christopherrangelux-dev.github.io/nexus-ops-mcp/)**
+<DemoPreviewCard
+	href="https://christopherrangelux-dev.github.io/nexus-ops-mcp/"
+	image="/images/mcp-registry-hero.png"
+	alt="MCP Server Registry admin view: approved, pending, and rejected servers (representative recreation)"
+/>
 *A representative recreation, genericized and rebuilt in React, not the real internal tool.*
 
 The work started as an information architecture problem: design a registration form and a

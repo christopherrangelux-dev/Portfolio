@@ -20,6 +20,7 @@
 		const target = e.target;
 		if (!(target instanceof HTMLImageElement)) return;
 		if (!target.closest('.case-study-body, .about-photos')) return;
+		if (target.closest('a')) return; // linked images (e.g. demo preview cards) navigate instead of zooming
 
 		const overlay = ensureOverlay();
 		const img = overlay.querySelector('img');

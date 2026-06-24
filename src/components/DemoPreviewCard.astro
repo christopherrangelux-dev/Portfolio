@@ -1,0 +1,19 @@
+---
+import { withBase } from '../lib/url';
+
+interface Props {
+	href: string;
+	image: string;
+	alt: string;
+}
+
+const { href, image, alt } = Astro.props;
+---
+
+<a class="demo-preview" href={href} target="_blank" rel="noopener noreferrer">
+	<img src={withBase(image)} alt={alt} loading="lazy" />
+	<span class="demo-preview-cta">
+		Explore the live, interactive demo
+		<span class="demo-preview-arrow" aria-hidden="true">&nearr;</span>
+	</span>
+</a>

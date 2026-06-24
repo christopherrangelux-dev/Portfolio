@@ -16,6 +16,8 @@ color: "#c2752e"
 pattern: path-motif
 ---
 
+import DemoPreviewCard from '../../components/DemoPreviewCard.astro';
+
 ## The Problem
 
 Self-service completion for API, app, and entitlement access requests was stuck at 53%. It wasn't
@@ -25,7 +27,11 @@ couldn't reliably get through the process on their own.
 
 ## The Process
 
-**[Explore the live, interactive demo →](https://christopherrangelux-dev.github.io/nexus-ops/)**
+<DemoPreviewCard
+	href="https://christopherrangelux-dev.github.io/nexus-ops/"
+	image="/images/self-service-workflow-hero.png"
+	alt="Applications list with Change Order actions for each registered app (representative recreation)"
+/>
 *A representative recreation, genericized and rebuilt in React, not the real internal tool.*
 
 The work started with a full content and component inventory audit, going through the existing
