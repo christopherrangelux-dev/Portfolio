@@ -18,6 +18,20 @@ function rewriteInternalPaths() {
   };
 }
 
+/** Opens external links (live demos, source recipes, etc.) in a new tab; internal "/..." links stay in the same tab. */
+function externalLinksInNewTab() {
+  return (tree) => {
+    function visit(node) {
+      if (node.type === 'element' && node.tagName === 'a' && /^https?:\/\//i.test(node.properties?.href ?? '')) {
+        node.properties.target = '_blank';
+        node.properties.rel = 'noopener noreferrer';
+      }
+      if (node.children) node.children.forEach(visit);
+    }
+    visit(tree);
+  };
+}
+
 // https://astro.build/config
 export default defineConfig({
   site: 'https://christopherrangelux-dev.github.io',
@@ -25,5 +39,6 @@ export default defineConfig({
   integrations: [mdx(), sitemap()],
   markdown: {
     remarkPlugins: [rewriteInternalPaths],
+    rehypePlugins: [externalLinksInNewTab],
   },
 });
