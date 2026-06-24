@@ -3,7 +3,7 @@ import { defineConfig } from 'astro/config';
 import mdx from '@astrojs/mdx';
 import sitemap from '@astrojs/sitemap';
 
-const base = '/Portfolio';
+const base = '/';
 
 /** Rewrites absolute "/..." markdown image and link paths so they resolve under `base`. */
 function rewriteInternalPaths() {
@@ -34,7 +34,7 @@ function externalLinksInNewTab() {
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://christopherrangelux-dev.github.io',
+  site: 'https://chrisrangelux.com',
   base,
   integrations: [mdx(), sitemap()],
   markdown: {
