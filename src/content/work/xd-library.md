@@ -26,7 +26,7 @@ meant constant reinvention and inconsistency across teams.
 ## The Process
 
 **[Explore the live, interactive demo →](https://christopherrangelux-dev.github.io/xd-library/)**
-*A representative recreation, genericized and rebuilt in React, not the real internal tool.*
+*Open a resource to see its full detail and review history — not just the card preview.*
 
 Centralizing the content was the easy part. The harder problem was structuring it so designers
 could actually find what they needed at enterprise scale, which meant starting with research
@@ -39,6 +39,8 @@ design specialty: the way designers already organized their own work. Getting th
 right was the lever that made the library both findable and easy enough to contribute to.
 
 ![The resource library, filterable by design discipline and resource type (representative recreation)](/images/xd-library-resource-grid.png)
+
+![A resource's full detail view, with contributor info and review history together in one place (representative recreation)](/images/xd-library-resource-detail.png)
 
 ## The Outcome
 
