@@ -902,8 +902,7 @@ img {
 /* photo break (full-bleed editorial section divider) */
 
 .photo-break {
-  width: 100vw;
-  margin-left: calc(50% - 50vw);
+  width: 100%;
   height: 45vh;
   overflow: hidden;
 }
