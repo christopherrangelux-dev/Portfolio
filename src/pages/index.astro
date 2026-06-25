@@ -45,8 +45,9 @@ const featured = allWork.filter((p) => p.data.featured).sort((a, b) => a.data.or
 		</section>
 	</div>
 
-	<div class="photo-break">
-		<img src={withBase('images/laguna-sunset.jpg')} alt="Sunset over the ocean" loading="lazy" />
+	<div class="photo-break photo-break-parallax">
+		<img class="photo-break-img photo-break-img-day" src={withBase('images/laguna-sunset.jpg')} alt="Sunset over the ocean" loading="lazy" />
+		<img class="photo-break-img photo-break-img-night" src={withBase('images/milky-way.jpg')} alt="The Milky Way" loading="lazy" />
 	</div>
 
 	<div class="container">
@@ -83,3 +84,30 @@ const featured = allWork.filter((p) => p.data.featured).sort((a, b) => a.data.or
 		</p>
 	</div>
 </Base>
+
+<script>
+	function setupHomeParallax() {
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		if (window.matchMedia('(hover: none)').matches) return;
+
+		let raf = 0;
+		document.addEventListener('mousemove', (e) => {
+			if (raf) return;
+			raf = requestAnimationFrame(() => {
+				const img = document.querySelector<HTMLElement>('.photo-break-img-night');
+				if (img) {
+					const x = (e.clientX / window.innerWidth - 0.5) * -8;
+					const y = (e.clientY / window.innerHeight - 0.5) * -8;
+					img.style.transform = `translate(${x}px, ${y}px)`;
+				}
+				raf = 0;
+			});
+		});
+	}
+
+	const w = window as typeof window & { __homeParallaxBound?: boolean };
+	if (!w.__homeParallaxBound) {
+		setupHomeParallax();
+		w.__homeParallaxBound = true;
+	}
+</script>

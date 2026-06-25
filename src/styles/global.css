@@ -914,6 +914,23 @@ img {
   object-fit: cover;
 }
 
+.photo-break-parallax {
+  position: relative;
+}
+
+.photo-break-parallax .photo-break-img {
+  position: absolute;
+  top: -2.5%;
+  left: -2.5%;
+  width: 105%;
+  height: 105%;
+  object-fit: cover;
+  transition: transform 120ms ease-out;
+}
+
+[data-theme='day'] .photo-break-img-night { display: none; }
+[data-theme='night'] .photo-break-img-day { display: none; }
+
 /* tag pills */
 
 .tag-list {
@@ -1215,19 +1232,6 @@ img {
   }
 }
 
-.milky-way-container {
-  position: relative;
-}
-
-.milky-way-container .milky-way-img {
-  position: absolute;
-  top: -2.5%;
-  left: -2.5%;
-  width: 105%;
-  height: 105%;
-  object-fit: cover;
-  transition: transform 120ms ease-out;
-}
 
 .prose p,
 .prose ul {
