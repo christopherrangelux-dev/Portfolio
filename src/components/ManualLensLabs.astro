@@ -1,0 +1,810 @@
+<div class="mll-root">
+  <div class="mll-camera-interface">
+    <div class="mll-viewfinder-wrap">
+      <div class="mll-viewfinder" id="mll-viewfinder">
+        <div class="mll-bg-layer" id="mll-bg-layer"></div>
+        <div class="mll-subject-layer" id="mll-subject-layer"></div>
+        <canvas id="mll-grain"></canvas>
+        <div class="mll-hud" id="mll-hud">
+          <span id="mll-hud-aperture">f/8</span>
+          <span id="mll-hud-shutter">1/250</span>
+          <span id="mll-hud-iso">ISO 400</span>
+        </div>
+        <div class="mll-shutter-flash" id="mll-shutter-flash"></div>
+      </div>
+      <div class="mll-ev-meter" id="mll-ev-meter">
+        <div class="mll-ev-track">
+          <div class="mll-ev-indicator" id="mll-ev-indicator"></div>
+        </div>
+        <div class="mll-ev-labels">
+          <span>Underexposed</span>
+          <span id="mll-ev-label">Balanced</span>
+          <span>Overexposed</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mll-controls-panel">
+      <div class="mll-dial" id="mll-dial-aperture">
+        <label class="mll-dial-label">Aperture</label>
+        <div class="mll-dial-value" id="mll-aperture-value">f/8</div>
+        <input type="range" id="mll-aperture" min="0" max="7" step="1" value="5" />
+        <div class="mll-dial-ticks" data-count="8"></div>
+      </div>
+
+      <div class="mll-dial" id="mll-dial-shutter">
+        <label class="mll-dial-label">Shutter Speed</label>
+        <div class="mll-dial-value" id="mll-shutter-value">1/250</div>
+        <input type="range" id="mll-shutter" min="0" max="8" step="1" value="3" />
+        <div class="mll-dial-ticks" data-count="9"></div>
+      </div>
+
+      <div class="mll-dial" id="mll-dial-iso">
+        <label class="mll-dial-label">ISO</label>
+        <div class="mll-dial-value" id="mll-iso-value">ISO 400</div>
+        <input type="range" id="mll-iso" min="0" max="6" step="1" value="2" />
+        <div class="mll-dial-ticks" data-count="7"></div>
+      </div>
+
+      <div class="mll-actions">
+        <button id="mll-shutter-btn" class="mll-shutter-btn">Take Photo →</button>
+        <div class="mll-scene-label" id="mll-scene-label">
+          <span class="mll-scene-name" id="mll-scene-name">Street Scene, Daylight</span>
+          <span class="mll-scene-reason" id="mll-scene-reason">Balanced exposure — neutral teaching baseline</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mll-critique" id="mll-critique" aria-live="polite">
+    <p class="mll-critique-text" id="mll-critique-text"></p>
+  </div>
+</div>
+
+<script>
+  // Constants
+  const APERTURES = [1.4, 1.8, 2.8, 4, 5.6, 8, 11, 16];
+  const SHUTTERS  = ['1/2000','1/1000','1/500','1/250','1/125','1/60','1/30','1/15','1/8'];
+  const SHUTTER_SECONDS = [1/2000, 1/1000, 1/500, 1/250, 1/125, 1/60, 1/30, 1/15, 1/8];
+  const ISOS      = [100, 200, 400, 800, 1600, 3200, 6400];
+
+  // Reference EV for each scene — the rawEV at which exposure is "correct" for that scene.
+  // Derived from the sunny-16 rule: f/8, 1/250, ISO 400 gives rawEV ≈ 12 for a daylight scene.
+  // Darker scenes need lower rawEV (more light from settings), so their ref is lower.
+  const SCENE_REF_EV: Record<string, number> = {
+    'street-daylight':       12.0,  // f/8, 1/250, ISO 400 → balanced
+    'runner':                12.0,
+    'wildlife':              12.0,
+    'landscape':             12.0,
+    'blown-beach':           14.0,  // f/8, 1/250, ISO 100 → balanced (very bright scene)
+    'golden-hour':            9.0,  // f/4, 1/125, ISO 400 → balanced (3 stops darker)
+    'dark-interior':         -0.5,  // f/1.8, 1/15, ISO 6400 → balanced
+    'night-street':           0.0,  // f/1.4, 1/30, ISO 6400 → nearly balanced
+    'night-street-traffic':   0.0,
+  };
+
+  // State
+  let apertureIdx = 5;  // f/8 default
+  let shutterIdx  = 3;  // 1/250 default
+  let isoIdx      = 2;  // ISO 400 default
+  let rafId       = 0;
+
+  // DOM refs
+  const viewfinder    = document.getElementById('mll-viewfinder')!;
+  const bgLayer       = document.getElementById('mll-bg-layer')!;
+  const subjectLayer  = document.getElementById('mll-subject-layer')!;
+  const grainCanvas   = document.getElementById('mll-grain') as HTMLCanvasElement;
+  const hudAperture   = document.getElementById('mll-hud-aperture')!;
+  const hudShutter    = document.getElementById('mll-hud-shutter')!;
+  const hudIso        = document.getElementById('mll-hud-iso')!;
+  const evIndicator   = document.getElementById('mll-ev-indicator')!;
+  const evLabel       = document.getElementById('mll-ev-label')!;
+  const shutterFlash  = document.getElementById('mll-shutter-flash')!;
+  const sceneName     = document.getElementById('mll-scene-name')!;
+  const sceneReason   = document.getElementById('mll-scene-reason')!;
+  const critiquePanel = document.getElementById('mll-critique')!;
+  const critiqueText  = document.getElementById('mll-critique-text')!;
+  const apertureInput = document.getElementById('mll-aperture') as HTMLInputElement;
+  const shutterInput  = document.getElementById('mll-shutter') as HTMLInputElement;
+  const isoInput      = document.getElementById('mll-iso') as HTMLInputElement;
+  const apertureVal   = document.getElementById('mll-aperture-value')!;
+  const shutterVal    = document.getElementById('mll-shutter-value')!;
+  const isoVal        = document.getElementById('mll-iso-value')!;
+
+  // EV computation
+  function computeRawEV(N: number, t: number, iso: number): number {
+    return Math.log2((N * N) / t) - Math.log2(iso / 100);
+  }
+
+  // Derived analysis
+  function computeAnalysis(aIdx: number, sIdx: number, iIdx: number) {
+    const N   = APERTURES[aIdx];
+    const t   = SHUTTER_SECONDS[sIdx];
+    const iso = ISOS[iIdx];
+    const scene = assignScene(aIdx, sIdx, iIdx);
+    const rawEV = computeRawEV(N, t, iso);
+    const sceneRefEV = SCENE_REF_EV[scene.scene_id] ?? 12.0;
+    // stopsOff: positive = overexposed (too bright), negative = underexposed (too dark)
+    const stopsOff = sceneRefEV - rawEV;
+
+    const bokehIntensity    = 1 - (aIdx / 7);
+    const motionBlurIntensity = sIdx / 8;
+    const grainIntensity    = iIdx / 6;
+
+    const dof = aIdx <= 2 ? 'shallow' : aIdx <= 4 ? 'medium' : 'deep';
+    const exposureStatus = stopsOff < -0.5 ? 'underexposed' : stopsOff > 0.5 ? 'overexposed' : 'correct';
+
+    return {
+      N, t, iso,
+      stopsOff,
+      exposureStatus,
+      bokehIntensity,
+      motionBlurIntensity,
+      grainIntensity,
+      dof,
+      scene,
+    };
+  }
+
+  // Scene assignment — priority order, first match wins
+  function assignScene(aIdx: number, sIdx: number, iIdx: number) {
+    const iso     = ISOS[iIdx];
+    const t       = SHUTTER_SECONDS[sIdx];
+    const N       = APERTURES[aIdx];
+    const rawEV   = computeRawEV(N, t, iso);
+
+    // stopsOff relative to street-daylight ref (12.0) for exposure extremes
+    const stopsOffFromNeutral = 12.0 - rawEV;
+
+    if (iso >= 3200 && sIdx >= 6) {
+      return { scene_id: 'night-street-traffic', scene_label: 'Night Street — Moving Traffic', subject_motion: 'fast', trigger_reason: 'High ISO + slow shutter: noise and motion blur combine' };
+    }
+    if (iso >= 3200) {
+      return { scene_id: 'night-street', scene_label: 'Night Street', subject_motion: 'slow', trigger_reason: 'High ISO implies low-light environment' };
+    }
+    if (sIdx >= 6 && iso < 3200) {
+      return { scene_id: 'runner', scene_label: 'Runner Mid-Stride', subject_motion: 'fast', trigger_reason: 'Slow shutter with a moving subject — motion blur teaching moment' };
+    }
+    if (sIdx <= 1 && aIdx <= 2) {
+      return { scene_id: 'wildlife', scene_label: 'Wildlife — Bird in Flight', subject_motion: 'fast', trigger_reason: 'Fast shutter + wide aperture freezes a fast subject with background separation' };
+    }
+    if (aIdx <= 1 && iIdx <= 2 && sIdx >= 2 && sIdx <= 6) {
+      return { scene_id: 'golden-hour', scene_label: 'Golden Hour Portrait', subject_motion: 'static', trigger_reason: 'Wide aperture at low ISO — textbook portrait / bokeh scenario' };
+    }
+    if (aIdx >= 5 && iIdx <= 2) {
+      return { scene_id: 'landscape', scene_label: 'Landscape — Mountain Vista', subject_motion: 'static', trigger_reason: 'Narrow aperture gives deep depth of field — landscape scenario' };
+    }
+    if (stopsOffFromNeutral <= -2) {
+      return { scene_id: 'dark-interior', scene_label: 'Dark Interior', subject_motion: 'static', trigger_reason: 'Severe underexposure — the consequence is visible in the scene' };
+    }
+    if (stopsOffFromNeutral >= 2) {
+      return { scene_id: 'blown-beach', scene_label: 'Blown-Out Beach', subject_motion: 'static', trigger_reason: 'Severe overexposure — highlights clip visibly' };
+    }
+    return { scene_id: 'street-daylight', scene_label: 'Street Scene, Daylight', subject_motion: 'slow', trigger_reason: 'Balanced exposure — neutral teaching baseline' };
+  }
+
+  // Update viewfinder CSS + HUD
+  function updateViewfinder() {
+    const a = computeAnalysis(apertureIdx, shutterIdx, isoIdx);
+
+    const bokehPx = a.bokehIntensity * 12;
+    const motionPx = a.motionBlurIntensity * 16;
+    const evNormalized = Math.max(0, Math.min(1, (a.stopsOff + 3) / 6)); // 0..1 over -3..+3 range
+    const brightness = 0.3 + evNormalized * 1.4;
+
+    bgLayer.style.filter = `blur(${bokehPx.toFixed(1)}px)`;
+    if (a.scene.subject_motion !== 'static') {
+      subjectLayer.style.filter = `blur(${motionPx.toFixed(1)}px)`;
+      subjectLayer.style.transform = `scaleX(${1 + a.motionBlurIntensity * 0.3})`;
+    } else {
+      subjectLayer.style.filter = 'none';
+      subjectLayer.style.transform = 'scaleX(1)';
+    }
+    viewfinder.style.filter = `brightness(${brightness.toFixed(2)})`;
+
+    // Scene classes
+    const allSceneClasses = ['scene-street-daylight','scene-night-street','scene-night-street-traffic','scene-runner','scene-wildlife','scene-golden-hour','scene-landscape','scene-dark-interior','scene-blown-beach'];
+    bgLayer.classList.remove(...allSceneClasses);
+    bgLayer.classList.add(`scene-${a.scene.scene_id}`);
+
+    const allSubjectClasses = ['subject-person','subject-runner','subject-bird','subject-landscape','subject-none'];
+    subjectLayer.classList.remove(...allSubjectClasses);
+    const subjectMap: Record<string,string> = {
+      'golden-hour': 'subject-person',
+      'dark-interior': 'subject-person',
+      'night-street': 'subject-person',
+      'runner': 'subject-runner',
+      'night-street-traffic': 'subject-runner',
+      'wildlife': 'subject-bird',
+      'landscape': 'subject-landscape',
+      'blown-beach': 'subject-person',
+      'street-daylight': 'subject-person',
+    };
+    subjectLayer.classList.add(subjectMap[a.scene.scene_id] ?? 'subject-none');
+
+    // HUD
+    hudAperture.textContent = `f/${a.N}`;
+    hudShutter.textContent  = SHUTTERS[shutterIdx];
+    hudIso.textContent      = `ISO ${a.iso}`;
+
+    // Dial value displays
+    apertureVal.textContent = `f/${a.N}`;
+    shutterVal.textContent  = SHUTTERS[shutterIdx];
+    isoVal.textContent      = `ISO ${a.iso}`;
+
+    // EV meter: indicator moves 0..100% of track width
+    const pct = evNormalized * 100;
+    evIndicator.style.left = `${pct}%`;
+    if (a.stopsOff <= -0.5) {
+      evIndicator.style.background = 'var(--ev-underexposed)';
+      evLabel.textContent = `${Math.abs(a.stopsOff).toFixed(1)} stops under`;
+    } else if (a.stopsOff >= 0.5) {
+      evIndicator.style.background = 'var(--ev-overexposed)';
+      evLabel.textContent = `${a.stopsOff.toFixed(1)} stops over`;
+    } else {
+      evIndicator.style.background = 'var(--ev-balanced)';
+      evLabel.textContent = 'Balanced';
+    }
+
+    // Scene label with fade
+    sceneName.style.opacity = '0';
+    sceneReason.style.opacity = '0';
+    setTimeout(() => {
+      sceneName.textContent = a.scene.scene_label;
+      sceneReason.textContent = a.scene.trigger_reason;
+      sceneName.style.opacity = '1';
+      sceneReason.style.opacity = '1';
+    }, 150);
+  }
+
+  // Canvas grain
+  function drawGrain(canvas: HTMLCanvasElement, intensity: number) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    const imageData = ctx.createImageData(canvas.width, canvas.height);
+    for (let i = 0; i < imageData.data.length; i += 4) {
+      const noise = (Math.random() - 0.5) * intensity * 80;
+      imageData.data[i] = imageData.data[i+1] = imageData.data[i+2] = 128 + noise;
+      imageData.data[i+3] = intensity * 60;
+    }
+    ctx.putImageData(imageData, 0, 0);
+  }
+
+  function startGrainLoop() {
+    function loop() {
+      const grainIntensity = isoIdx / 6;
+      if (grainIntensity > 0.05) {
+        drawGrain(grainCanvas, grainIntensity);
+      } else {
+        const ctx = grainCanvas.getContext('2d');
+        ctx?.clearRect(0, 0, grainCanvas.width, grainCanvas.height);
+      }
+      rafId = requestAnimationFrame(loop);
+    }
+    rafId = requestAnimationFrame(loop);
+  }
+
+  // Resize grain canvas to match viewfinder
+  function resizeGrain() {
+    const rect = viewfinder.getBoundingClientRect();
+    grainCanvas.width  = rect.width;
+    grainCanvas.height = rect.height;
+  }
+
+  // Critique engine — priority-ordered, first match wins
+  function generateCritique(): string {
+    const a = computeAnalysis(apertureIdx, shutterIdx, isoIdx);
+    const so = a.stopsOff;
+
+    if (so <= -2) return `Your image is too dark by ${Math.abs(so).toFixed(1)} stops. Try widening your aperture, slowing your shutter, or raising your ISO.`;
+    if (so >= 2) return `Your image is blown out by ${so.toFixed(1)} stops. Try narrowing your aperture, speeding up your shutter, or lowering your ISO.`;
+    if (so < -1) return `Slightly underexposed by ${Math.abs(so).toFixed(1)} stops — you'll lose shadow detail. A one-stop correction in any direction would clean this up.`;
+    if (so > 1) return `Slightly overexposed by ${so.toFixed(1)} stops — highlights may clip. Dial back by one stop to recover them.`;
+    if (a.motionBlurIntensity > 0.5 && a.scene.subject_motion === 'fast') return `At ${SHUTTERS[shutterIdx]}s your fast-moving subject will blur into streaks. For this scene, try 1/500s or faster to freeze the action.`;
+    if (a.grainIntensity > 0.6 && a.exposureStatus === 'correct') return `Exposure is balanced, but ISO ${a.iso} introduces heavy grain. If light allows, drop to ISO 400 or below for cleaner shadows.`;
+    if (a.bokehIntensity > 0.8 && a.dof === 'shallow' && a.exposureStatus === 'correct') return `Clean exposure and beautiful background separation at f/${a.N}. For this portrait scene, focus precision matters — any drift will put your subject's eyes out of plane.`;
+    if (a.exposureStatus === 'correct' && a.scene.scene_id === 'landscape' && a.N > 5.6) return `Solid exposure for a landscape. Your f/${a.N} gives you deep focus across the whole frame — exactly right for this scene.`;
+    return `Exposure is balanced. Your settings are technically correct for this scene. Try pushing ISO higher or opening the aperture wider to see how the trade-offs shift.`;
+  }
+
+  // Shutter press
+  function onShutter() {
+    shutterFlash.style.opacity = '0.9';
+    setTimeout(() => { shutterFlash.style.opacity = '0'; }, 80);
+
+    critiqueText.textContent = generateCritique();
+    critiquePanel.style.display = 'block';
+  }
+
+  // Setting change handler
+  function onSettingChange() {
+    apertureIdx = parseInt(apertureInput.value, 10);
+    shutterIdx  = parseInt(shutterInput.value, 10);
+    isoIdx      = parseInt(isoInput.value, 10);
+    updateViewfinder();
+  }
+
+  // Init tick marks
+  document.querySelectorAll<HTMLElement>('.mll-dial-ticks').forEach(el => {
+    const count = parseInt(el.dataset.count ?? '8', 10);
+    for (let i = 0; i < count; i++) {
+      const tick = document.createElement('div');
+      tick.className = 'mll-tick';
+      el.appendChild(tick);
+    }
+  });
+
+  // Cleanup on View Transitions
+  document.addEventListener('astro:before-swap', () => cancelAnimationFrame(rafId));
+
+  // Bind events (guard against double-binding on View Transition re-run)
+  const w = window as typeof window & { __mllBound?: boolean };
+  if (!w.__mllBound) {
+    apertureInput.addEventListener('input', onSettingChange);
+    shutterInput.addEventListener('input', onSettingChange);
+    isoInput.addEventListener('input', onSettingChange);
+    document.getElementById('mll-shutter-btn')!.addEventListener('click', onShutter);
+    window.addEventListener('resize', resizeGrain);
+    w.__mllBound = true;
+  }
+
+  // Initial render
+  resizeGrain();
+  startGrainLoop();
+  updateViewfinder();
+</script>
+
+<style>
+  /* ── Root ─────────────────────────────────────────────── */
+  .mll-root {
+    margin: 2rem 0;
+    font-family: inherit;
+  }
+
+  /* ── Camera interface grid ────────────────────────────── */
+  .mll-camera-interface {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  @media (max-width: 699px) {
+    .mll-camera-interface {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* ── Viewfinder wrap ──────────────────────────────────── */
+  .mll-viewfinder-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  /* ── Viewfinder ───────────────────────────────────────── */
+  .mll-viewfinder {
+    aspect-ratio: 3 / 2;
+    background: var(--viewfinder-bg);
+    position: relative;
+    overflow: hidden;
+    border-radius: 4px;
+    box-shadow:
+      inset 0 0 0 1px rgba(255,255,255,0.06),
+      inset 0 2px 12px rgba(0,0,0,0.5),
+      0 4px 20px rgba(0,0,0,0.25);
+    transition: filter 0.2s ease;
+  }
+
+  /* ── Background & subject layers ─────────────────────── */
+  .mll-bg-layer,
+  .mll-subject-layer {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .mll-bg-layer {
+    transition: filter 0.2s ease, opacity 0.2s ease;
+  }
+
+  .mll-subject-layer {
+    transition: filter 0.15s ease, transform 0.15s ease;
+  }
+
+  /* ── Scene backgrounds ────────────────────────────────── */
+  .scene-street-daylight {
+    background: linear-gradient(180deg, #87ceeb 0%, #87ceeb 55%, #9e9e9e 55%, #808080 100%);
+  }
+
+  .scene-night-street {
+    background: linear-gradient(180deg, #0a0a1a 0%, #0a0a1a 60%, #1a1a2e 60%, #111 100%);
+  }
+
+  .scene-night-street::before,
+  .scene-night-street-traffic::before {
+    content: '';
+    position: absolute;
+    top: 54%;
+    left: 15%;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #ffe870;
+    box-shadow:
+      130px -8px 4px 1px rgba(255, 232, 80, 0.8),
+      280px 4px 4px 1px rgba(255, 232, 80, 0.7),
+      60px 10px 6px 2px rgba(255, 210, 60, 0.5);
+  }
+
+  .scene-night-street-traffic {
+    background: linear-gradient(180deg, #0a0a1a 0%, #0a0a1a 60%, #1a1a2e 60%, #111 100%);
+  }
+
+  .scene-golden-hour {
+    background: linear-gradient(180deg, #ff7043 0%, #ffa726 40%, #66bb6a 60%, #388e3c 100%);
+  }
+
+  .scene-landscape {
+    background: linear-gradient(180deg,
+      #4fc3f7 0%,
+      #81d4fa 40%,
+      #a5d6a7 55%,
+      #4caf50 55%,
+      #388e3c 70%,
+      #5d4037 85%,
+      #4e342e 100%
+    );
+  }
+
+  .scene-wildlife {
+    background: linear-gradient(180deg, #b3e5fc 0%, #81d4fa 50%, #a5d6a7 60%, #66bb6a 100%);
+  }
+
+  .scene-dark-interior {
+    background: linear-gradient(180deg, #1a1a1a 0%, #2d2d2d 60%, #111 100%);
+  }
+
+  .scene-blown-beach {
+    background: linear-gradient(180deg,
+      #fffde7 0%,
+      #fff9c4 40%,
+      #f9a825 50%,
+      #e6ee9c 60%,
+      #fff176 100%
+    );
+  }
+
+  .scene-runner {
+    background: linear-gradient(180deg, #90caf9 0%, #64b5f6 50%, #616161 55%, #424242 100%);
+  }
+
+  /* ── Subject silhouettes ──────────────────────────────── */
+
+  /* Person: head (::before) + body (::after) */
+  .mll-subject-layer.subject-person::before,
+  .mll-subject-layer.subject-person::after,
+  .mll-subject-layer.subject-runner::before,
+  .mll-subject-layer.subject-runner::after {
+    content: '';
+    position: absolute;
+    background: rgba(0, 0, 0, 0.42);
+    left: 50%;
+  }
+
+  /* Person head */
+  .mll-subject-layer.subject-person::before {
+    top: 22%;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Person body */
+  .mll-subject-layer.subject-person::after {
+    top: 40%;
+    width: 26px;
+    height: 33%;
+    border-radius: 6px 6px 3px 3px;
+    transform: translateX(-50%);
+  }
+
+  /* Runner head — same shape, slightly leaning */
+  .mll-subject-layer.subject-runner::before {
+    top: 20%;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    left: 52%;
+    transform: translateX(-50%) rotate(-8deg);
+  }
+
+  /* Runner body — elongated, leaning */
+  .mll-subject-layer.subject-runner::after {
+    top: 37%;
+    width: 24px;
+    height: 30%;
+    border-radius: 8px 4px 4px 10px;
+    left: 52%;
+    transform: translateX(-50%) rotate(-8deg);
+    background: rgba(0, 0, 0, 0.45);
+  }
+
+  /* Bird — small horizontal oval, upper-right */
+  .mll-subject-layer.subject-bird::after {
+    content: '';
+    position: absolute;
+    top: 18%;
+    right: 18%;
+    width: 52px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.38);
+  }
+
+  /* Landscape / none — no silhouette */
+  .mll-subject-layer.subject-landscape::before,
+  .mll-subject-layer.subject-landscape::after,
+  .mll-subject-layer.subject-none::before,
+  .mll-subject-layer.subject-none::after {
+    display: none;
+  }
+
+  /* ── Grain canvas ─────────────────────────────────────── */
+  #mll-grain {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    mix-blend-mode: overlay;
+  }
+
+  /* ── HUD ──────────────────────────────────────────────── */
+  .mll-hud {
+    position: absolute;
+    bottom: 10px;
+    left: 12px;
+    display: flex;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    color: #fff;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.5);
+    pointer-events: none;
+    letter-spacing: 0.03em;
+  }
+
+  /* ── Shutter flash ────────────────────────────────────── */
+  .mll-shutter-flash {
+    position: absolute;
+    inset: 0;
+    background: white;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.08s ease;
+  }
+
+  /* ── EV meter ─────────────────────────────────────────── */
+  .mll-ev-meter {
+    padding-top: 8px;
+  }
+
+  .mll-ev-track {
+    position: relative;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(
+      to right,
+      var(--ev-underexposed) 33.3%,
+      var(--ev-balanced) 33.3%,
+      var(--ev-balanced) 66.6%,
+      var(--ev-overexposed) 66.6%
+    );
+    margin-bottom: 10px;
+  }
+
+  .mll-ev-indicator {
+    width: 3px;
+    height: 18px;
+    background: white;
+    border-radius: 2px;
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    transition: left 0.15s ease, background 0.15s ease;
+    box-shadow: 0 0 4px rgba(0,0,0,0.4);
+  }
+
+  .mll-ev-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: var(--muted);
+  }
+
+  /* ── Controls panel ───────────────────────────────────── */
+  .mll-controls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* ── Dials ────────────────────────────────────────────── */
+  .mll-dial {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .mll-dial-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .mll-dial-value {
+    font-size: 1.4rem;
+    font-family: var(--mono);
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+    min-height: 1.7rem;
+  }
+
+  /* Range input track */
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    cursor: pointer;
+    outline: none;
+    margin: 6px 0 0;
+  }
+
+  input[type="range"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* Webkit thumb */
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: grab;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+
+  input[type="range"]::-webkit-slider-thumb:active {
+    cursor: grabbing;
+    transform: scale(1.15);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* Firefox thumb */
+  input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: grab;
+    border: none;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+  }
+
+  input[type="range"]::-moz-range-thumb:active {
+    cursor: grabbing;
+  }
+
+  /* Tick marks */
+  .mll-dial-ticks {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+  }
+
+  .mll-tick {
+    width: 2px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 1px;
+  }
+
+  /* ── Actions area ─────────────────────────────────────── */
+  .mll-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 4px;
+  }
+
+  .mll-shutter-btn {
+    background: var(--accent);
+    color: #fff;
+    padding: 12px 28px;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: inherit;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+    align-self: flex-start;
+  }
+
+  .mll-shutter-btn:hover {
+    opacity: 0.88;
+  }
+
+  .mll-shutter-btn:active {
+    transform: scale(0.97);
+  }
+
+  .mll-shutter-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  /* ── Scene label ──────────────────────────────────────── */
+  .mll-scene-label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .mll-scene-name {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--ink);
+    transition: opacity 0.2s ease;
+  }
+
+  .mll-scene-reason {
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.45;
+    transition: opacity 0.2s ease;
+  }
+
+  /* ── Critique panel ───────────────────────────────────── */
+  .mll-critique {
+    display: none;
+    padding: 20px 24px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-top: 24px;
+  }
+
+  .mll-critique-text {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+
+  /* ── Mobile adjustments ───────────────────────────────── */
+  @media (max-width: 699px) {
+    .mll-controls-panel {
+      gap: 18px;
+    }
+
+    .mll-shutter-btn {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
