@@ -10,9 +10,6 @@
   --border: #e7e0d2;
   --mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
   --max-width: 1100px;
-  --fatigue-ok: #4a7c59;
-  --fatigue-warning: #c2752e;
-  --fatigue-danger: #b83232;
   --ev-underexposed: #d94f4f;
   --ev-balanced: #4caf6e;
   --ev-overexposed: #e09832;
@@ -27,9 +24,6 @@
   --accent-amber: #d98a42;
   --accent-indigo: #a48ce0;
   --border: #2e2a3d;
-  --fatigue-ok: #6bab82;
-  --fatigue-warning: #d98a42;
-  --fatigue-danger: #e05555;
   --ev-underexposed: #e05c5c;
   --ev-balanced: #5ec47e;
   --ev-overexposed: #e8a83a;

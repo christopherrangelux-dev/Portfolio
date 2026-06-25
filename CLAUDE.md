@@ -35,7 +35,6 @@ One global stylesheet at `src/styles/global.css`. No utility classes. All compon
 Available CSS custom properties (always prefer these over hardcoded values):
 ```
 --ink, --paper, --muted, --accent, --accent-amber, --accent-indigo, --border, --mono, --max-width
---fatigue-ok, --fatigue-warning, --fatigue-danger   (Pace & Power component)
 ```
 
 **Seasonal accent colors** (`--accent`, `--accent-indigo`) are overridden by `[data-season='...']` on `<html>`. The season is computed at **build time** by `src/lib/season.ts` and baked into static HTML — it is not a runtime value. Theme (day/night) is a runtime preference stored in `localStorage` under the key `theme`.
