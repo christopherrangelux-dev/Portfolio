@@ -38,30 +38,34 @@ const season = getSeason();
 
 <html lang="en" data-season={season}>
 	<head>
-		<script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} is:inline></script>
-		<script is:inline define:vars={{ GA_MEASUREMENT_ID }}>
-			window.dataLayer = window.dataLayer || [];
-			function gtag() {
-				dataLayer.push(arguments);
-			}
-			gtag('js', new Date());
-			// View Transitions swap pages without a full reload, so the automatic
-			// page_view on config would only ever fire once. Send it manually on
-			// every astro:page-load instead, which covers the first load too.
-			gtag('config', GA_MEASUREMENT_ID, { send_page_view: false });
+		{import.meta.env.PROD && (
+			<>
+				<script async src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} is:inline></script>
+				<script is:inline define:vars={{ GA_MEASUREMENT_ID }}>
+					window.dataLayer = window.dataLayer || [];
+					function gtag() {
+						dataLayer.push(arguments);
+					}
+					gtag('js', new Date());
+					// View Transitions swap pages without a full reload, so the automatic
+					// page_view on config would only ever fire once. Send it manually on
+					// every astro:page-load instead, which covers the first load too.
+					gtag('config', GA_MEASUREMENT_ID, { send_page_view: false });
 
-			// astro:page-load can fire more than once for the same navigation
-			// (e.g. when a link was prefetched), so skip if the path didn't change.
-			var lastTrackedPath = null;
-			document.addEventListener('astro:page-load', () => {
-				if (window.location.pathname === lastTrackedPath) return;
-				lastTrackedPath = window.location.pathname;
-				gtag('event', 'page_view', {
-					page_location: window.location.href,
-					page_title: document.title,
-				});
-			});
-		</script>
+					// astro:page-load can fire more than once for the same navigation
+					// (e.g. when a link was prefetched), so skip if the path didn't change.
+					var lastTrackedPath = null;
+					document.addEventListener('astro:page-load', () => {
+						if (window.location.pathname === lastTrackedPath) return;
+						lastTrackedPath = window.location.pathname;
+						gtag('event', 'page_view', {
+							page_location: window.location.href,
+							page_title: document.title,
+						});
+					});
+				</script>
+			</>
+		)}
 		<meta charset="utf-8" />
 		<script is:inline>
 			(function () {
