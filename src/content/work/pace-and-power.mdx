@@ -1,0 +1,128 @@
+---
+name: "Pace & Power"
+title: "Pace & Power: Hybrid Athlete Fatigue Planner"
+subtitle: "A live embedded training planner that surfaces fatigue collision risks between lifting and running sessions — built as a portfolio-native interactive tool."
+order: 10
+featured: false
+tags: ["Dashboard UX", "Data Visualization", "State Management"]
+snapshot:
+  role: "Designer & Developer"
+  timeline: "2026"
+  tools: "Astro, Vanilla TS"
+  team: "Solo"
+metric: "3–4"
+metricLabel: "fatigue collision risks surfaced per week"
+color: "#4a7c59"
+pattern: stacked-bars
+---
+
+import PacePower from '../../components/PacePower.astro';
+
+## The Problem
+
+Hybrid athletes — people who lift heavy and run serious mileage in the same week — face a fatigue problem that generic training apps ignore. Tools like Strava and Strong track one modality well and are blind to the other. The conflict shows up in the body: CNS load from a heavy lower-body lift on Thursday and structural load from a run two days later don't reset on the same clock.
+
+Placing them too close without flagging the overlap leaves recovery to guesswork. This tool makes the cost of each session visible and flags when back-to-back days are likely to compound.
+
+## Object Map
+
+<style>{`
+  .pp-ooux { margin: 1.5rem 0; overflow-x: auto; }
+  .pp-ooux-row { display: flex; align-items: flex-start; gap: 1rem; min-width: 440px; }
+  .pp-ooux-col { display: flex; flex-direction: column; gap: 0.5rem; }
+  .pp-ooux-node {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    background: var(--paper);
+    font-size: 0.84rem;
+    min-width: 130px;
+  }
+  .pp-ooux-primary { border-color: var(--accent-indigo); }
+  .pp-ooux-node strong { display: block; margin-bottom: 0.4rem; font-size: 0.88rem; }
+  .pp-ooux-node ul { margin: 0; padding-left: 1.1rem; color: var(--muted); }
+  .pp-ooux-node li { margin-bottom: 0.2rem; font-family: var(--mono); font-size: 0.76rem; line-height: 1.5; }
+  .pp-ooux-arrow { font-size: 1.1rem; color: var(--muted); padding-top: 1.1rem; flex-shrink: 0; }
+`}</style>
+
+<div class="pp-ooux" aria-label="OOUX diagram">
+  <div class="pp-ooux-row">
+    <div class="pp-ooux-node pp-ooux-primary">
+      <strong>WeeklyPlan</strong>
+      <ul>
+        <li>days[0–6]</li>
+        <li>recoveryContext</li>
+      </ul>
+    </div>
+    <div class="pp-ooux-arrow" aria-hidden="true">→</div>
+    <div class="pp-ooux-col">
+      <div class="pp-ooux-node">
+        <strong>LiftSession</strong>
+        <ul>
+          <li>category</li>
+          <li>baseCnsCost</li>
+        </ul>
+      </div>
+      <div class="pp-ooux-node">
+        <strong>RunSession</strong>
+        <ul>
+          <li>category</li>
+          <li>baseStructuralCost</li>
+          <li>distanceMiles?</li>
+        </ul>
+      </div>
+    </div>
+    <div class="pp-ooux-arrow" aria-hidden="true">→</div>
+    <div class="pp-ooux-node">
+      <strong>FatigueMarker</strong>
+      <ul>
+        <li>severity</li>
+        <li>combinedCost</li>
+        <li>ruleNote</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+## Live Tool
+
+The matrix below is pre-loaded with my actual Thu–Sun training block. Adjust the recovery settings to see how sleep quality and systemic stress shift the fatigue scores in real time. The gear tracker persists to `localStorage`.
+
+<PacePower />
+
+## Architecture Notes
+
+The collision engine runs entirely client-side — no server, no model, no training data. It assigns a base cost to each session type, applies recovery modifiers from the sliders, then checks adjacent days against a rule table.
+
+**Cost lookup:**
+
+| Session | Base cost |
+|---------|-----------|
+| Lower body heavy lift | CNS 3 |
+| Lower body moderate lift | CNS 2 |
+| Upper body lift | CNS 1 |
+| Long run (6+ mi) | Structural 3 |
+| Tempo / interval | Structural 2 |
+| Easy / Zone 2 under 5 mi | Structural 1 |
+| Stairmaster / incline walk | Structural 1 |
+
+**Collision rules (evaluated in order, first match wins per pair):**
+
+| Rule | Condition | Severity |
+|------|-----------|----------|
+| Critical overlap | Day N ≥ 5 AND Day N+1 ≥ 4 | Danger |
+| Elevated overlap | Day N ≥ 4 AND Day N+1 ≥ 3 | Warning |
+| Back-to-back lower | Both days have a lower-body lift | Warning |
+| Everything else | — | OK |
+
+**Recovery modifiers:** Sleep below 6 → +1 to combined cost. Systemic stress above 7 → +1 to all CNS costs. Deload week → halve all base costs before modifiers.
+
+The rule table is intentionally legible. Every assumption is inspectable. The tool is wrong in known ways — it doesn't account for training age, accumulated weekly volume, or individual recovery variance — and those limits are visible rather than hidden inside a model.
+
+**Implementation:** All state lives in module-scoped TypeScript variables inside a single `.astro` component. DOM updates go through `.dataset`, `.style.width`, and `.textContent` — no framework, no virtual DOM, no library dependencies. Event binding fires once inside `astro:page-load` with a window-flag guard to handle Astro's view transitions cleanly.
+
+## Reflection
+
+The design decision I kept coming back to: should recovery context (sleep, stress, deload) modify the displayed scores or just the collision flags? I landed on modifying the scores themselves, because it makes the feedback loop legible — you can see why a session changes color, not just that it did.
+
+What's next: user-defined sessions (the matrix is currently read-only), a 4-week rolling view to track accumulated load across mesocycles, and HRV input as a recovery signal that updates the sleep slider automatically.
