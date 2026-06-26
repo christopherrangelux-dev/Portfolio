@@ -40,27 +40,48 @@ import { withBase } from '../lib/url';
 		<div class="about-photos">
 			<div class="photo-item">
 				<img src={withBase('images/dsc02733.jpg')} alt="Photography by Christopher Rangel" loading="lazy" />
+				<span class="photo-caption">Portrait</span>
 			</div>
 			<div class="photo-item about-photo-tall">
 				<img src={withBase('images/moonrise.jpg')} alt="A full moon rising through trees over a neighborhood" loading="lazy" />
+				<span class="photo-caption">Moonrise</span>
 			</div>
 			<div class="photo-item">
 				<img src={withBase('images/cherry-blossoms.jpg')} alt="Cherry blossoms in bloom" loading="lazy" />
+				<span class="photo-caption">Cherry Blossoms</span>
 			</div>
 			<div class="photo-item">
 				<img src={withBase('images/milky-way.jpg')} alt="The Milky Way, astrophotography by Christopher Rangel" loading="lazy" />
+				<span class="photo-caption">Milky Way</span>
 			</div>
 			<div class="photo-item">
 				<img src={withBase('images/azaleas.jpg')} alt="Pink azalea blossoms in close-up" loading="lazy" />
+				<span class="photo-caption">Azaleas</span>
 			</div>
 			<div class="photo-item about-photo-wide">
 				<img src={withBase('images/fall-foliage.jpg')} alt="Autumn trees in fall foliage" loading="lazy" />
+				<span class="photo-caption">Fall Foliage</span>
 			</div>
 			<div class="photo-item">
 				<img src={withBase('images/laguna-sunset.jpg')} alt="Sunset over the ocean" loading="lazy" />
+				<span class="photo-caption">Sunset</span>
 			</div>
 		</div>
 		<p><a href={withBase('now')} style="border-bottom: 1px solid var(--ink);">See what I'm working on now &rarr;</a></p>
 	</div>
 </Base>
 
+<style>
+	.photo-item {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.photo-caption {
+		font-family: var(--mono);
+		font-size: 0.7rem;
+		color: var(--muted);
+		margin-top: 0.4rem;
+		letter-spacing: 0.03em;
+	}
+</style>
