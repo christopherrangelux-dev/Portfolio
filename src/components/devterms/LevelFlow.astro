@@ -1,12 +1,16 @@
 ---
-// The playable level experience: briefing → exchanges (with tap-to-define term
-// chips) → decision (with consequences) → XP award → return.
+// The playable level experience, paced one screen at a time:
+//   briefing → each exchange (with tap-to-define chips) → decision → reward.
+// A step index lives on the root (data-step); a single delegated handler
+// advances it. Renderer is data-driven, so any authored level plays.
 //
-// Data-driven, so it renders any authored level. Tappable terms are surfaced
-// as a "Define:" chip row beneath each exchange rather than inline-wrapped —
-// the authored prose doesn't consistently mark the term phrases, so chips are
-// the reliable, accessible way to expose them. Terms unlock (into the glossary)
-// on level completion, not on tap; tapping is preview only.
+// Binding pattern: delegated click/keydown handlers are bound ONCE at the
+// script's top level (not inside astro:page-load) and live on `document`, so
+// they survive view transitions — matching the site's BranchGraph pattern.
+// hydration (render) runs at top level AND on astro:page-load so it fires
+// whether the page arrived by full load or by client navigation.
+//
+// Terms unlock into the glossary on completion; tapping a chip is preview only.
 import { withBase } from '../../lib/url';
 import { getTrack, getLevel } from '../../data/devterms/content';
 
@@ -18,25 +22,51 @@ const { trackSlug, level } = Astro.props;
 const track = getTrack(trackSlug)!;
 const lvl = getLevel(trackSlug, level)!;
 const termMap = new Map(lvl.terms.map((t) => [t.slug, t]));
+
+const exCount = lvl.scenario.exchanges.length;
+const decisionStep = exCount + 1;
+const completeStep = exCount + 2;
+const totalSteps = exCount + 3; // briefing + exchanges + decision + complete
 ---
 
-<div class="dt-flow" data-dt-level data-track-slug={trackSlug} data-level={level} style={`--track-color: ${track.color}`}>
-	<section class="dt-briefing">
-		<p class="dt-briefing-label">Mission briefing</p>
-		<p class="dt-briefing-text">{lvl.scenario.briefing}</p>
+<div
+	class="dt-flow"
+	data-dt-level
+	data-track-slug={trackSlug}
+	data-level={level}
+	data-step="0"
+	data-total={totalSteps}
+	data-ex-count={exCount}
+	style={`--track-color: ${track.color}`}
+>
+	<div class="dt-progress" aria-hidden="true">
+		<div class="dt-progress-track"><div class="dt-progress-fill"></div></div>
+		<span class="dt-progress-label"></span>
+	</div>
+
+	{/* Step 0 — briefing */}
+	<section class="dt-step" data-step-index="0">
+		<div class="dt-briefing">
+			<p class="dt-briefing-label">Mission briefing</p>
+			<p class="dt-briefing-text">{lvl.scenario.briefing}</p>
+		</div>
+		<div class="dt-step-nav">
+			<button type="button" class="dt-btn dt-btn-primary" data-next>Begin mission →</button>
+		</div>
 	</section>
 
-	<section class="dt-exchanges" aria-label="Scenario">
-		{lvl.scenario.exchanges.map((ex) => {
-			const isYou = ex.speaker === 'You';
-			const slugs = [...new Set(ex.highlightedTerms)];
-			return (
+	{/* Steps 1..exCount — one exchange each */}
+	{lvl.scenario.exchanges.map((ex, i) => {
+		const isYou = ex.speaker === 'You';
+		const slugs = [...new Set(ex.highlightedTerms)];
+		return (
+			<section class="dt-step" data-step-index={i + 1} hidden>
 				<div class:list={['dt-exchange', { 'is-you': isYou }]}>
 					<span class="dt-speaker">{ex.speaker}</span>
-					<p class="dt-exchange-text">{ex.text.split('`').map((seg, i) => (i % 2 === 1 ? <code>{seg}</code> : seg))}</p>
+					<p class="dt-exchange-text">{ex.text.split('`').map((seg, j) => (j % 2 === 1 ? <code>{seg}</code> : seg))}</p>
 					{slugs.length > 0 && (
 						<div class="dt-term-chips">
-							<span class="dt-term-chips-label">Define:</span>
+							<span class="dt-term-chips-label">Tap to define:</span>
 							{slugs.map((slug) => (
 								<button type="button" class="dt-term-chip" data-term={slug}>
 									{termMap.get(slug)?.word ?? slug}
@@ -45,32 +75,46 @@ const termMap = new Map(lvl.terms.map((t) => [t.slug, t]));
 						</div>
 					)}
 				</div>
-			);
-		})}
+				<div class="dt-step-nav">
+					<button type="button" class="dt-btn" data-back>← Back</button>
+					<button type="button" class="dt-btn dt-btn-primary" data-next>Next →</button>
+				</div>
+			</section>
+		);
+	})}
+
+	{/* Decision */}
+	<section class="dt-step" data-step-index={decisionStep} hidden>
+		<div class="dt-decision">
+			<p class="dt-decision-prompt">{lvl.scenario.decision.prompt}</p>
+			<ul class="dt-decision-options">
+				{lvl.scenario.decision.options.map((opt, i) => (
+					<li class="dt-decision-item">
+						<button type="button" class="dt-decision-btn" data-option-btn data-correct={String(opt.correct)} data-index={i}>
+							{opt.text}
+						</button>
+						<p class="dt-consequence" data-consequence hidden>{opt.consequence}</p>
+					</li>
+				))}
+			</ul>
+			<div class="dt-step-nav">
+				<button type="button" class="dt-btn" data-back>← Back</button>
+				<button type="button" class="dt-btn dt-btn-primary" data-next hidden data-decision-continue>See your reward →</button>
+			</div>
+		</div>
 	</section>
 
-	<section class="dt-decision" aria-label="Decision">
-		<p class="dt-decision-prompt">{lvl.scenario.decision.prompt}</p>
-		<ul class="dt-decision-options">
-			{lvl.scenario.decision.options.map((opt, i) => (
-				<li class="dt-decision-item">
-					<button type="button" class="dt-decision-btn" data-option-btn data-correct={String(opt.correct)} data-index={i}>
-						{opt.text}
-					</button>
-					<p class="dt-consequence" data-consequence hidden>{opt.consequence}</p>
-				</li>
-			))}
-		</ul>
+	{/* Complete */}
+	<section class="dt-step" data-step-index={completeStep} hidden>
+		<div class="dt-complete" id="dt-complete" data-xp={lvl.xpReward}>
+			<p class="dt-complete-title">Mission complete</p>
+			<p class="dt-xp-award" id="dt-xp-award">+{lvl.xpReward} XP</p>
+			<p class="dt-complete-terms" id="dt-complete-terms"></p>
+			<a class="dt-complete-return" href={withBase(`dev-terms/${trackSlug}`)}>Return to {track.name} →</a>
+		</div>
 	</section>
 
-	<section class="dt-complete" id="dt-complete" data-xp={lvl.xpReward} hidden>
-		<p class="dt-complete-title">Mission complete</p>
-		<p class="dt-xp-award" id="dt-xp-award">+{lvl.xpReward} XP</p>
-		<p class="dt-complete-terms" id="dt-complete-terms"></p>
-		<a class="dt-complete-return" href={withBase(`dev-terms/${trackSlug}`)}>Return to {track.name} →</a>
-	</section>
-
-	<!-- tap-to-define overlay -->
+	{/* tap-to-define overlay */}
 	<div class="dt-term-overlay" id="dt-term-overlay" hidden>
 		<div class="dt-term-backdrop" data-term-close></div>
 		<aside class="dt-term-panel" role="dialog" aria-modal="true" aria-labelledby="dt-term-word">
@@ -90,7 +134,7 @@ const termMap = new Map(lvl.terms.map((t) => [t.slug, t]));
 	import { completeLevel } from '../../lib/devTermsState';
 	import { getLevel } from '../../data/devterms/content';
 
-	function currentLevel() {
+	function ctx() {
 		const root = document.querySelector('[data-dt-level]') as HTMLElement | null;
 		if (!root) return null;
 		const slug = root.dataset.trackSlug!;
@@ -99,10 +143,44 @@ const termMap = new Map(lvl.terms.map((t) => [t.slug, t]));
 		return lvl ? { root, slug, num, lvl } : null;
 	}
 
+	function render() {
+		const c = ctx();
+		if (!c) return;
+		const step = Number(c.root.dataset.step || '0');
+		const total = Number(c.root.dataset.total);
+		const exCount = Number(c.root.dataset.exCount);
+
+		c.root.querySelectorAll('.dt-step').forEach((s) => {
+			(s as HTMLElement).hidden = Number((s as HTMLElement).dataset.stepIndex) !== step;
+		});
+
+		const fill = c.root.querySelector('.dt-progress-fill') as HTMLElement | null;
+		if (fill) fill.style.width = `${(step / (total - 1)) * 100}%`;
+		const label = c.root.querySelector('.dt-progress-label') as HTMLElement | null;
+		if (label) {
+			let text = '';
+			if (step === 0) text = 'Briefing';
+			else if (step <= exCount) text = `Dispatch ${step} of ${exCount}`;
+			else if (step === exCount + 1) text = 'Decision';
+			else text = 'Complete';
+			label.textContent = text;
+		}
+	}
+
+	function goTo(step: number) {
+		const c = ctx();
+		if (!c) return;
+		const total = Number(c.root.dataset.total);
+		const clamped = Math.max(0, Math.min(total - 1, step));
+		c.root.dataset.step = String(clamped);
+		render();
+		c.root.scrollIntoView({ behavior: 'smooth', block: 'start' });
+	}
+
 	function openTerm(slug: string) {
-		const ctx = currentLevel();
-		if (!ctx) return;
-		const term = ctx.lvl.terms.find((t) => t.slug === slug);
+		const c = ctx();
+		if (!c) return;
+		const term = c.lvl.terms.find((t) => t.slug === slug);
 		if (!term) return;
 		const set = (id: string, v: string) => {
 			const el = document.getElementById(id);
@@ -129,7 +207,7 @@ const termMap = new Map(lvl.terms.map((t) => [t.slug, t]));
 
 	function closeTerm() {
 		const overlay = document.getElementById('dt-term-overlay');
-		if (!overlay) return;
+		if (!overlay || overlay.hidden) return;
 		overlay.classList.remove('is-open');
 		setTimeout(() => {
 			overlay.hidden = true;
@@ -137,55 +215,63 @@ const termMap = new Map(lvl.terms.map((t) => [t.slug, t]));
 	}
 
 	function chooseOption(btn: HTMLElement) {
-		const ctx = currentLevel();
-		if (!ctx) return;
+		const c = ctx();
+		if (!c) return;
 		const item = btn.closest('.dt-decision-item');
 		const consequence = item?.querySelector('[data-consequence]') as HTMLElement | null;
 		const correct = btn.dataset.correct === 'true';
-
-		// reveal this option's consequence + mark it
 		if (consequence) consequence.hidden = false;
 		btn.classList.toggle('is-correct', correct);
 		btn.classList.toggle('is-incorrect', !correct);
 
 		if (correct) {
-			// lock the decision and award the level
-			ctx.root.querySelectorAll('[data-option-btn]').forEach((b) => ((b as HTMLButtonElement).disabled = true));
+			c.root.querySelectorAll('[data-option-btn]').forEach((b) => ((b as HTMLButtonElement).disabled = true));
+			const back = c.root.querySelector('[data-step-index] [data-back]');
 			const state = completeLevel({
-				trackSlug: ctx.slug,
-				level: ctx.num,
-				xpReward: ctx.lvl.xpReward,
-				termsUnlocked: ctx.lvl.terms.map((t) => t.slug),
+				trackSlug: c.slug,
+				level: c.num,
+				xpReward: c.lvl.xpReward,
+				termsUnlocked: c.lvl.terms.map((t) => t.slug),
 			});
 			const termsEl = document.getElementById('dt-complete-terms');
-			if (termsEl) termsEl.textContent = `${ctx.lvl.terms.length} terms added to your field notebook · Level ${state.level}`;
-			const complete = document.getElementById('dt-complete');
-			if (complete) {
-				complete.hidden = false;
-				requestAnimationFrame(() => complete.classList.add('is-shown'));
-				complete.scrollIntoView({ behavior: 'smooth', block: 'center' });
-			}
+			if (termsEl) termsEl.textContent = `${c.lvl.terms.length} terms added to your field notebook · now Level ${state.level}`;
+			// reveal the "see your reward" continue button on the decision step
+			const cont = c.root.querySelector('[data-decision-continue]') as HTMLElement | null;
+			if (cont) cont.hidden = false;
+			const decisionBack = c.root.querySelector(`[data-step-index="${c.lvl.scenario.exchanges.length + 1}"] [data-back]`) as HTMLElement | null;
+			if (decisionBack) decisionBack.hidden = true;
 		} else {
-			// wrong: disable just this one, let them try again
 			(btn as HTMLButtonElement).disabled = true;
+		}
+	}
+
+	function onComplete() {
+		const complete = document.getElementById('dt-complete');
+		if (complete) {
+			complete.classList.remove('is-shown');
+			requestAnimationFrame(() => complete.classList.add('is-shown'));
 		}
 	}
 
 	function onClick(e: MouseEvent) {
 		const target = e.target as HTMLElement;
-		const chip = target.closest('[data-term]') as HTMLElement | null;
-		if (chip) {
-			openTerm(chip.dataset.term!);
-			return;
-		}
-		if (target.closest('[data-term-close]')) {
-			closeTerm();
-			return;
-		}
+		if (target.closest('[data-term]')) return openTerm((target.closest('[data-term]') as HTMLElement).dataset.term!);
+		if (target.closest('[data-term-close]')) return closeTerm();
 		const opt = target.closest('[data-option-btn]') as HTMLElement | null;
-		if (opt && !(opt as HTMLButtonElement).disabled) {
-			chooseOption(opt);
+		if (opt && !(opt as HTMLButtonElement).disabled) return chooseOption(opt);
+		if (target.closest('[data-next]')) {
+			const c = ctx();
+			const step = c ? Number(c.root.dataset.step || '0') : 0;
+			goTo(step + 1);
+			// if we just landed on the complete step, play the award animation
+			const cur = ctx();
+			if (cur && Number(cur.root.dataset.step) === Number(cur.root.dataset.total) - 1) onComplete();
 			return;
+		}
+		if (target.closest('[data-back]')) {
+			const c = ctx();
+			const step = c ? Number(c.root.dataset.step || '0') : 0;
+			return goTo(step - 1);
 		}
 	}
 
@@ -193,14 +279,16 @@ const termMap = new Map(lvl.terms.map((t) => [t.slug, t]));
 		if (e.key === 'Escape') closeTerm();
 	}
 
-	function init() {
-		// Bind document-level delegated handlers exactly once for the app's
-		// lifetime — avoids listener stacking across view transitions.
-		if ((window as any).__dtLevelFlowBound) return;
-		(window as any).__dtLevelFlowBound = true;
+	// Bind delegated handlers once for the app lifetime (they live on document
+	// and persist across view transitions).
+	const w = window as typeof window & { __dtLevelFlowBound?: boolean };
+	if (!w.__dtLevelFlowBound) {
+		w.__dtLevelFlowBound = true;
 		document.addEventListener('click', onClick);
 		document.addEventListener('keydown', onKey);
 	}
 
-	document.addEventListener('astro:page-load', init);
+	// Render now (covers arrival by client navigation) and on every page load.
+	render();
+	document.addEventListener('astro:page-load', render);
 </script>

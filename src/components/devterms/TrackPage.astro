@@ -120,5 +120,7 @@ const rows = authored
 		});
 	}
 
+	// Run now (covers arrival by client navigation) and on every page load.
+	hydrate();
 	document.addEventListener('astro:page-load', hydrate);
 </script>

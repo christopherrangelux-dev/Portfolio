@@ -374,6 +374,90 @@
    Level flow
    =========================================================================== */
 
+/* Stepped progress */
+.dt-progress {
+	display: flex;
+	align-items: center;
+	gap: 0.85rem;
+	margin-bottom: 2rem;
+}
+.dt-progress-track {
+	flex: 1;
+	height: 6px;
+	border-radius: 999px;
+	background: var(--border);
+	overflow: hidden;
+}
+.dt-progress-fill {
+	height: 100%;
+	width: 0;
+	background: var(--track-color, var(--accent));
+	border-radius: 999px;
+	transition: width 0.4s ease;
+}
+.dt-progress-label {
+	font-family: var(--mono);
+	font-size: 0.72rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--muted);
+	white-space: nowrap;
+}
+
+/* Steps + nav */
+.dt-step[hidden] {
+	display: none;
+}
+.dt-step {
+	animation: dt-step-in 0.35s ease;
+}
+@keyframes dt-step-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
+}
+.dt-step-nav {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	margin-top: 1.75rem;
+}
+.dt-step-nav:has(.dt-btn-primary:only-child),
+.dt-step-nav > .dt-btn-primary:only-child {
+	justify-content: flex-end;
+}
+.dt-btn {
+	font-family: var(--mono);
+	font-size: 0.88rem;
+	color: var(--ink);
+	background: var(--paper);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 0.55rem 1rem;
+	cursor: pointer;
+	transition: border-color 0.15s ease, opacity 0.15s ease;
+}
+.dt-btn:hover {
+	border-color: var(--track-color, var(--accent));
+}
+.dt-btn-primary {
+	color: var(--paper);
+	background: var(--track-color, var(--accent));
+	border-color: transparent;
+	font-weight: 600;
+	margin-left: auto;
+}
+.dt-btn-primary:hover {
+	opacity: 0.88;
+	border-color: transparent;
+}
+
 .dt-briefing {
 	border-left: 4px solid var(--track-color, var(--accent));
 	background: color-mix(in srgb, var(--track-color, var(--accent)) 6%, transparent);

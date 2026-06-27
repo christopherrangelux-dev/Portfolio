@@ -134,8 +134,8 @@ import XPBar from './XPBar.astro';
 		}
 	}
 
-	// Runs on first load and after every view transition; only acts on the
-	// dashboard page. No persistent listeners are added, so no dedupe guard is
-	// needed — this is a one-shot, idempotent DOM update.
+	// Run now (covers arrival by client navigation, where this script executes
+	// after astro:page-load has already fired) and on every page load. Idempotent.
+	hydrate();
 	document.addEventListener('astro:page-load', hydrate);
 </script>
