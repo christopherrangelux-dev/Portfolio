@@ -1,7 +1,8 @@
 ---
 import Base from '../../../layouts/Base.astro';
 import { withBase } from '../../../lib/url';
-import { TRACKS, getTrack } from '../../../data/devterms/content';
+import { TRACKS, getTrack, getLevel } from '../../../data/devterms/content';
+import LevelFlow from '../../../components/devterms/LevelFlow.astro';
 
 import '../../../styles/devterms.css';
 
@@ -16,6 +17,7 @@ export function getStaticPaths() {
 const { track: trackSlug, level } = Astro.params;
 const track = getTrack(trackSlug!)!;
 const levelNum = Number(level);
+const lvl = getLevel(trackSlug!, levelNum);
 ---
 
 <Base title={`${track.name} · Level ${levelNum} — Dev Terms`} description={track.tagline}>
@@ -23,10 +25,15 @@ const levelNum = Number(level);
 		<a class="dt-back-link" href={withBase(`dev-terms/${track.slug}`)}>← {track.name}</a>
 		<section class="dt-hero">
 			<p class="dt-eyebrow">{track.name} · Level {levelNum}</p>
-			<h1>Mission briefing</h1>
+			<h1>{lvl ? lvl.title : 'Mission briefing'}</h1>
 		</section>
 
-		<!-- STEP 1 placeholder: briefing → exchanges → term reveals → decision → XP land in step 6. -->
-		<p class="dt-placeholder">Mission flow coming online.</p>
+		{
+			lvl ? (
+				<LevelFlow trackSlug={track.slug} level={levelNum} />
+			) : (
+				<p class="dt-placeholder">This mission isn't authored yet — check back soon.</p>
+			)
+		}
 	</div>
 </Base>

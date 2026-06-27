@@ -369,3 +369,295 @@
 .dt-footer-link a:hover {
 	color: var(--accent);
 }
+
+/* ===========================================================================
+   Level flow
+   =========================================================================== */
+
+.dt-briefing {
+	border-left: 4px solid var(--track-color, var(--accent));
+	background: color-mix(in srgb, var(--track-color, var(--accent)) 6%, transparent);
+	padding: 1.25rem 1.5rem;
+	border-radius: 0 6px 6px 0;
+	margin-bottom: 2rem;
+}
+.dt-briefing-label {
+	font-family: var(--mono);
+	font-size: 0.72rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--track-color, var(--accent));
+	margin: 0 0 0.4rem;
+}
+.dt-briefing-text {
+	margin: 0;
+	font-style: italic;
+	font-size: 1.05rem;
+}
+
+/* Exchanges */
+.dt-exchanges {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	margin-bottom: 2.5rem;
+}
+.dt-exchange {
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 1rem 1.25rem;
+	background: var(--paper);
+	max-width: 90%;
+}
+.dt-exchange.is-you {
+	align-self: flex-end;
+	background: color-mix(in srgb, var(--ink) 4%, var(--paper));
+	font-style: italic;
+}
+.dt-speaker {
+	display: block;
+	font-family: var(--mono);
+	font-size: 0.74rem;
+	letter-spacing: 0.04em;
+	color: var(--muted);
+	margin-bottom: 0.4rem;
+}
+.dt-exchange-text {
+	margin: 0;
+	line-height: 1.6;
+}
+.dt-term-chips {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	margin-top: 0.85rem;
+}
+.dt-term-chips-label {
+	font-family: var(--mono);
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--muted);
+}
+.dt-term-chip {
+	font-family: var(--mono);
+	font-size: 0.8rem;
+	color: var(--track-color, var(--accent));
+	background: color-mix(in srgb, var(--track-color, var(--accent)) 10%, transparent);
+	border: 1px solid color-mix(in srgb, var(--track-color, var(--accent)) 35%, transparent);
+	border-radius: 999px;
+	padding: 0.2rem 0.7rem;
+	cursor: pointer;
+	transition: background 0.15s ease;
+}
+.dt-term-chip:hover {
+	background: color-mix(in srgb, var(--track-color, var(--accent)) 20%, transparent);
+}
+
+/* Decision */
+.dt-decision {
+	border-top: 1px solid var(--border);
+	padding-top: 1.75rem;
+	margin-bottom: 2rem;
+}
+.dt-decision-prompt {
+	font-weight: 600;
+	font-size: 1.1rem;
+	margin: 0 0 1rem;
+}
+.dt-decision-options {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+.dt-decision-btn {
+	display: block;
+	width: 100%;
+	text-align: left;
+	font-family: inherit;
+	font-size: 1rem;
+	color: var(--ink);
+	background: var(--paper);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 0.9rem 1.1rem;
+	cursor: pointer;
+	transition: border-color 0.15s ease, background 0.15s ease;
+}
+.dt-decision-btn:hover:not(:disabled) {
+	border-color: var(--track-color, var(--accent));
+}
+.dt-decision-btn:disabled {
+	cursor: default;
+}
+.dt-decision-btn.is-correct {
+	border-color: var(--ev-balanced, #4caf6e);
+	background: color-mix(in srgb, var(--ev-balanced, #4caf6e) 12%, transparent);
+}
+.dt-decision-btn.is-incorrect {
+	border-color: var(--ev-underexposed, #d94f4f);
+	background: color-mix(in srgb, var(--ev-underexposed, #d94f4f) 10%, transparent);
+	opacity: 0.7;
+}
+.dt-consequence {
+	margin: 0.5rem 0 0;
+	padding-left: 1.1rem;
+	font-size: 0.92rem;
+	color: var(--muted);
+	border-left: 2px solid var(--border);
+}
+
+/* Completion */
+.dt-complete {
+	text-align: center;
+	border: 1px solid var(--track-color, var(--accent));
+	border-radius: 8px;
+	padding: 2rem 1.5rem;
+	background: color-mix(in srgb, var(--track-color, var(--accent)) 6%, transparent);
+	opacity: 0;
+	transform: translateY(8px);
+	transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.dt-complete.is-shown {
+	opacity: 1;
+	transform: none;
+}
+.dt-complete-title {
+	font-family: var(--mono);
+	font-size: 0.8rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--muted);
+	margin: 0 0 0.5rem;
+}
+.dt-xp-award {
+	font-size: 2.4rem;
+	font-weight: 700;
+	color: var(--track-color, var(--accent));
+	margin: 0;
+}
+.dt-complete.is-shown .dt-xp-award {
+	animation: dt-xp-pop 0.6s ease;
+}
+@keyframes dt-xp-pop {
+	0% {
+		transform: scale(0.6);
+		opacity: 0;
+	}
+	60% {
+		transform: scale(1.15);
+	}
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+}
+.dt-complete-terms {
+	font-family: var(--mono);
+	font-size: 0.8rem;
+	color: var(--muted);
+	margin: 0.5rem 0 1.25rem;
+}
+.dt-complete-return {
+	display: inline-block;
+	font-family: var(--mono);
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--paper);
+	background: var(--track-color, var(--accent));
+	padding: 0.6rem 1.2rem;
+	border-radius: 6px;
+}
+.dt-complete-return:hover {
+	opacity: 0.88;
+}
+
+/* Term reveal overlay */
+.dt-term-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	display: flex;
+	justify-content: flex-end;
+}
+.dt-term-backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.35);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+.dt-term-overlay.is-open .dt-term-backdrop {
+	opacity: 1;
+}
+.dt-term-panel {
+	position: relative;
+	width: min(420px, 100%);
+	height: 100%;
+	overflow-y: auto;
+	background: var(--paper);
+	border-left: 1px solid var(--border);
+	padding: 2.5rem 1.75rem 2rem;
+	transform: translateX(100%);
+	transition: transform 0.3s ease;
+}
+.dt-term-overlay.is-open .dt-term-panel {
+	transform: none;
+}
+.dt-term-close {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
+	font-size: 1.5rem;
+	line-height: 1;
+	color: var(--muted);
+	background: none;
+	border: none;
+	cursor: pointer;
+}
+.dt-term-close:hover {
+	color: var(--ink);
+}
+.dt-term-word {
+	font-size: 1.6rem;
+	margin: 0 0 0.75rem;
+	color: var(--track-color, var(--accent));
+}
+.dt-term-code {
+	display: block;
+	margin-bottom: 1rem;
+	font-size: 0.85rem;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+.dt-term-def {
+	margin: 0 0 1.5rem;
+	line-height: 1.6;
+}
+.dt-term-context {
+	border-top: 1px solid var(--border);
+	padding-top: 1rem;
+}
+.dt-term-context-label {
+	display: block;
+	font-family: var(--mono);
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--muted);
+	margin-bottom: 0.4rem;
+}
+.dt-term-context p {
+	margin: 0;
+	font-size: 0.95rem;
+	line-height: 1.55;
+}
+@media (max-width: 520px) {
+	.dt-term-panel {
+		width: 100%;
+	}
+}
