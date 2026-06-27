@@ -13,7 +13,7 @@
 //     top level — the site uses View Transitions and a top-level read misfires
 //     on client-side navigations.
 
-import { TRACKS } from '../data/devterms/content';
+import { TRACKS, getAllTerms } from '../data/devterms/content';
 import { TITLES, GEAR } from '../data/devterms/rpg';
 
 const STORAGE_KEY = 'devTermsState';
@@ -178,4 +178,59 @@ export function completeLevel(opts: {
 
 	saveState(state);
 	return state;
+}
+
+// ---------------------------------------------------------------------------
+// Presentation helpers (pure — used by component hydration scripts)
+// ---------------------------------------------------------------------------
+
+export interface XpProgress {
+	level: number;
+	xp: number;
+	curThreshold: number;
+	nextThreshold: number;
+	pct: number; // 0–100, progress through the current level
+	atMax: boolean;
+}
+
+/** XP progress within the current level, for the XP bar. */
+export function xpProgress(state: DevTermsState): XpProgress {
+	const level = levelForXp(state.xp);
+	const atMax = level >= LEVEL_THRESHOLDS.length;
+	const curThreshold = LEVEL_THRESHOLDS[level - 1];
+	const nextThreshold = atMax ? LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] : LEVEL_THRESHOLDS[level];
+	const span = Math.max(1, nextThreshold - curThreshold);
+	const pct = atMax ? 100 : Math.round(((state.xp - curThreshold) / span) * 100);
+	return { level, xp: state.xp, curThreshold, nextThreshold, pct, atMax };
+}
+
+export type ContinueMode = 'start' | 'continue' | 'replay';
+
+/**
+ * Which track the dashboard "Continue" CTA should point at. lastActive isn't
+ * stored, so this is derived: first in-progress track, else first not-started
+ * track, else (everything done) the first track to replay.
+ */
+export function continueTarget(state: DevTermsState): { trackSlug: string; mode: ContinueMode } {
+	for (const t of TRACKS) {
+		const done = getTrackProgress(state, t.slug).levelsCompleted.length;
+		if (done > 0 && done < t.levelCount) return { trackSlug: t.slug, mode: 'continue' };
+	}
+	for (const t of TRACKS) {
+		if (getTrackProgress(state, t.slug).levelsCompleted.length === 0) return { trackSlug: t.slug, mode: 'start' };
+	}
+	return { trackSlug: TRACKS[0].slug, mode: 'replay' };
+}
+
+/** The N most recently unlocked terms (approx — glossary tail), resolved to display info. */
+export function recentTerms(state: DevTermsState, n = 4): { slug: string; word: string; trackSlug: string }[] {
+	const bySlug = new Map(getAllTerms().map((x) => [x.term.slug, x]));
+	return state.glossary
+		.slice(-n)
+		.reverse()
+		.map((slug) => {
+			const entry = bySlug.get(slug);
+			return entry ? { slug, word: entry.term.word, trackSlug: entry.trackSlug } : null;
+		})
+		.filter((x): x is { slug: string; word: string; trackSlug: string } => x !== null);
 }

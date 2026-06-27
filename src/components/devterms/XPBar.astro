@@ -1,0 +1,60 @@
+---
+// XP + level + title indicator. Server-renders a zero-progress baseline; the
+// Dashboard script hydrates the ids below from localStorage on astro:page-load.
+---
+
+<div class="dt-xpbar">
+	<div class="dt-xpbar-head">
+		<span class="dt-level-badge">Level <span id="dt-level">1</span></span>
+		<span class="dt-title-label" id="dt-title">Embedded Designer</span>
+	</div>
+	<div class="dt-xp-track" role="progressbar" aria-label="XP progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="dt-xp-track">
+		<div class="dt-xp-fill" id="dt-xp-fill" style="width: 0%"></div>
+	</div>
+	<span class="dt-xp-text" id="dt-xp-text">0 XP</span>
+</div>
+
+<style>
+	.dt-xpbar {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+		width: 100%;
+	}
+	.dt-xpbar-head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1rem;
+	}
+	.dt-level-badge {
+		font-family: var(--mono);
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--ink);
+	}
+	.dt-title-label {
+		font-family: var(--mono);
+		font-size: 0.82rem;
+		color: var(--accent);
+		text-align: right;
+	}
+	.dt-xp-track {
+		height: 10px;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--paper);
+		overflow: hidden;
+	}
+	.dt-xp-fill {
+		height: 100%;
+		background: var(--accent);
+		border-radius: 999px;
+		transition: width 0.5s ease;
+	}
+	.dt-xp-text {
+		font-family: var(--mono);
+		font-size: 0.75rem;
+		color: var(--muted);
+	}
+</style>

@@ -1,0 +1,141 @@
+---
+import { withBase } from '../../lib/url';
+import { TRACKS } from '../../data/devterms/content';
+import AvatarDisplay from './AvatarDisplay.astro';
+import XPBar from './XPBar.astro';
+---
+
+<div data-dt-dashboard>
+	<section class="dt-dashboard-top">
+		<AvatarDisplay />
+		<div class="dt-dashboard-status">
+			<XPBar />
+			<a class="dt-continue" id="dt-continue" href={withBase('dev-terms/git-flow')}>Start: Git Flow →</a>
+		</div>
+	</section>
+
+	<section class="dt-track-grid" aria-label="Tracks">
+		{
+			TRACKS.map((track) => (
+				<a
+					class="dt-track-card"
+					data-track-slug={track.slug}
+					href={withBase(`dev-terms/${track.slug}`)}
+					style={`--track-color: ${track.color}`}
+				>
+					<span class="dt-track-head">
+						<span class="dt-track-name">{track.name}</span>
+						<span class="dt-track-status" data-track-status>
+							Not started
+						</span>
+					</span>
+					<span class="dt-track-tagline">{track.tagline}</span>
+					<span class="dt-track-progress">
+						<span class="dt-track-progress-fill" data-track-fill style="width: 0%" />
+					</span>
+					<span class="dt-track-meta">
+						{track.terms} terms · {track.levelCount} levels
+					</span>
+				</a>
+			))
+		}
+	</section>
+
+	<section class="dt-recent">
+		<h2 class="dt-section-title">Recently learned</h2>
+		<ul class="dt-recent-list" id="dt-recent">
+			<li class="dt-recent-empty">Terms you unlock will appear here.</li>
+		</ul>
+	</section>
+</div>
+
+<script>
+	import { getState, xpProgress, continueTarget, recentTerms, getTrackProgress, isTrackComplete } from '../../lib/devTermsState';
+	import { TRACKS, getTrack } from '../../data/devterms/content';
+	import { TITLES } from '../../data/devterms/rpg';
+	import { withBase } from '../../lib/url';
+
+	function titleLabel(slug: string): string {
+		return TITLES.find((t) => t.slug === slug)?.label ?? 'Embedded Designer';
+	}
+
+	function hydrate() {
+		const root = document.querySelector('[data-dt-dashboard]');
+		if (!root) return; // not on the dashboard
+
+		const state = getState();
+		const label = titleLabel(state.title);
+
+		// XP bar
+		const xp = xpProgress(state);
+		const setText = (id: string, value: string) => {
+			const el = document.getElementById(id);
+			if (el) el.textContent = value;
+		};
+		setText('dt-level', String(xp.level));
+		setText('dt-title', label);
+		setText('dt-avatar-title', label);
+		setText('dt-xp-text', xp.atMax ? `${xp.xp} XP · max level` : `${xp.xp} / ${xp.nextThreshold} XP`);
+		const fill = document.getElementById('dt-xp-fill');
+		if (fill) fill.style.width = `${xp.pct}%`;
+		const track = document.getElementById('dt-xp-track');
+		if (track) track.setAttribute('aria-valuenow', String(xp.pct));
+
+		// Track cards
+		for (const t of TRACKS) {
+			const card = root.querySelector(`[data-track-slug="${t.slug}"]`);
+			if (!card) continue;
+			const done = getTrackProgress(state, t.slug).levelsCompleted.length;
+			const complete = isTrackComplete(state, t.slug);
+			const statusEl = card.querySelector('[data-track-status]') as HTMLElement | null;
+			const fillEl = card.querySelector('[data-track-fill]') as HTMLElement | null;
+			if (statusEl) statusEl.textContent = complete ? 'Complete' : done > 0 ? `${done}/${t.levelCount} levels` : 'Not started';
+			if (fillEl) fillEl.style.width = `${Math.round((done / t.levelCount) * 100)}%`;
+			card.classList.toggle('is-complete', complete);
+			card.classList.toggle('is-started', done > 0 && !complete);
+		}
+
+		// Continue CTA
+		const cont = continueTarget(state);
+		const contEl = document.getElementById('dt-continue') as HTMLAnchorElement | null;
+		if (contEl) {
+			const name = getTrack(cont.trackSlug)?.name ?? 'Git Flow';
+			const verb = cont.mode === 'start' ? 'Start' : cont.mode === 'replay' ? 'Replay' : 'Continue';
+			contEl.textContent = `${verb}: ${name} →`;
+			contEl.href = withBase(`dev-terms/${cont.trackSlug}`);
+		}
+
+		// Recently learned
+		const recentEl = document.getElementById('dt-recent');
+		if (recentEl) {
+			const recent = recentTerms(state, 4);
+			recentEl.replaceChildren();
+			if (recent.length === 0) {
+				const li = document.createElement('li');
+				li.className = 'dt-recent-empty';
+				li.textContent = 'Terms you unlock will appear here.';
+				recentEl.appendChild(li);
+			} else {
+				for (const r of recent) {
+					const li = document.createElement('li');
+					li.className = 'dt-recent-item';
+					const word = document.createElement('span');
+					word.className = 'dt-recent-word';
+					word.textContent = r.word;
+					const tag = document.createElement('span');
+					tag.className = 'dt-recent-tag';
+					const tr = getTrack(r.trackSlug);
+					tag.textContent = tr?.name ?? r.trackSlug;
+					if (tr) tag.style.setProperty('--track-color', tr.color);
+					li.append(word, tag);
+					recentEl.appendChild(li);
+				}
+			}
+		}
+	}
+
+	// Runs on first load and after every view transition; only acts on the
+	// dashboard page. No persistent listeners are added, so no dedupe guard is
+	// needed — this is a one-shot, idempotent DOM update.
+	document.addEventListener('astro:page-load', hydrate);
+</script>

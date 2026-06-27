@@ -44,6 +44,35 @@
 	margin: 0;
 }
 
+/* Dashboard top: avatar + status column */
+.dt-dashboard-top {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1.75rem;
+	margin-bottom: 2.5rem;
+}
+.dt-dashboard-status {
+	flex: 1 1 280px;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+.dt-continue {
+	align-self: flex-start;
+	font-family: var(--mono);
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--paper);
+	background: var(--accent);
+	padding: 0.6rem 1.1rem;
+	border-radius: 6px;
+	transition: opacity 0.15s ease;
+}
+.dt-continue:hover {
+	opacity: 0.88;
+}
+
 /* Track grid (dashboard) */
 .dt-track-grid {
 	display: grid;
@@ -77,19 +106,99 @@
 	transform: translateY(-2px);
 	border-color: var(--track-color, var(--accent));
 }
+.dt-track-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.75rem;
+}
 .dt-track-name {
 	font-size: 1.15rem;
+	font-weight: 600;
+}
+.dt-track-status {
+	font-family: var(--mono);
+	font-size: 0.72rem;
+	color: var(--muted);
+	white-space: nowrap;
+}
+.dt-track-card.is-complete .dt-track-status {
+	color: var(--track-color, var(--accent));
 	font-weight: 600;
 }
 .dt-track-tagline {
 	color: var(--muted);
 	font-size: 0.95rem;
 }
+.dt-track-progress {
+	display: block;
+	height: 5px;
+	border-radius: 999px;
+	background: var(--border);
+	overflow: hidden;
+	margin-top: 0.35rem;
+}
+.dt-track-progress-fill {
+	display: block;
+	height: 100%;
+	width: 0;
+	background: var(--track-color, var(--accent));
+	border-radius: 999px;
+	transition: width 0.5s ease;
+}
 .dt-track-meta {
 	font-family: var(--mono);
 	font-size: 0.78rem;
 	color: var(--muted);
 	margin-top: 0.25rem;
+}
+
+/* Recently learned */
+.dt-recent {
+	margin-bottom: 2rem;
+}
+.dt-section-title {
+	font-size: 1rem;
+	font-family: var(--mono);
+	font-weight: 600;
+	color: var(--muted);
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	margin: 0 0 0.85rem;
+}
+.dt-recent-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.6rem;
+}
+.dt-recent-empty {
+	font-family: var(--mono);
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.dt-recent-item {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.4rem 0.75rem;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--paper);
+}
+.dt-recent-word {
+	font-family: var(--mono);
+	font-size: 0.85rem;
+	color: var(--ink);
+}
+.dt-recent-tag {
+	font-family: var(--mono);
+	font-size: 0.68rem;
+	color: var(--track-color, var(--muted));
+	border-left: 1px solid var(--border);
+	padding-left: 0.5rem;
 }
 
 /* Level list (track page) */
