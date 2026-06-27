@@ -1,0 +1,26 @@
+---
+import Base from '../../layouts/Base.astro';
+import { withBase } from '../../lib/url';
+import { TRACKS } from '../../data/devterms/content';
+import '../../styles/devterms.css';
+
+// Total term count is derived from the data, never hardcoded (spec §11).
+const totalTerms = TRACKS.reduce((sum, t) => sum + t.terms, 0);
+---
+
+<Base
+	title="Field Notebook — Dev Terms"
+	description="Every term from Dev Terms, filling in as you unlock it across the six tracks."
+>
+	<div class="container devterms">
+		<a class="dt-back-link" href={withBase('dev-terms')}>← Back to Dev Terms</a>
+		<section class="dt-hero">
+			<p class="dt-eyebrow">Field Notebook</p>
+			<h1>Glossary</h1>
+			<p class="dt-lede">{totalTerms} terms across {TRACKS.length} tracks. Unlocked entries fill in as you complete missions.</p>
+		</section>
+
+		<!-- STEP 1 placeholder: filterable term grid built from localStorage in step 9. -->
+		<p class="dt-placeholder">Field notebook coming together — terms unlock as you play.</p>
+	</div>
+</Base>

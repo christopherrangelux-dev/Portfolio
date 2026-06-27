@@ -1,0 +1,38 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { withBase } from '../../../lib/url';
+import { TRACKS, getTrack } from '../../../data/devterms/content';
+
+import '../../../styles/devterms.css';
+
+export function getStaticPaths() {
+	return TRACKS.map((track) => ({ params: { track: track.slug } }));
+}
+
+const { track: trackSlug } = Astro.params;
+const track = getTrack(trackSlug!)!;
+const levels = Array.from({ length: track.levelCount }, (_, i) => i + 1);
+---
+
+<Base title={`${track.name} — Dev Terms`} description={track.tagline}>
+	<div class="container devterms" style={`--track-color: ${track.color}`}>
+		<a class="dt-back-link" href={withBase('dev-terms')}>← All tracks</a>
+		<section class="dt-hero">
+			<p class="dt-eyebrow">{track.missionTheme}</p>
+			<h1>{track.name}</h1>
+			<p class="dt-lede">{track.tagline}</p>
+		</section>
+
+		<!-- STEP 1 placeholder: lock states, unlock image, and 8-bit game land in steps 5/7/10. -->
+		<section class="dt-level-list" aria-label="Levels">
+			{
+				levels.map((n) => (
+					<a class="dt-level-row" href={withBase(`dev-terms/${track.slug}/${n}`)}>
+						<span class="dt-level-num">Level {n}</span>
+						<span class="dt-level-cta">Start →</span>
+					</a>
+				))
+			}
+		</section>
+	</div>
+</Base>

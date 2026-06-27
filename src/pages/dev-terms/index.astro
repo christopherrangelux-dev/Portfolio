@@ -1,0 +1,39 @@
+---
+import Base from '../../layouts/Base.astro';
+import { withBase } from '../../lib/url';
+import { TRACKS } from '../../data/devterms/content';
+import '../../styles/devterms.css';
+---
+
+<Base
+	title="Dev Terms — Christopher Rangel"
+	description="A gamified dev vocabulary trainer for designers — learn the language engineers use every sprint, through scenario-based field missions."
+>
+	<div class="container devterms">
+		<section class="dt-hero">
+			<p class="dt-eyebrow">Field Manual</p>
+			<h1>Dev Terms</h1>
+			<p class="dt-lede">
+				The language engineers use every sprint, learned by doing. Six tracks, scenario-based
+				missions, one growing field notebook.
+			</p>
+		</section>
+
+		<!-- STEP 1 placeholder: XP bar + avatar land in steps 2/4/8. -->
+		<section class="dt-track-grid" aria-label="Tracks">
+			{
+				TRACKS.map((track) => (
+					<a class="dt-track-card" href={withBase(`dev-terms/${track.slug}`)} style={`--track-color: ${track.color}`}>
+						<span class="dt-track-name">{track.name}</span>
+						<span class="dt-track-tagline">{track.tagline}</span>
+						<span class="dt-track-meta">{track.terms} terms · {track.levelCount} levels</span>
+					</a>
+				))
+			}
+		</section>
+
+		<p class="dt-footer-link">
+			<a href={withBase('dev-terms/glossary')}>Open the field notebook →</a>
+		</p>
+	</div>
+</Base>

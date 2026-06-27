@@ -1,0 +1,32 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { withBase } from '../../../lib/url';
+import { TRACKS, getTrack } from '../../../data/devterms/content';
+
+import '../../../styles/devterms.css';
+
+export function getStaticPaths() {
+	return TRACKS.flatMap((track) =>
+		Array.from({ length: track.levelCount }, (_, i) => ({
+			params: { track: track.slug, level: String(i + 1) },
+		}))
+	);
+}
+
+const { track: trackSlug, level } = Astro.params;
+const track = getTrack(trackSlug!)!;
+const levelNum = Number(level);
+---
+
+<Base title={`${track.name} · Level ${levelNum} — Dev Terms`} description={track.tagline}>
+	<div class="container devterms" style={`--track-color: ${track.color}`}>
+		<a class="dt-back-link" href={withBase(`dev-terms/${track.slug}`)}>← {track.name}</a>
+		<section class="dt-hero">
+			<p class="dt-eyebrow">{track.name} · Level {levelNum}</p>
+			<h1>Mission briefing</h1>
+		</section>
+
+		<!-- STEP 1 placeholder: briefing → exchanges → term reveals → decision → XP land in step 6. -->
+		<p class="dt-placeholder">Mission flow coming online.</p>
+	</div>
+</Base>

@@ -1,0 +1,131 @@
+/*
+ * Dev Terms — scoped app styles.
+ *
+ * STEP 1: minimal layout for scaffolded routes, built only on existing
+ * portfolio tokens (--ink, --paper, --muted, --accent, --border, --mono,
+ * --max-width). Per-track accent comes in via --track-color set inline on
+ * the page container. Component-specific styles will live in their own
+ * scoped <style> blocks inside each .astro component as those get built.
+ */
+
+.devterms {
+	padding-block: 2.5rem 4rem;
+}
+
+.dt-back-link {
+	display: inline-block;
+	margin-bottom: 1.5rem;
+	font-family: var(--mono);
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.dt-back-link:hover {
+	color: var(--ink);
+}
+
+.dt-hero {
+	margin-bottom: 2.5rem;
+}
+.dt-eyebrow {
+	font-family: var(--mono);
+	font-size: 0.78rem;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--track-color, var(--accent));
+	margin: 0 0 0.5rem;
+}
+.dt-hero h1 {
+	margin: 0 0 0.75rem;
+	font-size: 2.4rem;
+}
+.dt-lede {
+	max-width: 46ch;
+	color: var(--muted);
+	margin: 0;
+}
+
+/* Track grid (dashboard) */
+.dt-track-grid {
+	display: grid;
+	grid-template-columns: 1fr;
+	gap: 1rem;
+	margin-bottom: 2.5rem;
+}
+@media (min-width: 640px) {
+	.dt-track-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+}
+@media (min-width: 960px) {
+	.dt-track-grid {
+		grid-template-columns: repeat(3, 1fr);
+	}
+}
+
+.dt-track-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+	padding: 1.25rem;
+	border: 1px solid var(--border);
+	border-left: 4px solid var(--track-color, var(--accent));
+	border-radius: 6px;
+	background: var(--paper);
+	transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.dt-track-card:hover {
+	transform: translateY(-2px);
+	border-color: var(--track-color, var(--accent));
+}
+.dt-track-name {
+	font-size: 1.15rem;
+	font-weight: 600;
+}
+.dt-track-tagline {
+	color: var(--muted);
+	font-size: 0.95rem;
+}
+.dt-track-meta {
+	font-family: var(--mono);
+	font-size: 0.78rem;
+	color: var(--muted);
+	margin-top: 0.25rem;
+}
+
+/* Level list (track page) */
+.dt-level-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.dt-level-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 1rem 1.25rem;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--paper);
+	transition: border-color 0.15s ease;
+}
+.dt-level-row:hover {
+	border-color: var(--track-color, var(--accent));
+}
+.dt-level-num {
+	font-weight: 600;
+}
+.dt-level-cta {
+	font-family: var(--mono);
+	font-size: 0.85rem;
+	color: var(--track-color, var(--accent));
+}
+
+.dt-footer-link,
+.dt-placeholder {
+	font-family: var(--mono);
+	font-size: 0.9rem;
+	color: var(--muted);
+}
+.dt-footer-link a:hover {
+	color: var(--accent);
+}
