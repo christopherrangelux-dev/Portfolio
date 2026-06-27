@@ -201,32 +201,163 @@
 	padding-left: 0.5rem;
 }
 
+/* Start CTA (track page) */
+.dt-start-cta {
+	display: inline-block;
+	margin-bottom: 1.5rem;
+	font-family: var(--mono);
+	font-size: 0.9rem;
+	font-weight: 600;
+	color: var(--paper);
+	background: var(--track-color, var(--accent));
+	padding: 0.6rem 1.1rem;
+	border-radius: 6px;
+	transition: opacity 0.15s ease;
+}
+.dt-start-cta:hover {
+	opacity: 0.88;
+}
+
 /* Level list (track page) */
 .dt-level-list {
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
+	margin-bottom: 2.5rem;
 }
 .dt-level-row {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
+	gap: 1rem;
 	padding: 1rem 1.25rem;
 	border: 1px solid var(--border);
 	border-radius: 6px;
 	background: var(--paper);
-	transition: border-color 0.15s ease;
+	transition: border-color 0.15s ease, opacity 0.15s ease;
 }
 .dt-level-row:hover {
 	border-color: var(--track-color, var(--accent));
 }
+.dt-level-main {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
 .dt-level-num {
 	font-weight: 600;
 }
-.dt-level-cta {
+.dt-level-title {
+	font-size: 0.9rem;
+	color: var(--muted);
+}
+.dt-level-side {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	text-align: right;
+}
+.dt-level-meta {
 	font-family: var(--mono);
-	font-size: 0.85rem;
+	font-size: 0.72rem;
+	color: var(--muted);
+}
+.dt-level-status {
+	font-family: var(--mono);
+	font-size: 0.82rem;
 	color: var(--track-color, var(--accent));
+	white-space: nowrap;
+}
+/* Locked rows: dimmed, non-interactive */
+.dt-level-row.is-locked {
+	opacity: 0.5;
+	pointer-events: none;
+}
+.dt-level-row.is-locked .dt-level-status {
+	color: var(--muted);
+}
+.dt-level-row.is-complete .dt-level-status {
+	color: var(--muted);
+}
+
+/* Progressive unlock image */
+.dt-unlock {
+	margin: 0 0 2.5rem;
+}
+.dt-unlock-frame {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 3 / 2;
+	max-height: 320px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	overflow: hidden;
+	background: var(--paper);
+}
+.dt-unlock-svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+.dt-unlock-strip {
+	position: absolute;
+	left: 0;
+	width: 100%;
+	height: 33.34%;
+	opacity: 0;
+	pointer-events: none;
+	background: color-mix(in srgb, var(--paper) 55%, transparent);
+	-webkit-backdrop-filter: blur(7px);
+	backdrop-filter: blur(7px);
+	transition: opacity 0.6s ease;
+}
+.dt-unlock-strip.is-locked {
+	opacity: 1;
+}
+.dt-unlock-caption {
+	margin-top: 0.6rem;
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.dt-unlock-hint {
+	font-family: var(--mono);
+	font-size: 0.72rem;
+}
+
+/* 8-bit game panel */
+.dt-game {
+	margin-bottom: 2.5rem;
+}
+.dt-game-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0.5rem 1rem;
+	margin-bottom: 0.6rem;
+}
+.dt-game-name {
+	font-family: var(--mono);
+	font-weight: 600;
+	font-size: 0.9rem;
+	color: var(--track-color, var(--accent));
+}
+.dt-game-instructions {
+	font-size: 0.85rem;
+	color: var(--muted);
+}
+.dt-game-canvas {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 220px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: var(--viewfinder-bg, #0d0d0f);
+}
+.dt-game-placeholder {
+	font-family: var(--mono);
+	font-size: 0.78rem;
+	color: var(--muted);
 }
 
 .dt-footer-link,

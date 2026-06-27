@@ -1,0 +1,124 @@
+---
+import { withBase } from '../../lib/url';
+import { getTrack } from '../../data/devterms/content';
+import UnlockImage from './UnlockImage.astro';
+
+interface Props {
+	trackSlug: string;
+}
+const { trackSlug } = Astro.props;
+const track = getTrack(trackSlug)!;
+const authored = track.levels.length > 0;
+
+// Rows come from authored levels when available, else generic placeholders.
+const rows = authored
+	? track.levels.map((l) => ({ n: l.number, title: l.title, terms: l.terms.length, xp: l.xpReward }))
+	: Array.from({ length: track.levelCount }, (_, i) => ({ n: i + 1, title: 'Coming soon', terms: 0, xp: 0 }));
+---
+
+<div data-dt-track data-track-slug={track.slug} data-authored={String(authored)} style={`--track-color: ${track.color}`}>
+	{authored && (
+		<a class="dt-start-cta" id="dt-start-cta" href={withBase(`dev-terms/${track.slug}/1`)}>Start Level 1 →</a>
+	)}
+
+	<section class="dt-level-list" aria-label="Levels">
+		{rows.map((row) => (
+			<a
+				class="dt-level-row"
+				data-level-row
+				data-level={row.n}
+				href={authored ? withBase(`dev-terms/${track.slug}/${row.n}`) : '#'}
+			>
+				<span class="dt-level-main">
+					<span class="dt-level-num">Level {row.n}</span>
+					<span class="dt-level-title">{row.title}</span>
+				</span>
+				<span class="dt-level-side">
+					{authored && (
+						<span class="dt-level-meta">
+							{row.terms} terms · {row.xp} XP
+						</span>
+					)}
+					<span class="dt-level-status" data-level-status>{row.n === 1 && authored ? 'Start' : authored ? 'Locked' : 'Coming soon'}</span>
+				</span>
+			</a>
+		))}
+	</section>
+
+	<UnlockImage trackSlug={track.slug} />
+
+	<section class="dt-game" aria-label={`${track.game.name} mini-game`}>
+		<header class="dt-game-head">
+			<span class="dt-game-name">{track.game.name}</span>
+			<span class="dt-game-instructions">{track.game.instructions}</span>
+		</header>
+		<div class="dt-game-canvas" data-game-slot data-game-slug={track.game.slug}>
+			<span class="dt-game-placeholder">Mini-game arriving soon — score: {track.game.scoreLabel}</span>
+		</div>
+	</section>
+</div>
+
+<script>
+	import { getState, getTrackProgress } from '../../lib/devTermsState';
+	import { getTrack } from '../../data/devterms/content';
+	import { withBase } from '../../lib/url';
+
+	function hydrate() {
+		const root = document.querySelector('[data-dt-track]') as HTMLElement | null;
+		if (!root) return;
+		const slug = root.dataset.trackSlug!;
+		const authored = root.dataset.authored === 'true';
+		const track = getTrack(slug);
+		if (!track) return;
+
+		const state = getState();
+		const progress = getTrackProgress(state, slug);
+		const completed = new Set(progress.levelsCompleted);
+
+		// Level rows: sequential locks (level n unlocked if n===1 or n-1 completed)
+		let nextIncomplete = 0;
+		root.querySelectorAll('[data-level-row]').forEach((el) => {
+			const row = el as HTMLElement;
+			const n = Number(row.dataset.level);
+			const isDone = completed.has(n);
+			const isUnlocked = authored && (n === 1 || completed.has(n - 1));
+			const statusEl = row.querySelector('[data-level-status]') as HTMLElement | null;
+
+			row.classList.toggle('is-complete', isDone);
+			row.classList.toggle('is-locked', authored ? !isUnlocked : true);
+
+			if (!authored) {
+				if (statusEl) statusEl.textContent = 'Coming soon';
+				row.removeAttribute('href');
+				return;
+			}
+			if (isDone) {
+				if (statusEl) statusEl.textContent = 'Completed ✓';
+			} else if (isUnlocked) {
+				if (statusEl) statusEl.textContent = nextIncomplete === 0 ? 'Start →' : 'Available';
+				if (nextIncomplete === 0) nextIncomplete = n;
+			} else {
+				if (statusEl) statusEl.textContent = 'Locked';
+				row.removeAttribute('href'); // locked rows are not navigable
+			}
+		});
+
+		// Start CTA → next incomplete level (or all done → replay level 1)
+		const cta = document.getElementById('dt-start-cta') as HTMLAnchorElement | null;
+		if (cta && authored) {
+			const allDone = progress.levelsCompleted.length >= track.levelCount;
+			const target = allDone ? 1 : nextIncomplete || 1;
+			const verb = allDone ? 'Replay' : progress.levelsCompleted.length > 0 ? 'Continue' : 'Start';
+			cta.textContent = `${verb} Level ${target} →`;
+			cta.href = withBase(`dev-terms/${slug}/${target}`);
+		}
+
+		// Unlock image strips: strip i revealed when imageSegmentsUnlocked >= i
+		root.querySelectorAll('[data-segment]').forEach((el) => {
+			const seg = Number((el as HTMLElement).dataset.segment);
+			el.classList.toggle('is-locked', seg > progress.imageSegmentsUnlocked);
+		});
+	}
+
+	document.addEventListener('astro:page-load', hydrate);
+</script>
