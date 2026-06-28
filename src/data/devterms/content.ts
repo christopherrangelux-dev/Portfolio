@@ -1,4 +1,4 @@
-// Dev Terms content data (spec §6 schema, §9 Git Flow content).
+// Field Manual content data (spec §6 schema, §9 Git Flow content).
 //
 // Git Flow (Track 1) is fully authored: 3 levels with briefings, exchanges,
 // decisions, and term definitions. Tracks 2–6 carry their metadata, game, and

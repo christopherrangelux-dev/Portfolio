@@ -1,4 +1,4 @@
-// Dev Terms — localStorage state machine.
+// Field Manual — localStorage state machine.
 //
 // All player progress lives under a single key (`devTermsState`). This module
 // owns reading, writing, resetting, and the progression math (XP → level,

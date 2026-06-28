@@ -35,7 +35,7 @@ const rows = authored
 
 <div data-dt-track data-track-slug={track.slug} data-authored={String(authored)} style={`--track-color: ${track.color}`}>
 	{authored && (
-		<a class="dt-start-cta" id="dt-start-cta" href={withBase(`dev-terms/${track.slug}/1`)}>Start Level 1 →</a>
+		<a class="dt-start-cta" id="dt-start-cta" href={withBase(`field-manual/${track.slug}/1`)}>Start Level 1 →</a>
 	)}
 
 	<section class="dt-level-list" aria-label="Levels">
@@ -44,7 +44,7 @@ const rows = authored
 				class="dt-level-row"
 				data-level-row
 				data-level={row.n}
-				href={authored ? withBase(`dev-terms/${track.slug}/${row.n}`) : '#'}
+				href={authored ? withBase(`field-manual/${track.slug}/${row.n}`) : '#'}
 			>
 				<span class="dt-level-main">
 					<span class="dt-level-num">Level {row.n}</span>
@@ -134,7 +134,7 @@ const rows = authored
 			const target = allDone ? 1 : nextIncomplete || 1;
 			const verb = allDone ? 'Replay' : progress.levelsCompleted.length > 0 ? 'Continue' : 'Start';
 			cta.textContent = `${verb} Level ${target} →`;
-			cta.href = withBase(`dev-terms/${slug}/${target}`);
+			cta.href = withBase(`field-manual/${slug}/${target}`);
 		}
 
 		// Unlock image strips: strip i revealed when imageSegmentsUnlocked >= i

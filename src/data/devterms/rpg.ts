@@ -1,4 +1,4 @@
-// Dev Terms — RPG progression data (titles + gear), from spec §7.
+// Field Manual — RPG progression data (titles + gear), from spec §7.
 //
 // Titles and gear are unlocked by *conditions* (not raw XP — every title is
 // xpRequired: 0). The player's numeric level (1–10) is XP-driven and lives in

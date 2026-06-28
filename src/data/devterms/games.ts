@@ -1,4 +1,4 @@
-// Dev Terms — 8-bit game configs (spec §8 / §6 GameConfig).
+// Field Manual — 8-bit game configs (spec §8 / §6 GameConfig).
 //
 // One game per track. Slugs match the component filenames under
 // components/devterms/games/. scoreLabel + instructions are surfaced in the

@@ -15,9 +15,9 @@ const { track: trackSlug } = Astro.params;
 const track = getTrack(trackSlug!)!;
 ---
 
-<Base title={`${track.name} — Dev Terms`} description={track.tagline}>
+<Base title={`${track.name} — Field Manual`} description={track.tagline}>
 	<div class="container devterms" style={`--track-color: ${track.color}`}>
-		<a class="dt-back-link" href={withBase('dev-terms')}>← All tracks</a>
+		<a class="dt-back-link" href={withBase('field-manual')}>← All tracks</a>
 		<section class="dt-hero">
 			<p class="dt-eyebrow">{track.missionTheme}</p>
 			<div class="dt-hero-title-row">

@@ -10,7 +10,7 @@ import XPBar from './XPBar.astro';
 		<AvatarDisplay />
 		<div class="dt-dashboard-status">
 			<XPBar />
-			<a class="dt-continue" id="dt-continue" href={withBase('dev-terms/git-flow')}>Start: Git Flow →</a>
+			<a class="dt-continue" id="dt-continue" href={withBase('field-manual/git-flow')}>Start: Git Flow →</a>
 		</div>
 	</section>
 
@@ -20,7 +20,7 @@ import XPBar from './XPBar.astro';
 				<a
 					class="dt-track-card"
 					data-track-slug={track.slug}
-					href={withBase(`dev-terms/${track.slug}`)}
+					href={withBase(`field-manual/${track.slug}`)}
 					style={`--track-color: ${track.color}`}
 				>
 					<span class="dt-track-head">
@@ -131,7 +131,7 @@ import XPBar from './XPBar.astro';
 			const name = getTrack(cont.trackSlug)?.name ?? 'Git Flow';
 			const verb = cont.mode === 'start' ? 'Start' : cont.mode === 'replay' ? 'Replay' : 'Continue';
 			contEl.textContent = `${verb}: ${name} →`;
-			contEl.href = withBase(`dev-terms/${cont.trackSlug}`);
+			contEl.href = withBase(`field-manual/${cont.trackSlug}`);
 		}
 
 		// Recently learned
