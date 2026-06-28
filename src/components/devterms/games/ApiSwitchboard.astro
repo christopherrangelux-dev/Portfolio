@@ -1,0 +1,278 @@
+---
+// API Switchboard — API Literacy's 8-bit mini-game (spec §8). Canvas only.
+// Requests drop from the top tagged with a destination; route each one left or
+// right (arrow keys / A-D / tap a side) to the matching endpoint. A correct
+// route is a 200 (+1); a wrong route is a 404 (-1). Drop one unrouted and the
+// switchboard jams — game over. Best score persists.
+//
+// Same scaffolding as GitRunner: chunky pixels, two-colour palette (track teal
+// + off-white) on a dark field, Press Start 2P scoped to the game UI only.
+---
+
+<div class="dt-switch" data-switch>
+	<canvas class="dt-switch-canvas" data-switch-canvas role="img" aria-label="API Switchboard — route each request left or right to the correct endpoint"></canvas>
+</div>
+
+<script>
+	const BEST_KEY = 'dt-api-switchboard-best';
+	const H = 220;
+	const ENDPOINTS = ['USERS', 'ORDERS'] as const; // left, right
+
+	type Side = 'left' | 'right';
+	interface Req {
+		x: number;
+		y: number;
+		target: Side;
+		routing: Side | null;
+		result: '200' | '404' | null;
+		flash: number;
+	}
+
+	let rafId = 0;
+	let cleanup: Array<() => void> = [];
+
+	function readBest(): number {
+		try {
+			return Number(localStorage.getItem(BEST_KEY)) || 0;
+		} catch {
+			return 0;
+		}
+	}
+	function writeBest(n: number) {
+		try {
+			localStorage.setItem(BEST_KEY, String(n));
+		} catch {
+			/* ignore */
+		}
+	}
+
+	function setup() {
+		destroy();
+		const canvas = document.querySelector<HTMLCanvasElement>('[data-switch-canvas]');
+		if (!canvas) return;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		const palette = {
+			teal: getComputedStyle(canvas).getPropertyValue('--track-color').trim() || '#1D9E75',
+			ink: '#f4f1ea',
+			bg: '#0f1014',
+			bad: '#d9683f',
+		};
+
+		const PW = 64;
+		const PH = 24;
+		let W = 0;
+		let leftX = 0;
+		let rightX = 0;
+		const endpointY = H - 34;
+
+		function resize() {
+			const dpr = Math.min(window.devicePixelRatio || 1, 2);
+			W = canvas!.clientWidth || 800;
+			canvas!.width = Math.round(W * dpr);
+			canvas!.height = Math.round(H * dpr);
+			ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+			ctx!.imageSmoothingEnabled = false;
+			leftX = Math.round(W * 0.25);
+			rightX = Math.round(W * 0.75);
+		}
+		resize();
+
+		const g = {
+			mode: 'idle' as 'idle' | 'running' | 'over',
+			t: 0,
+			score: 0,
+			best: readBest(),
+			fall: 1.4,
+			req: null as Req | null,
+			endpointFlash: { left: 0, right: 0 },
+		};
+
+		function spawn() {
+			const target: Side = Math.random() < 0.5 ? 'left' : 'right';
+			g.req = { x: W / 2, y: -PH, target, routing: null, result: null, flash: 0 };
+		}
+
+		function reset() {
+			g.mode = 'running';
+			g.t = 0;
+			g.score = 0;
+			g.fall = 1.4;
+			g.endpointFlash = { left: 0, right: 0 };
+			spawn();
+		}
+
+		function route(side: Side) {
+			if (g.mode === 'idle' || g.mode === 'over') return reset();
+			const r = g.req;
+			if (!r || r.routing) return;
+			r.routing = side;
+		}
+
+		// ---- input ----
+		const onKey = (e: KeyboardEvent) => {
+			if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+				e.preventDefault();
+				route('left');
+			} else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+				e.preventDefault();
+				route('right');
+			} else if (e.code === 'Space' && g.mode !== 'running') {
+				e.preventDefault();
+				reset();
+			}
+		};
+		const onPointer = (e: PointerEvent) => {
+			e.preventDefault();
+			if (g.mode !== 'running') return reset();
+			const rect = canvas!.getBoundingClientRect();
+			route(e.clientX - rect.left < rect.width / 2 ? 'left' : 'right');
+		};
+		window.addEventListener('keydown', onKey);
+		canvas.addEventListener('pointerdown', onPointer);
+		window.addEventListener('resize', resize);
+		cleanup.push(() => window.removeEventListener('keydown', onKey));
+		cleanup.push(() => canvas.removeEventListener('pointerdown', onPointer));
+		cleanup.push(() => window.removeEventListener('resize', resize));
+
+		// ---- update ----
+		function resolve(r: Req) {
+			const ok = r.routing === r.target;
+			r.result = ok ? '200' : '404';
+			r.flash = 24;
+			const side = r.routing as Side;
+			g.endpointFlash[side] = 24;
+			if (ok) {
+				g.score++;
+				if (g.score > g.best) {
+					g.best = g.score;
+					writeBest(g.best);
+				}
+			} else {
+				g.score = Math.max(0, g.score - 1);
+			}
+			g.fall = Math.min(4, g.fall + 0.08);
+			setTimeout(() => {
+				if (g.mode === 'running') spawn();
+			}, 0);
+			g.req = null;
+		}
+
+		function update() {
+			g.t++;
+			if (g.endpointFlash.left > 0) g.endpointFlash.left--;
+			if (g.endpointFlash.right > 0) g.endpointFlash.right--;
+			if (g.mode !== 'running' || !g.req) return;
+			const r = g.req;
+			r.y += g.fall;
+
+			if (r.routing) {
+				const tx = r.routing === 'left' ? leftX : rightX;
+				r.x += (tx - r.x) * 0.25;
+				if (Math.abs(r.x - tx) < 3 || r.y + PH >= endpointY) return resolve(r);
+			} else if (r.y + PH >= endpointY) {
+				// dropped unrouted → jam
+				g.mode = 'over';
+				g.req = null;
+			}
+		}
+
+		// ---- render ----
+		function px(x: number, y: number, w: number, h: number, color: string) {
+			ctx!.fillStyle = color;
+			ctx!.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+		}
+		function text(s: string, x: number, y: number, size: number, color: string, align: CanvasTextAlign = 'left') {
+			ctx!.fillStyle = color;
+			ctx!.font = `${size}px 'Press Start 2P', monospace`;
+			ctx!.textAlign = align;
+			ctx!.textBaseline = 'alphabetic';
+			ctx!.fillText(s, x, y);
+		}
+
+		function endpoint(cx: number, label: string, flash: number) {
+			const w = 90;
+			const on = flash > 0;
+			px(cx - w / 2, endpointY, w, 26, on ? palette.teal : palette.bg);
+			ctx!.strokeStyle = palette.teal;
+			ctx!.lineWidth = 2;
+			ctx!.strokeRect(Math.round(cx - w / 2) + 1, endpointY + 1, w - 2, 24);
+			text(label, cx, endpointY + 17, 8, on ? palette.bg : palette.teal, 'center');
+		}
+
+		function render() {
+			px(0, 0, W, H, palette.bg);
+
+			// guide rails from center to each endpoint
+			ctx!.globalAlpha = 0.25;
+			px(leftX, 30, 2, endpointY - 30, palette.teal);
+			px(rightX, 30, 2, endpointY - 30, palette.teal);
+			ctx!.globalAlpha = 1;
+
+			endpoint(leftX, ENDPOINTS[0], g.endpointFlash.left);
+			endpoint(rightX, ENDPOINTS[1], g.endpointFlash.right);
+
+			const r = g.req;
+			if (r) {
+				const label = r.target === 'left' ? ENDPOINTS[0] : ENDPOINTS[1];
+				px(r.x - PW / 2, r.y, PW, PH, palette.bg);
+				ctx!.strokeStyle = palette.ink;
+				ctx!.lineWidth = 2;
+				ctx!.strokeRect(Math.round(r.x - PW / 2) + 1, Math.round(r.y) + 1, PW - 2, PH - 2);
+				text('GET', r.x, r.y + 11, 6, palette.teal, 'center');
+				text(label, r.x, r.y + 20, 6, palette.ink, 'center');
+			}
+
+			text(`200s ${g.score}`, 12, 22, 8, palette.ink);
+			text(`BEST ${g.best}`, W - 12, 22, 8, palette.teal, 'right');
+
+			if (g.mode === 'idle') {
+				text('API SWITCHBOARD', W / 2, H / 2 - 18, 11, palette.ink, 'center');
+				text('ROUTE EACH REQUEST', W / 2, H / 2 + 2, 8, palette.teal, 'center');
+				text('LEFT / RIGHT OR TAP', W / 2, H / 2 + 18, 8, palette.teal, 'center');
+			} else if (g.mode === 'over') {
+				text('JAMMED!', W / 2, H / 2 - 14, 12, palette.bad, 'center');
+				text(`${g.score} RESPONSES`, W / 2, H / 2 + 6, 8, palette.ink, 'center');
+				text('SPACE / TAP TO RETRY', W / 2, H / 2 + 24, 8, palette.teal, 'center');
+			}
+		}
+
+		function loop() {
+			update();
+			render();
+			rafId = requestAnimationFrame(loop);
+		}
+		(document as any).fonts?.load("8px 'Press Start 2P'").catch(() => {});
+		loop();
+	}
+
+	function destroy() {
+		if (rafId) cancelAnimationFrame(rafId);
+		rafId = 0;
+		cleanup.forEach((fn) => fn());
+		cleanup = [];
+	}
+
+	setup();
+	document.addEventListener('astro:page-load', setup);
+	document.addEventListener('astro:before-swap', destroy);
+</script>
+
+<style>
+	@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+	.dt-switch {
+		width: 100%;
+		height: 100%;
+	}
+	.dt-switch-canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		border-radius: 6px;
+		cursor: pointer;
+		touch-action: manipulation;
+	}
+</style>

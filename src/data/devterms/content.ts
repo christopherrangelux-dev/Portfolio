@@ -343,6 +343,287 @@ const gitFlowLevels: Level[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Track 2 — API Literacy (fully authored)
+// ---------------------------------------------------------------------------
+
+const apiLiteracyLevels: Level[] = [
+	{
+		number: 1,
+		title: "What's an API",
+		xpReward: 15,
+		scenario: {
+			briefing:
+				"Mission 2-A: The new pricing page shipped to staging looking perfect — except the prices are blank. Empty white space where numbers should be. The design is fine. Something underneath isn't talking to something else.",
+			exchanges: [
+				{
+					speaker: 'The Backend Engineer',
+					text: "The layout's right, the data's just not arriving. That page asks an `API` for the prices — an API is basically a waiter. Your page tells the waiter what it wants, the waiter goes to the kitchen, and brings the data back. Right now the waiter's coming back empty-handed.",
+					highlightedTerms: ['api'],
+				},
+				{
+					speaker: 'The Backend Engineer',
+					text: "Every API has `endpoint`s — specific addresses you ask for specific things. The prices live at `/api/pricing`. Think of an endpoint like a single item on the waiter's menu. You don't ask for 'everything,' you ask for one thing by name.",
+					highlightedTerms: ['endpoint'],
+				},
+				{
+					speaker: 'You',
+					text: "I open the network tab and watch the page load. There it is — a line that says `GET /api/pricing`. So it is asking. The asking is the part I didn't know had a name.",
+					highlightedTerms: [],
+				},
+				{
+					speaker: 'The Backend Engineer',
+					text: "That line is the `request` — your page asking for something. What comes back is the `response`. The request went out fine. The response came back empty. So the problem's on our side, not the page's. Good — that means your design isn't broken.",
+					highlightedTerms: ['request', 'response'],
+				},
+			],
+			decision: {
+				prompt: 'The Backend Engineer asks: "The prices are blank on staging. Where do you point first?"',
+				options: [
+					{
+						text: 'Assume the design is broken and start redoing the layout',
+						correct: false,
+						consequence:
+							"The layout rendered fine — it just had nothing to render. Tearing up good design work won't fill an empty response. Look at the data first.",
+					},
+					{
+						text: 'Check whether the request got a real response',
+						correct: true,
+						consequence:
+							"Exactly. An empty page with a working layout means the data didn't arrive. Checking the request/response tells you which side of the wall the problem is on.",
+					},
+					{
+						text: "File it as a 'mystery bug' and move on",
+						correct: false,
+						consequence:
+							"You're closer than you think. 'No data on the page' almost always means the request came back empty. That's a lead, not a mystery.",
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'api',
+				word: 'API',
+				codeExample: 'GET https://api.acme.com/pricing',
+				definition:
+					'A messenger that lets two pieces of software talk to each other. One side asks for something, the API carries the request to wherever the answer lives, and brings the answer back. Like a waiter between you and the kitchen — you never go into the kitchen yourself.',
+				designerContext:
+					"When a screen shows live data — prices, user names, search results — that data almost always comes through an API. If it's blank or wrong, the API is usually where the trail starts, not your layout.",
+			},
+			{
+				slug: 'endpoint',
+				word: 'endpoint',
+				codeExample: '/api/pricing',
+				definition:
+					'One specific address on an API for one specific thing. An API can have many endpoints — one for prices, one for users, one for orders. Like individual items on a menu, each with its own name.',
+				designerContext:
+					'When an engineer says "that data comes from the pricing endpoint," they\'re naming the exact source feeding your screen. Knowing the word lets you ask "which endpoint?" instead of "where does this come from?"',
+			},
+			{
+				slug: 'request',
+				word: 'request',
+				codeExample: 'fetch("/api/pricing")',
+				definition:
+					"The act of a screen asking an API for something. Every piece of live data on a page started as a request that went out somewhere. It's the question, before the answer.",
+				designerContext:
+					"In a browser's network tab you can watch requests fire as a page loads. For a designer, this is how you confirm a screen is even trying to get the data it's missing.",
+			},
+			{
+				slug: 'response',
+				word: 'response',
+				definition:
+					'What an API sends back after a request. It might be the data you asked for, or a message saying something went wrong. The response is the answer to the question the request asked.',
+				designerContext:
+					'"The response came back empty" means the page asked correctly but got nothing useful. That tells you the problem is in the data, not your design — a distinction that saves hours.',
+			},
+		],
+	},
+	{
+		number: 2,
+		title: 'Reading the response',
+		xpReward: 20,
+		scenario: {
+			briefing:
+				'Mission 2-B: A contact form keeps failing. Users fill it out, hit submit, and get a vague red error. No one can reproduce it reliably. The answer is sitting in the response — you just have to learn to read it.',
+			exchanges: [
+				{
+					speaker: 'The Backend Engineer',
+					text: "Every response comes with a `status code` — a three-digit number that says how it went. 200 means success. 400-something means you sent something wrong. 500-something means the server broke. The form's coming back 401. That's not random — that's a specific story.",
+					highlightedTerms: ['status-code'],
+				},
+				{
+					speaker: 'The Backend Engineer',
+					text: 'Open the response body. It\'s `JSON` — that format with the curly braces and key/value pairs. It\'s just structured text, organized so both humans and machines can read it. The JSON here says `{ "error": "missing token" }`. That\'s the actual reason.',
+					highlightedTerms: ['json'],
+				},
+				{
+					speaker: 'The On-Call Engineer',
+					text: "A 401 with 'missing token' means `authentication` failed. The form tried to submit without proving who it was. Authentication is the login check — the 'are you allowed to do this' step. The form's knock on the door had no ID attached.",
+					highlightedTerms: ['authentication'],
+				},
+				{
+					speaker: 'You',
+					text: "I look closer. The proof of identity is supposed to ride along in the request `headers` — the little envelope of info attached to every request. This one's envelope is empty. Now I can describe the bug precisely instead of saying 'it's broken.'",
+					highlightedTerms: ['headers'],
+				},
+			],
+			decision: {
+				prompt: 'You found the form returns a 401 with "missing token." How do you write up the bug?',
+				options: [
+					{
+						text: '"The form is broken, please fix"',
+						correct: false,
+						consequence:
+							'Technically true, but it sends the engineer on the same hunt you just finished. You already know more than this — share it.',
+					},
+					{
+						text: '"Submit returns 401 \'missing token\' — auth header looks empty"',
+						correct: true,
+						consequence:
+							'That\'s a report an engineer can act on in minutes. You named the status code, the message, and the likely cause. This is what fluency buys you.',
+					},
+					{
+						text: 'Keep testing to see if it fails every time',
+						correct: false,
+						consequence:
+							'You already have a 401 and a clear error message in the response. More repro attempts won\'t tell you more than the response already did.',
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'status-code',
+				word: 'status code',
+				codeExample: '200 OK · 401 Unauthorized · 500 Internal Server Error',
+				definition:
+					'A three-digit number every API response includes to say how things went. 200s mean success, 400s mean the request had a problem, 500s mean the server itself failed. A one-glance summary of the outcome.',
+				designerContext:
+					'When something on a screen fails, the status code tells you whose fault it is. A 404 (not found) versus a 403 (not allowed) versus a 500 (server broke) point to completely different fixes — and different error states you might need to design.',
+			},
+			{
+				slug: 'json',
+				word: 'JSON',
+				codeExample: '{ "name": "Acme", "price": 49, "inStock": true }',
+				definition:
+					'A way of writing structured data as plain text, using labels and values inside curly braces. It\'s how most APIs send information back. Readable enough for a person, strict enough for a machine — like a very tidy bulleted list.',
+				designerContext:
+					"When you peek at the data behind a screen, it'll almost always be JSON. Being able to skim it lets you confirm whether a field you designed for actually exists in the data, or what it's really called.",
+			},
+			{
+				slug: 'headers',
+				word: 'headers',
+				codeExample: 'Authorization: Bearer abc123',
+				definition:
+					'Extra information attached to a request or response that isn\'t the main content — things like who\'s asking, what format they want, and proof of identity. Like the envelope around a letter: not the message itself, but everything needed to deliver and verify it.',
+				designerContext:
+					'You usually won\'t touch headers directly, but when a request fails for "auth" or "permission" reasons, a missing or wrong header is often why. Knowing the word helps you follow the debugging conversation.',
+			},
+			{
+				slug: 'authentication',
+				word: 'authentication',
+				definition:
+					'The process of proving you are who you say you are before a system lets you in. The "are you logged in" check. Distinct from what you\'re allowed to do once inside — this is just the front-door ID check.',
+				designerContext:
+					'Auth states are design work — logged in, logged out, session expired, "please sign in again." Understanding what authentication is helps you design the moments when it succeeds, fails, or runs out.',
+			},
+		],
+	},
+	{
+		number: 3,
+		title: 'The full picture',
+		xpReward: 25,
+		scenario: {
+			briefing:
+				'Mission 2-C: Launch is in three days. The integration with the payments provider — the thing that actually charges customers — just started failing intermittently. Sometimes it works. Sometimes it returns nothing. Intermittent is the worst kind.',
+			exchanges: [
+				{
+					speaker: 'The Backend Engineer',
+					text: "Our payments integration follows `REST` — a common set of conventions for how APIs are organized. Predictable addresses, standard verbs like GET and POST. The good news: because it's REST, it behaves the way we expect. So a failure means something specific changed, not chaos.",
+					highlightedTerms: ['rest'],
+				},
+				{
+					speaker: 'The Backend Engineer',
+					text: "Look at the logs — we're getting `429`s. That's a `rate limit`. The provider only allows so many requests per minute, and we're knocking too fast. They're not rejecting our data; they're telling us to slow down. Intermittent failure makes sense now — we fail only when we burst.",
+					highlightedTerms: ['rate-limit'],
+				},
+				{
+					speaker: 'The On-Call Engineer',
+					text: "Separate thing to check: the provider sends us a `webhook` when a payment settles — they call us, instead of us asking them. If that webhook's `payload` — the actual data bundle in the message — changed shape, our confirmation screen could break even when the charge succeeded.",
+					highlightedTerms: ['webhook', 'payload'],
+				},
+				{
+					speaker: 'You',
+					text: "So two different mechanisms, two different failure modes. The rate limit explains the intermittent drops. The webhook payload is worth checking for the confirmation screen. I'm not guessing anymore — I'm narrowing.",
+					highlightedTerms: [],
+				},
+			],
+			decision: {
+				prompt: 'Payments fail only during high traffic and return a 429. What\'s the right read?',
+				options: [
+					{
+						text: 'The payment provider is down',
+						correct: false,
+						consequence:
+							"A 429 isn't 'down' — it's 'too fast.' The provider is up and answering; it's asking us to throttle. Different problem, different fix.",
+					},
+					{
+						text: "We're hitting a rate limit during bursts",
+						correct: true,
+						consequence:
+							"Right. 429 plus 'only under load' is a textbook rate limit. The fix is pacing our requests, not panicking about an outage.",
+					},
+					{
+						text: 'Redesign the checkout flow',
+						correct: false,
+						consequence:
+							"The flow's fine — it's being throttled by request volume, not a UX problem. Redesigning won't change how fast we hit the provider.",
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'rest',
+				word: 'REST',
+				codeExample: 'GET /users/42 · POST /orders',
+				definition:
+					'A widely used set of conventions for how APIs are organized and named. It makes APIs predictable — addresses follow patterns, and a standard set of verbs (get, create, update, delete) does the work. Less a technology, more an agreed-upon style.',
+				designerContext:
+					'When an engineer says "it\'s a REST API," they mean it follows familiar rules. For you, that predictability means the data behind your screens is organized in consistent, learnable ways.',
+			},
+			{
+				slug: 'webhook',
+				word: 'webhook',
+				codeExample: 'POST /webhooks/payment-settled',
+				definition:
+					'A reversal of the usual direction — instead of your app asking an API for updates, the other service automatically notifies your app the moment something happens. Like the difference between checking your mailbox repeatedly and getting a text when mail arrives.',
+				designerContext:
+					'Webhooks power "it just happened" moments — a payment clears, a file finishes processing, a status flips. If a confirmation or notification you designed feels delayed or missing, a webhook is often the thing behind it.',
+			},
+			{
+				slug: 'rate-limit',
+				word: 'rate limit',
+				codeExample: '429 Too Many Requests',
+				definition:
+					'A cap on how many requests you\'re allowed to make in a given window of time. Go over it and the API politely refuses with a 429 until you slow down. It protects services from being overwhelmed — like a "one scoop per customer" rule.',
+				designerContext:
+					'Rate limits create real UX situations — "you\'re doing that too fast, try again in a minute." If a feature fails only under heavy use, a rate limit may be why, and you may need to design the slow-down gracefully.',
+			},
+			{
+				slug: 'payload',
+				word: 'payload',
+				codeExample: '{ "orderId": 991, "status": "paid" }',
+				definition:
+					'The actual content carried inside a request or response — the meat of the message, as opposed to the addressing and envelope around it. When data is sent or received, the payload is the data part.',
+				designerContext:
+					'When an engineer says "the payload changed," the shape of the data your screen receives is different — a renamed field, a missing value. That can break a display even when nothing visually obvious failed.',
+			},
+		],
+	},
+];
+
+// ---------------------------------------------------------------------------
 // Tracks
 // ---------------------------------------------------------------------------
 
@@ -375,7 +656,7 @@ export const TRACKS: Track[] = [
 		missionTheme: 'Debugging an overnight outage',
 		terms: 12,
 		levelCount: 3,
-		levels: [],
+		levels: apiLiteracyLevels,
 		game: GAMES['api-literacy'],
 		unlockImage: {
 			description:

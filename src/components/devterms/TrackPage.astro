@@ -3,6 +3,14 @@ import { withBase } from '../../lib/url';
 import { getTrack } from '../../data/devterms/content';
 import UnlockImage from './UnlockImage.astro';
 import GitRunner from './games/GitRunner.astro';
+import ApiSwitchboard from './games/ApiSwitchboard.astro';
+
+// Per-track mini-game, keyed by the game slug. Tracks without an entry here
+// fall back to the "arriving soon" placeholder until their game is built.
+const GAME_COMPONENTS: Record<string, typeof GitRunner> = {
+	'git-runner': GitRunner,
+	'api-switchboard': ApiSwitchboard,
+};
 
 interface Props {
 	trackSlug: string;
@@ -54,11 +62,14 @@ const rows = authored
 			<span class="dt-game-instructions">{track.game.instructions}</span>
 		</header>
 		<div class="dt-game-canvas" data-game-slot data-game-slug={track.game.slug}>
-			{track.game.slug === 'git-runner' ? (
-				<GitRunner />
-			) : (
-				<span class="dt-game-placeholder">Mini-game arriving soon — score: {track.game.scoreLabel}</span>
-			)}
+			{(() => {
+				const Game = GAME_COMPONENTS[track.game.slug];
+				return Game ? (
+					<Game />
+				) : (
+					<span class="dt-game-placeholder">Mini-game arriving soon — score: {track.game.scoreLabel}</span>
+				);
+			})()}
 		</div>
 	</section>
 </div>
