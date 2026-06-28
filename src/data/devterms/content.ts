@@ -1171,6 +1171,289 @@ const cicdLevels: Level[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Track 5 — Security & Compliance (spec §10)
+// ---------------------------------------------------------------------------
+
+const securityLevels: Level[] = [
+	{
+		number: 1,
+		title: 'The basics',
+		xpReward: 15,
+		scenario: {
+			briefing:
+				'Mission 5-A: A security auditor is poking at the site and pings the team: "Why is this page served over HTTP?" There\'s a small lock icon missing from the address bar on one page — and that tiny missing lock is apparently a real problem.',
+			exchanges: [
+				{
+					speaker: 'The Security Engineer',
+					text: "That page loads over plain `HTTP` instead of `HTTPS`. The 'S' means the connection is encrypted — scrambled so no one in between can read it. Without it, anything typed on that page travels in the open, readable by anyone snooping the network.",
+					highlightedTerms: ['https', 'encryption'],
+				},
+				{
+					speaker: 'The Security Engineer',
+					text: 'The scrambling itself is `encryption` — turning readable data into nonsense that only the right key can unlock. HTTPS encrypts the conversation between the browser and the server. The missing lock icon means this one page isn\'t doing that.',
+					highlightedTerms: ['encryption'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: "Two more words you'll hear constantly, and people mix them up: `authentication` is proving *who you are* — logging in. `authorization` is what you're *allowed to do* once you're in. Auth-n is the ID check at the door; auth-z is which rooms your badge opens.",
+					highlightedTerms: ['authentication', 'authorization'],
+				},
+				{
+					speaker: 'You',
+					text: 'So the fix is forcing HTTPS on that page. And the auth distinction finally clicks — the "you\'re logged in but can\'t access this" state I keep designing is authorization, not authentication. Different screen, different message.',
+					highlightedTerms: [],
+				},
+			],
+			decision: {
+				prompt: 'A page that collects user info is served over HTTP, not HTTPS. How serious is this?',
+				options: [
+					{
+						text: "Minor — it's just a missing icon",
+						correct: false,
+						consequence:
+							'The icon is the visible symptom; the real issue is that user data on that page is unencrypted in transit. That\'s a genuine security gap, not cosmetics.',
+					},
+					{
+						text: 'Serious — user data is unencrypted in transit',
+						correct: true,
+						consequence:
+							'Exactly. Without HTTPS, anything entered on that page can be read by anyone between the user and the server. This is a real fix, prioritized accordingly.',
+					},
+					{
+						text: 'Not your concern as a designer',
+						correct: false,
+						consequence:
+							'Security touches UX directly — trust signals, the lock icon, "your connection is secure" messaging. Understanding it makes you a better partner, not a bystander.',
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'authentication',
+				word: 'authentication',
+				codeExample: '(login that proves identity — "authn")',
+				definition:
+					'Proving you are who you claim to be, usually by logging in. The front-door ID check before a system trusts you at all. Distinct from what you\'re then permitted to do.',
+				designerContext:
+					'Every login, signup, password reset, and "session expired, sign in again" flow is authentication design. Knowing the term — and that it\'s separate from permissions — sharpens how you design the "who are you" moments.',
+			},
+			{
+				slug: 'authorization',
+				word: 'authorization',
+				codeExample: '(permission check — "authz")',
+				definition:
+					'Deciding what an already-identified user is allowed to do or see. You can be authenticated (logged in) but not authorized (not permitted) for a specific action. The ID check gets you in the building; authorization decides which doors open.',
+				designerContext:
+					'"You don\'t have access to this" states are authorization design. Mixing it up with authentication leads to confusing messages — telling someone to log in when they\'re already logged in and simply lack permission.',
+			},
+			{
+				slug: 'https',
+				word: 'HTTPS',
+				codeExample: 'https://acme.com',
+				definition:
+					'The secure version of the web\'s basic protocol. The "S" means the connection between browser and server is encrypted, so data can\'t be read or tampered with along the way. The little lock icon in the address bar is its visible badge.',
+				designerContext:
+					'HTTPS is a baseline trust signal users have learned to look for. A missing lock or a "not secure" warning actively undermines confidence — which is why every page handling real data needs it.',
+			},
+			{
+				slug: 'encryption',
+				word: 'encryption',
+				codeExample: '(scrambling data so only a key can read it)',
+				definition:
+					'Turning readable information into scrambled nonsense that only someone with the right key can turn back. It protects data both while it travels and while it\'s stored. Like writing in a cipher only the intended reader can decode.',
+				designerContext:
+					'Encryption underpins the "your data is safe" promises in your UI. Understanding it lets you design honest security messaging — and know when phrases like "end-to-end encrypted" are accurate versus marketing.',
+			},
+		],
+	},
+	{
+		number: 2,
+		title: 'The data',
+		xpReward: 20,
+		scenario: {
+			briefing:
+				'Mission 5-B: A user just typed their Social Security number into a field you labeled "Order number." They misread it under stress. Now there\'s sensitive personal data sitting somewhere it was never meant to be, and the team has to deal with it carefully.',
+			exchanges: [
+				{
+					speaker: 'The Security Engineer',
+					text: 'An SSN is `PII` — Personally Identifiable Information. Data that can identify a real person: names, emails, government IDs, addresses. It\'s handled under stricter rules than ordinary data because a leak can genuinely harm someone.',
+					highlightedTerms: ['pii', 'data-retention'],
+				},
+				{
+					speaker: 'The Security Engineer',
+					text: 'Now we apply our `data retention` policy — the rules for how long we keep different kinds of data and when we delete it. PII that landed somewhere it shouldn\'t gets purged, not archived. The goal is to hold sensitive data for the shortest time we legitimately need it.',
+					highlightedTerms: ['data-retention'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: 'This is also a `vulnerability` worth fixing — a weakness someone could exploit, here a field that invites the wrong data. We design under `zero trust`: assume no request is automatically safe, verify everything. A clearer label and validation on that field closes the gap.',
+					highlightedTerms: ['vulnerability', 'zero-trust'],
+				},
+				{
+					speaker: 'You',
+					text: 'So a confusing label became a security problem. That reframes input design entirely — the label, the format hint, the validation aren\'t just UX polish, they\'re the first line of defense. I can prevent this category of mistake.',
+					highlightedTerms: [],
+				},
+			],
+			decision: {
+				prompt: 'A confusing field caused users to enter sensitive data in the wrong place. Whose problem is it?',
+				options: [
+					{
+						text: 'Purely an engineering/security issue',
+						correct: false,
+						consequence:
+							'The root cause was a misleading label — a design decision. Security cleans up the data, but preventing the next occurrence is squarely design work.',
+					},
+					{
+						text: 'A design problem with security consequences',
+						correct: true,
+						consequence:
+							'Exactly. Clear labels, format hints, and validation are how design prevents users from putting sensitive data where it doesn\'t belong. This is your lever.',
+					},
+					{
+						text: 'The user\'s fault for misreading',
+						correct: false,
+						consequence:
+							'Tempting, but "blame the user" fixes nothing — they were stressed and misled. If the label invited the mistake, the design owns preventing the next one.',
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'pii',
+				word: 'PII',
+				codeExample: '(name, email, SSN, address — Personally Identifiable Information)',
+				definition:
+					'Any data that can identify a specific real person — names, emails, phone numbers, government IDs, home addresses. It\'s governed by stricter handling and legal rules than ordinary data because exposing it can harm real people.',
+				designerContext:
+					'Whenever a form collects PII, you\'re designing something with legal and ethical weight. Knowing what counts as PII helps you design appropriate consent, clarity, and "why we need this" reassurance.',
+			},
+			{
+				slug: 'data-retention',
+				word: 'data retention',
+				codeExample: '(policy: "delete logs after 90 days")',
+				definition:
+					'The rules for how long different kinds of data are kept and when they\'re deleted. Good practice is to keep sensitive data only as long as genuinely needed, then remove it. Less "store everything forever," more "hold only what\'s necessary, only as long as necessary."',
+				designerContext:
+					'Retention shapes features like "download your data" and "delete my account." Understanding it helps you design honest, compliant flows around what happens to a user\'s information over time.',
+			},
+			{
+				slug: 'zero-trust',
+				word: 'zero trust',
+				codeExample: '(verify every request, trust none by default)',
+				definition:
+					'A security approach that assumes no request or user is automatically safe — even from inside the network — and verifies everything every time. The opposite of "you\'re in the building, so you must be fine." Trust is earned per action, not granted by location.',
+				designerContext:
+					'Zero trust can mean more frequent verification in the UI — re-confirming identity for sensitive actions, step-up auth. Knowing the principle helps you design those checks as reassurance rather than friction.',
+			},
+			{
+				slug: 'vulnerability',
+				word: 'vulnerability',
+				codeExample: '(an exploitable weakness, e.g. an unvalidated input)',
+				definition:
+					'A weakness in a system that someone could exploit to cause harm — steal data, break something, get unauthorized access. Found and fixed before bad actors find them, ideally. A gap in the fence, located before anyone climbs through. (Often shortened to "vuln" in conversation.)',
+				designerContext:
+					'Some vulnerabilities start as design gaps — a confusing field, a missing confirmation, an oversharing default. Recognizing that helps you see when a design choice is also a security choice.',
+			},
+		],
+	},
+	{
+		number: 3,
+		title: 'The audit',
+		xpReward: 25,
+		scenario: {
+			briefing:
+				'Mission 5-C: The audit report landed. There are findings — not catastrophic, but real, and each one needs an owner and a fix. A few of them, it turns out, point at screens you designed.',
+			exchanges: [
+				{
+					speaker: 'The Security Engineer',
+					text: 'Some findings came from `penetration testing` — hired experts who try to break in on purpose, with permission, to find holes before real attackers do. They probe like an adversary so we can patch what they find. Think of it as a fire drill for break-ins.',
+					highlightedTerms: ['penetration-testing', 'compliance'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: 'The whole audit exists for `compliance` — meeting the formal security and privacy standards our industry or customers require. Passing isn\'t optional; contracts and regulations depend on it. The findings are the gap between where we are and what the standard demands.',
+					highlightedTerms: ['compliance'],
+				},
+				{
+					speaker: 'The Security Engineer',
+					text: 'Two findings are yours-adjacent: `access control` — making sure people can only reach what they\'re permitted to — was too loose on one admin screen. And the `audit log`, the tamper-evident record of who did what and when, wasn\'t surfaced clearly in the UI for reviewers.',
+					highlightedTerms: ['access-control', 'audit-log'],
+				},
+				{
+					speaker: 'You',
+					text: 'So "who can see this" and "show the history of what happened" are design responsibilities with compliance teeth. The admin screen needs clearer permission states, and the audit log needs to be actually legible. Real, fixable, mine.',
+					highlightedTerms: [],
+				},
+			],
+			decision: {
+				prompt: 'An audit finding says an admin screen lets the wrong roles see sensitive controls. What\'s the design role here?',
+				options: [
+					{
+						text: 'None — access control is backend only',
+						correct: false,
+						consequence:
+							'Enforcement is backend, but *what each role sees* is interface design. Hiding or disabling controls by permission is a design decision with compliance impact.',
+					},
+					{
+						text: 'Design clear permission-based states for the screen',
+						correct: true,
+						consequence:
+							'Exactly. Showing the right controls to the right roles — and clearly — is design work. Good permission states make access control legible and auditable.',
+					},
+					{
+						text: 'Hide the whole screen from everyone',
+						correct: false,
+						consequence:
+							'Hiding it from everyone blocks the people who legitimately need it. The goal is the *right* access, not no access — that\'s what "access control" means.',
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'penetration-testing',
+				word: 'penetration testing',
+				codeExample: '(authorized simulated attack — "pen test")',
+				definition:
+					'Hiring skilled people to attack your own system on purpose, with permission, to find security holes before real attackers do. They think like an adversary so the weaknesses get patched first. A controlled break-in, run by the good guys.',
+				designerContext:
+					'Pen test findings often include UX-adjacent issues — exposed controls, weak confirmations, oversharing. Knowing the term helps you understand where some security-driven design changes originate.',
+			},
+			{
+				slug: 'compliance',
+				word: 'compliance',
+				codeExample: '(meeting standards like SOC 2, GDPR, HIPAA)',
+				definition:
+					'Meeting the formal security and privacy rules your industry, customers, or laws require. It\'s often a prerequisite to selling to certain clients or operating in certain markets. The documented proof that you handle data responsibly.',
+				designerContext:
+					'Compliance drives real UI requirements — consent banners, data-export tools, audit trails, specific disclosures. Understanding it helps you see why certain "boring" screens are non-negotiable rather than optional polish.',
+			},
+			{
+				slug: 'access-control',
+				word: 'access control',
+				codeExample: '(role-based permissions: who can do what)',
+				definition:
+					'The system of deciding who is allowed to see or do what, and enforcing it. It keeps sensitive actions and data limited to the right people. The set of rules behind "you have permission" and "you don\'t."',
+				designerContext:
+					'Access control is interface design as much as backend logic — which controls appear, which are disabled, what an under-permissioned user sees. Designing these states clearly is how access control becomes usable instead of confusing.',
+			},
+			{
+				slug: 'audit-log',
+				word: 'audit log',
+				codeExample: '[2026-06-27 14:03] user:42 changed role of user:88',
+				definition:
+					'A secure, tamper-evident record of who did what and when within a system — especially sensitive actions. When something needs accounting for, the audit log is the authoritative history. A logbook you can\'t quietly edit.',
+				designerContext:
+					'Audit logs frequently need a human-readable interface — for admins, reviewers, or auditors. Designing that history to be scannable and trustworthy is real, compliance-relevant design work.',
+			},
+		],
+	},
+];
+
+// ---------------------------------------------------------------------------
 // Tracks
 // ---------------------------------------------------------------------------
 
@@ -1256,7 +1539,7 @@ export const TRACKS: Track[] = [
 		missionTheme: 'Preparing for the audit',
 		terms: 12,
 		levelCount: 3,
-		levels: [],
+		levels: securityLevels,
 		game: GAMES['security'],
 		unlockImage: {
 			description:
