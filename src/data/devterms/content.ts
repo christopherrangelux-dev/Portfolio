@@ -624,6 +624,281 @@ const apiLiteracyLevels: Level[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Track 3 — Cloud & Infrastructure (fully authored)
+// ---------------------------------------------------------------------------
+
+const cloudInfraLevels: Level[] = [
+	{
+		number: 1,
+		title: 'Where does it live',
+		xpReward: 15,
+		scenario: {
+			briefing:
+				'Mission 3-A: Your redesign looks flawless on staging. You show it to a stakeholder on the real site — and a component is using last month\'s styling. "It works on my machine" is about to become a sentence you understand from the inside.',
+			exchanges: [
+				{
+					speaker: 'The On-Call Engineer',
+					text: "The site doesn't live on your laptop — it lives on a `server`, a computer somewhere that's always on, handing out the site to anyone who visits. Your machine has your local copy. The server has the copy the world sees. They're not automatically the same.",
+					highlightedTerms: ['server'],
+				},
+				{
+					speaker: 'The On-Call Engineer',
+					text: "Renting space on those always-on computers is called `hosting`. We host the site with a provider so we don't run the machines ourselves. Think of it like renting a storefront instead of building one.",
+					highlightedTerms: ['hosting'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: 'Here\'s the key thing: we run multiple `environment`s — separate copies of the site for different purposes. Staging is the rehearsal space. Production is the live show the public sees. Your redesign is on staging. The stakeholder was looking at production. Same site, different stage.',
+					highlightedTerms: ['environment'],
+				},
+				{
+					speaker: 'You',
+					text: "So nothing's broken — I was just showing the wrong copy. And the address bar difference I ignored? That's `DNS` doing its job, pointing each name at the right server.",
+					highlightedTerms: ['dns'],
+				},
+			],
+			decision: {
+				prompt: 'Your work looks right on staging but old on the live site. What\'s happening?',
+				options: [
+					{
+						text: 'Your changes got deleted',
+						correct: false,
+						consequence:
+							"Nothing's lost. Your work is alive and well — on staging. It just hasn't moved to production yet.",
+					},
+					{
+						text: 'Staging and production are different environments',
+						correct: true,
+						consequence:
+							'Exactly. Staging is the rehearsal copy; production is live. Your change is real, it just hasn\'t been promoted to the environment the public sees.',
+					},
+					{
+						text: 'The design itself is wrong',
+						correct: false,
+						consequence:
+							"The design is fine on staging. You're comparing two different copies of the site, not finding a flaw in the work.",
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'server',
+				word: 'server',
+				definition:
+					"A computer that's always on, whose job is to hold a website or app and hand it out to anyone who asks. When you visit a site, a server somewhere sends it to your browser. Your own laptop is not the server — it's a visitor with a private draft.",
+				designerContext:
+					'"It works on my machine but not on the server" is one of the most common phrases in software. It means your local copy and the live copy differ — a gap that explains a lot of "but it looked fine when I made it" moments.',
+			},
+			{
+				slug: 'hosting',
+				word: 'hosting',
+				definition:
+					'Renting space on always-on servers so your site is available to the public around the clock. Instead of running your own computers, you pay a provider to keep your site online. Like renting a storefront rather than constructing the building yourself.',
+				designerContext:
+					'Where a site is hosted affects how fast it loads and how it gets updated. When someone says "I\'ll deploy it to our host," they mean putting the latest version onto those public servers.',
+			},
+			{
+				slug: 'environment',
+				word: 'environment',
+				codeExample: 'staging.acme.com vs acme.com',
+				definition:
+					'A separate, complete copy of a site or app kept for a specific purpose. Common ones: development (where it\'s built), staging (where it\'s rehearsed and reviewed), and production (the live version real users see). Same software, different stages.',
+				designerContext:
+					'Knowing which environment you\'re looking at prevents the classic confusion of reviewing a change on the wrong copy. "Is that on staging or prod?" is a question that resolves a surprising number of "it looks wrong" reports.',
+			},
+			{
+				slug: 'dns',
+				word: 'DNS',
+				codeExample: 'acme.com → 192.0.2.10',
+				definition:
+					'The internet\'s address book. It translates a human-friendly name like acme.com into the numeric address of the actual server. You type a name; DNS quietly looks up where that name lives and points you there.',
+				designerContext:
+					'You rarely touch DNS, but it explains why a brand-new domain "isn\'t working yet" (the address book hasn\'t updated everywhere) or why staging and production sit at different web addresses.',
+			},
+		],
+	},
+	{
+		number: 2,
+		title: 'Making it fast',
+		xpReward: 20,
+		scenario: {
+			briefing:
+				'Mission 3-B: The new marketing page takes eight seconds to load. Eight. Someone in analytics noticed the bounce rate, and now there\'s a thread. Your beautiful hero image is, it turns out, part of the problem.',
+			exchanges: [
+				{
+					speaker: 'The On-Call Engineer',
+					text: 'Part of the slowness is `latency` — the travel time for data to get from our server to a visitor. A user in Tokyo hitting a server in Virginia waits for every byte to cross the planet. Distance is time.',
+					highlightedTerms: ['latency'],
+				},
+				{
+					speaker: 'The On-Call Engineer',
+					text: 'The fix is a `CDN` — a network of copies of your files spread across the world. Instead of everyone fetching that hero image from one server, they grab it from the nearest copy. Tokyo gets Tokyo\'s copy. That alone could cut seconds.',
+					highlightedTerms: ['cdn'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: 'The CDN also `cache`s — it keeps a ready-made copy so it doesn\'t rebuild the same thing for every visitor. And on our side, a `load balancer` spreads incoming traffic across several servers so no single one drowns when the page goes viral.',
+					highlightedTerms: ['cache', 'load-balancer'],
+				},
+				{
+					speaker: 'You',
+					text: "So the page isn't 'badly designed' — it's being served the slow way. The hero image is fine once it's cached close to the user. Now I know the question to ask: is this on a CDN?",
+					highlightedTerms: [],
+				},
+			],
+			decision: {
+				prompt: 'The marketing page loads slowly for overseas users. What\'s the most likely lever?',
+				options: [
+					{
+						text: 'Make the design simpler',
+						correct: false,
+						consequence:
+							"Simplifying might shave a little, but the core issue is distance and delivery, not visual complexity. Don't sacrifice the design for an infra problem.",
+					},
+					{
+						text: 'Serve assets from a CDN closer to users',
+						correct: true,
+						consequence:
+							'Right instinct. A CDN puts copies near each visitor, cutting the travel time that\'s making overseas loads crawl. This is an infrastructure fix, not a redesign.',
+					},
+					{
+						text: 'Tell users to refresh',
+						correct: false,
+						consequence:
+							"A refresh fetches the same slow assets from the same far server. The delivery path has to change, not the user's patience.",
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'cdn',
+				word: 'CDN',
+				definition:
+					"A worldwide network of servers that each keep a copy of your site's files, so visitors download from the location nearest them instead of one central place. Like a chain of local warehouses instead of shipping everything from one headquarters.",
+				designerContext:
+					'CDNs are why heavy assets — big images, fonts, video — can still load fast globally. If you\'re shipping large visuals, "put it on the CDN" is often the difference between snappy and sluggish.',
+			},
+			{
+				slug: 'cache',
+				word: 'cache',
+				codeExample: 'Cache-Control: max-age=3600',
+				definition:
+					'A saved, ready-to-serve copy of something so it doesn\'t have to be created or fetched fresh every time. The first visit does the work; later visits get the stored copy instantly. Like keeping a frequently used file on your desk instead of the archive room.',
+				designerContext:
+					'Caching is why your updated design sometimes doesn\'t appear until a hard refresh — the browser or CDN is still serving a stored older copy. "Try clearing your cache" means you\'re seeing an old saved version, not that the change failed to deploy.',
+			},
+			{
+				slug: 'load-balancer',
+				word: 'load balancer',
+				definition:
+					'A traffic director that spreads incoming visitors across several servers so no single one gets overwhelmed. When a page suddenly gets popular, the load balancer shares the crowd. Like opening more checkout lanes as a store fills up.',
+				designerContext:
+					'Load balancers are why a site can survive a launch spike or a viral moment without falling over. You won\'t configure one, but it explains how "the site stayed up under huge traffic."',
+			},
+			{
+				slug: 'latency',
+				word: 'latency',
+				definition:
+					'The delay between asking for something and starting to get it — the travel and reaction time, separate from how big the thing is. Even a tiny file has latency if it\'s coming from far away. Distance, congestion, and detours all add to it.',
+				designerContext:
+					'Latency shapes how "instant" an interaction feels. A button that waits on a far-away server can feel laggy no matter how snappy your animation is — which is why loading and optimistic states matter in your designs.',
+			},
+		],
+	},
+	{
+		number: 3,
+		title: 'When it breaks',
+		xpReward: 25,
+		scenario: {
+			briefing:
+				'Mission 3-C: 2:14am. The site is down. The incident channel is a blur of messages. You got pulled in because the error page users are seeing is one you designed — and right now it\'s the only thing standing between the company and a totally blank screen.',
+			exchanges: [
+				{
+					speaker: 'The On-Call Engineer',
+					text: "We're in `downtime` — the site is unreachable for users. The clock matters; every minute counts. Right now your error page is doing real work, telling people we know and we're on it instead of showing a scary blank screen.",
+					highlightedTerms: ['downtime'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: "This is a formal `incident` — that's the word for an active outage we're coordinating a response to. There's a process: identify, mitigate, recover, then write up what happened. You're part of the response because the user-facing message is yours.",
+					highlightedTerms: ['incident'],
+				},
+				{
+					speaker: 'The On-Call Engineer',
+					text: "We're reading the `logs` — the timestamped record of everything the system did right before it fell over. The logs show the primary database stopped responding. We're triggering `failover` — switching to a standby copy that takes over when the main one dies.",
+					highlightedTerms: ['logs', 'failover'],
+				},
+				{
+					speaker: 'You',
+					text: 'Failover kicks in. The site flickers back. My error page did its job for eleven minutes — and now I\'m thinking about how to make it calmer and clearer for next time, because there\'s always a next time.',
+					highlightedTerms: [],
+				},
+			],
+			decision: {
+				prompt: 'During the outage, what\'s the most useful thing your error page can do?',
+				options: [
+					{
+						text: 'Show a funny meme to lighten the mood',
+						correct: false,
+						consequence:
+							"Levity can backfire when someone's payment just failed. During downtime, people want acknowledgment and a sense it's being handled — not a joke.",
+					},
+					{
+						text: "Clearly say something's wrong and it's being fixed",
+						correct: true,
+						consequence:
+							'Exactly. A calm, honest message — "we\'re aware and working on it" — preserves trust during downtime far better than a blank screen or false cheer.',
+					},
+					{
+						text: "Auto-refresh every second to 'fix' it",
+						correct: false,
+						consequence:
+							'Hammering a downed server with refreshes doesn\'t help it recover and can make things worse. A clear status beats a frantic reload loop.',
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'downtime',
+				word: 'downtime',
+				definition:
+					'Any stretch of time when a site or service isn\'t working for users. It might be fully down or badly degraded. The opposite of uptime, and the thing every team works to minimize. Measured in minutes that feel like hours.',
+				designerContext:
+					'Downtime is when your error states, status pages, and fallback designs earn their keep. The screens you design for "when things break" are invisible until the worst moment — then they\'re everything.',
+			},
+			{
+				slug: 'failover',
+				word: 'failover',
+				definition:
+					'Automatically switching to a backup system when the main one fails, so service continues with minimal interruption. Like a generator kicking in the instant the power cuts. The user ideally never notices the handoff.',
+				designerContext:
+					'Failover is why a site can wobble for a moment and recover instead of staying dead. It explains the brief "blip" users sometimes see — a momentary error before things snap back to normal.',
+			},
+			{
+				slug: 'logs',
+				word: 'logs',
+				codeExample: '[02:11:04] ERROR db connection timeout',
+				definition:
+					'A timestamped, running record of what a system did — every notable action, warning, and error, in order. When something breaks, the logs are the security-camera footage you rewind to see what happened just before.',
+				designerContext:
+					'"What do the logs say?" is the first question in most outages. You won\'t read raw logs daily, but knowing they exist helps you understand how teams pinpoint when and where something went wrong.',
+			},
+			{
+				slug: 'incident',
+				word: 'incident',
+				definition:
+					'An unplanned disruption serious enough to warrant a coordinated response. Teams declare an incident, assign roles, fix it, then write a "what happened and why" review afterward. The formal, structured version of "something\'s on fire."',
+				designerContext:
+					'Incidents often produce action items that touch design — better error messaging, a status page, clearer alerts. Understanding the incident process helps you contribute the user-facing pieces of the response.',
+			},
+		],
+	},
+];
+
+// ---------------------------------------------------------------------------
 // Tracks
 // ---------------------------------------------------------------------------
 
@@ -674,7 +949,7 @@ export const TRACKS: Track[] = [
 		missionTheme: "You're in the incident channel",
 		terms: 12,
 		levelCount: 3,
-		levels: [],
+		levels: cloudInfraLevels,
 		game: GAMES['cloud-infra'],
 		unlockImage: {
 			description:

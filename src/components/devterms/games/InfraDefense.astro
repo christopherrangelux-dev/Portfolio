@@ -1,0 +1,287 @@
+---
+// Infra Defense — Cloud & Infrastructure's 8-bit mini-game (spec §8). Canvas
+// only. Traffic spikes march down three lanes toward your server on the left;
+// tap a lane (or press 1/2/3) to deflect the frontmost spike. Each spike that
+// reaches the server costs uptime; hit 0% and it's an outage (game over). Score
+// = spikes deflected; best persists.
+//
+// Same scaffolding as the other games: chunky pixels, two-colour palette (track
+// amber + off-white) on a dark field, Press Start 2P scoped to the game UI.
+---
+
+<div class="dt-infra" data-infra>
+	<canvas class="dt-infra-canvas" data-infra-canvas role="img" aria-label="Infra Defense — tap a lane or press 1, 2, 3 to deflect incoming traffic spikes"></canvas>
+</div>
+
+<script>
+	const BEST_KEY = 'dt-infra-defense-best';
+	const H = 220;
+	const LANES = 3;
+
+	type Enemy = { lane: number; x: number };
+
+	let rafId = 0;
+	let cleanup: Array<() => void> = [];
+
+	function readBest(): number {
+		try {
+			return Number(localStorage.getItem(BEST_KEY)) || 0;
+		} catch {
+			return 0;
+		}
+	}
+	function writeBest(n: number) {
+		try {
+			localStorage.setItem(BEST_KEY, String(n));
+		} catch {
+			/* ignore */
+		}
+	}
+
+	function setup() {
+		destroy();
+		const canvas = document.querySelector<HTMLCanvasElement>('[data-infra-canvas]');
+		if (!canvas) return;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		const palette = {
+			amber: getComputedStyle(canvas).getPropertyValue('--track-color').trim() || '#BA7517',
+			ink: '#f4f1ea',
+			bg: '#0f1014',
+			bad: '#d9683f',
+		};
+
+		const serverX = 20;
+		const serverW = 22;
+		const EW = 22;
+		const EH = 18;
+		let W = 0;
+		const laneY = (lane: number) => 56 + lane * 46; // center y of a lane's row
+
+		function resize() {
+			const dpr = Math.min(window.devicePixelRatio || 1, 2);
+			W = canvas!.clientWidth || 800;
+			canvas!.width = Math.round(W * dpr);
+			canvas!.height = Math.round(H * dpr);
+			ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+			ctx!.imageSmoothingEnabled = false;
+		}
+		resize();
+
+		const g = {
+			mode: 'idle' as 'idle' | 'running' | 'over',
+			t: 0,
+			score: 0,
+			best: readBest(),
+			uptime: 100,
+			speed: 1.1,
+			spawnIn: 60,
+			enemies: [] as Enemy[],
+			cd: [0, 0, 0],
+			laneFlash: [0, 0, 0],
+			serverFlash: 0,
+		};
+
+		function reset() {
+			g.mode = 'running';
+			g.t = 0;
+			g.score = 0;
+			g.uptime = 100;
+			g.speed = 1.1;
+			g.spawnIn = 50;
+			g.enemies = [];
+			g.cd = [0, 0, 0];
+			g.laneFlash = [0, 0, 0];
+			g.serverFlash = 0;
+		}
+
+		function deflect(lane: number) {
+			if (g.mode === 'idle' || g.mode === 'over') return reset();
+			if (g.cd[lane] > 0) return;
+			// frontmost = closest to the server (smallest x) in this lane
+			let target = -1;
+			let best = Infinity;
+			for (let i = 0; i < g.enemies.length; i++) {
+				const e = g.enemies[i];
+				if (e.lane === lane && e.x < best) {
+					best = e.x;
+					target = i;
+				}
+			}
+			g.laneFlash[lane] = 8;
+			g.cd[lane] = 13;
+			if (target >= 0) {
+				g.enemies.splice(target, 1);
+				g.score++;
+				if (g.score > g.best) {
+					g.best = g.score;
+					writeBest(g.best);
+				}
+			}
+		}
+
+		// ---- input ----
+		const onKey = (e: KeyboardEvent) => {
+			if (e.code === 'Digit1') {
+				e.preventDefault();
+				deflect(0);
+			} else if (e.code === 'Digit2') {
+				e.preventDefault();
+				deflect(1);
+			} else if (e.code === 'Digit3') {
+				e.preventDefault();
+				deflect(2);
+			} else if (e.code === 'Space' && g.mode !== 'running') {
+				e.preventDefault();
+				reset();
+			}
+		};
+		const onPointer = (e: PointerEvent) => {
+			e.preventDefault();
+			if (g.mode !== 'running') return reset();
+			const rect = canvas!.getBoundingClientRect();
+			const y = ((e.clientY - rect.top) / rect.height) * H;
+			let lane = Math.round((y - 56) / 46);
+			lane = Math.max(0, Math.min(LANES - 1, lane));
+			deflect(lane);
+		};
+		window.addEventListener('keydown', onKey);
+		canvas.addEventListener('pointerdown', onPointer);
+		window.addEventListener('resize', resize);
+		cleanup.push(() => window.removeEventListener('keydown', onKey));
+		cleanup.push(() => canvas.removeEventListener('pointerdown', onPointer));
+		cleanup.push(() => window.removeEventListener('resize', resize));
+
+		// ---- update ----
+		function update() {
+			g.t++;
+			for (let i = 0; i < LANES; i++) {
+				if (g.cd[i] > 0) g.cd[i]--;
+				if (g.laneFlash[i] > 0) g.laneFlash[i]--;
+			}
+			if (g.serverFlash > 0) g.serverFlash--;
+			if (g.mode !== 'running') return;
+
+			g.speed = Math.min(3.2, g.speed + 0.0012);
+			g.spawnIn -= 1;
+			if (g.spawnIn <= 0) {
+				g.enemies.push({ lane: Math.floor(Math.random() * LANES), x: W + EW });
+				const floor = 30;
+				g.spawnIn = Math.max(floor, 70 - g.t * 0.02);
+			}
+
+			const leakX = serverX + serverW;
+			for (let i = g.enemies.length - 1; i >= 0; i--) {
+				const e = g.enemies[i];
+				e.x -= g.speed;
+				if (e.x <= leakX) {
+					g.enemies.splice(i, 1);
+					g.uptime = Math.max(0, g.uptime - 5);
+					g.serverFlash = 12;
+					if (g.uptime <= 0) g.mode = 'over';
+				}
+			}
+		}
+
+		// ---- render ----
+		function px(x: number, y: number, w: number, h: number, color: string) {
+			ctx!.fillStyle = color;
+			ctx!.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+		}
+		function text(s: string, x: number, y: number, size: number, color: string, align: CanvasTextAlign = 'left') {
+			ctx!.fillStyle = color;
+			ctx!.font = `${size}px 'Press Start 2P', monospace`;
+			ctx!.textAlign = align;
+			ctx!.textBaseline = 'alphabetic';
+			ctx!.fillText(s, x, y);
+		}
+
+		function render() {
+			px(0, 0, W, H, palette.bg);
+
+			// lane rails + flashes
+			for (let i = 0; i < LANES; i++) {
+				const y = laneY(i);
+				ctx!.globalAlpha = g.laneFlash[i] > 0 ? 0.5 : 0.18;
+				px(serverX + serverW, y - 1, W, 2, palette.amber);
+				ctx!.globalAlpha = 1;
+			}
+
+			// server tower
+			const towerColor = g.serverFlash > 0 ? palette.bad : palette.ink;
+			px(serverX, laneY(0) - 16, serverW, laneY(2) - laneY(0) + 32, palette.bg);
+			ctx!.strokeStyle = towerColor;
+			ctx!.lineWidth = 2;
+			ctx!.strokeRect(serverX + 1, laneY(0) - 16 + 1, serverW - 2, laneY(2) - laneY(0) + 30);
+			for (let i = 0; i < LANES; i++) px(serverX + 4, laneY(i) - 2, serverW - 8, 4, towerColor);
+
+			// enemies (traffic spikes)
+			for (const e of g.enemies) {
+				const y = laneY(e.lane);
+				px(e.x - EW, y - EH / 2, EW, EH, palette.amber);
+				px(e.x - EW, y - EH / 2, EW, 2, palette.ink);
+			}
+
+			// HUD
+			text(`DEFLECTED ${g.score}`, 12, 20, 8, palette.ink);
+			text(`BEST ${g.best}`, W - 12, 20, 8, palette.amber, 'right');
+			// uptime bar
+			const barW = 120;
+			px(W / 2 - barW / 2, 12, barW, 8, palette.bg);
+			ctx!.strokeStyle = palette.ink;
+			ctx!.lineWidth = 1;
+			ctx!.strokeRect(W / 2 - barW / 2 + 0.5, 12.5, barW - 1, 7);
+			const fillW = Math.round((barW - 4) * (g.uptime / 100));
+			px(W / 2 - barW / 2 + 2, 14, fillW, 4, g.uptime <= 30 ? palette.bad : palette.amber);
+			text(`UPTIME ${g.uptime}%`, W / 2, 32, 6, palette.ink, 'center');
+
+			if (g.mode === 'idle') {
+				text('INFRA DEFENSE', W / 2, H / 2 - 16, 11, palette.ink, 'center');
+				text('DEFLECT THE TRAFFIC SPIKES', W / 2, H / 2 + 4, 7, palette.amber, 'center');
+				text('TAP A LANE OR 1 / 2 / 3', W / 2, H / 2 + 20, 7, palette.amber, 'center');
+			} else if (g.mode === 'over') {
+				text('OUTAGE!', W / 2, H / 2 - 14, 12, palette.bad, 'center');
+				text(`${g.score} DEFLECTED`, W / 2, H / 2 + 6, 8, palette.ink, 'center');
+				text('SPACE / TAP TO RETRY', W / 2, H / 2 + 24, 8, palette.amber, 'center');
+			}
+		}
+
+		function loop() {
+			update();
+			render();
+			rafId = requestAnimationFrame(loop);
+		}
+		(document as any).fonts?.load("8px 'Press Start 2P'").catch(() => {});
+		loop();
+	}
+
+	function destroy() {
+		if (rafId) cancelAnimationFrame(rafId);
+		rafId = 0;
+		cleanup.forEach((fn) => fn());
+		cleanup = [];
+	}
+
+	setup();
+	document.addEventListener('astro:page-load', setup);
+	document.addEventListener('astro:before-swap', destroy);
+</script>
+
+<style>
+	@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+	.dt-infra {
+		width: 100%;
+		height: 100%;
+	}
+	.dt-infra-canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		border-radius: 6px;
+		cursor: pointer;
+		touch-action: manipulation;
+	}
+</style>
