@@ -1,0 +1,99 @@
+---
+name: "Dev Terms"
+title: "Dev Terms: The Engineer Vocabulary Designers Learn by Playing"
+subtitle: "A context-first vocabulary trainer that drops designers into realistic engineering scenarios, then turns the words they meet into an RPG with 8-bit reward games."
+order: 0
+featured: true
+tags: ["Interactive Tool", "Design Education", "Game Design", "Vanilla TS"]
+snapshot:
+  role: "Designer & Developer"
+  timeline: "2026"
+  tools: "Astro, Canvas API, vanilla TS"
+  team: "Solo"
+metric: "71"
+metricLabel: "dev terms, taught in context across six field missions"
+color: "#4f4f97"
+pattern: node-graph
+---
+
+import { withBase } from '../../lib/url';
+import GitRunner from '../../components/devterms/games/GitRunner.astro';
+
+## The Problem
+
+Designers in engineering-heavy environments hit a vocabulary wall constantly. Standups, pull
+request reviews, incident channels, and planning meetings are full of words like *foreign key*,
+*feature flag*, *rollback*, *zero trust*, and *rate limit*. The terms get used around designers
+every sprint, but design education almost never teaches what they mean. The usual fixes, a
+glossary or a flashcard deck, fail for the same reason: a definition read cold, with no situation
+attached to it, does not stick.
+
+Dev Terms started from a different premise. People remember a word when they first meet it inside a
+moment that mattered, not when they look it up. So the tool leads with the moment.
+
+## The Process
+
+Every term is introduced inside a short, realistic scenario before it is ever formally defined. A
+feature stopped working overnight, the site is down at 2am, an audit is happening next week,
+production is returning wrong data. You read the exchange between the engineers, tap a highlighted
+word when you want the definition, make one judgment call, and see the consequence immediately.
+
+The reward loop is where the 8-bit layer comes in. Each of the six tracks ends with its own
+Canvas mini-game, themed to the track, as a release valve between missions. Here is the first one,
+Git Runner, live and playable. Press space or tap to jump the merge-conflict blocks.
+
+<div style="--track-color: #378ADD; height: 220px; background: #0f1014; border-radius: 8px; overflow: hidden; margin: 1.5rem 0;">
+  <GitRunner />
+</div>
+
+The full experience is six tracks, a leveling system, unlockable titles and gear on a pixel avatar,
+and a growing field notebook of every term you have met. It runs entirely in the browser.
+
+<p style="margin: 1.75rem 0;">
+  <a
+    href={withBase('dev-terms')}
+    style="display: inline-block; font-family: var(--mono); font-weight: 600; color: var(--paper); background: var(--accent); padding: 0.7rem 1.3rem; border-radius: 6px;"
+  >
+    Play the full Dev Terms experience &rarr;
+  </a>
+</p>
+
+## The Decision
+
+The sharpest decision was constraint. The instinct with a teaching tool is to cover everything and
+let people roam. Dev Terms does the opposite on purpose:
+
+- **Context before definition, every time.** A term is highlighted inside an exchange first. The
+  definition is a tap away, never the opening move. The scenario does the teaching; the definition
+  just confirms it.
+- **One guided path, not a sandbox.** Three short levels per track, gated in sequence. The point is
+  a guaranteed teaching moment, not an open library to get lost in.
+- **Games as reward, not gimmick.** One self-contained game per track, written in plain Canvas with
+  no game library, in a two-color palette that matches the track. They are the payoff for finishing
+  a mission, scoped small so they never become the homework.
+- **No backend, no accounts.** Progress lives in `localStorage`. The whole thing is static, which
+  keeps it honest about scope and lets it live inside this portfolio with no infrastructure.
+
+To stay native to the site, none of it uses a framework. The interactivity is vanilla TypeScript in
+Astro components, the same pattern as the rest of this portfolio, themed for day and night and built
+to work on a phone from the first line.
+
+## The Outcome
+
+- **Six tracks, 71 terms**, each one introduced in a scenario before it is defined: Git Flow, API
+  Literacy, Cloud and Infrastructure, CI/CD, Security and Compliance, and Data and Databases
+- **Six original 8-bit games**, one per track, all Canvas-only: an endless runner, a request router,
+  an infrastructure defense, a deploy conveyor, a lock-patching puzzle, and a data-tile match
+- **An RPG progression layer**, with XP, levels, unlockable titles and gear shown on a customizable
+  pixel avatar, plus a progressive image that sharpens as each track is completed
+- **A field notebook glossary** that fills in as you play, with locked terms visible but redacted
+  until you meet them in context
+- Fully **themed for light and dark** and **responsive to mobile**, with no framework and no backend
+
+## Reflection
+
+The hardest part was not the engineering trivia, it was trusting the constraint. A bigger glossary
+or a freeform sandbox would have looked more thorough and taught far less. Almost all of the
+learning happens in the first scenario where a word suddenly has a reason to exist, so the entire
+design protects that moment: lead with the situation, make the definition optional, reward the
+finish, then move on. The vocabulary sticks because it arrived attached to something that happened.
