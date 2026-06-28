@@ -1,0 +1,291 @@
+---
+// Git Runner — Git Flow's 8-bit endless runner (spec §8). Canvas API only, no
+// libraries. The world scrolls left; you auto-run and press space / tap to jump
+// the merge-conflict blocks. Score = commits landed; best score persists.
+//
+// Chunky pixel rendering, two-colour palette (track blue + off-white) on a dark
+// field. Press Start 2P is loaded here and only applied to this game's UI, so
+// it never leaks into the Lora-based rest of the app (spec §12).
+---
+
+<div class="dt-runner" data-runner>
+	<canvas class="dt-runner-canvas" data-runner-canvas role="img" aria-label="Git Runner — press space or tap to jump the merge-conflict blocks"></canvas>
+</div>
+
+<script>
+	const BEST_KEY = 'dt-git-runner-best';
+	const H = 220; // logical canvas height, matches the slot
+
+	type Obstacle = { x: number; w: number; h: number; passed: boolean };
+	interface Game {
+		mode: 'idle' | 'running' | 'over';
+		t: number;
+		speed: number;
+		score: number;
+		best: number;
+		runnerY: number; // top of runner
+		vy: number;
+		grounded: boolean;
+		obstacles: Obstacle[];
+		nextGap: number;
+		palette: { blue: string; ink: string; bg: string };
+	}
+
+	let rafId = 0;
+	let cleanup: Array<() => void> = [];
+
+	function readBest(): number {
+		try {
+			return Number(localStorage.getItem(BEST_KEY)) || 0;
+		} catch {
+			return 0;
+		}
+	}
+	function writeBest(n: number) {
+		try {
+			localStorage.setItem(BEST_KEY, String(n));
+		} catch {
+			/* ignore */
+		}
+	}
+
+	function setup() {
+		destroy(); // idempotent — never run two loops
+		const canvas = document.querySelector<HTMLCanvasElement>('[data-runner-canvas]');
+		if (!canvas) return;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		const cssVar = (name: string, fallback: string) =>
+			getComputedStyle(canvas).getPropertyValue(name).trim() || fallback;
+		const palette = {
+			blue: cssVar('--track-color', '#378ADD'),
+			ink: '#f4f1ea',
+			bg: '#0f1014',
+		};
+
+		let W = 0;
+		function resize() {
+			const dpr = Math.min(window.devicePixelRatio || 1, 2);
+			W = canvas!.clientWidth || 800;
+			canvas!.width = Math.round(W * dpr);
+			canvas!.height = Math.round(H * dpr);
+			ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+			ctx!.imageSmoothingEnabled = false;
+		}
+		resize();
+
+		const groundY = H - 30; // runner's feet rest here
+		const RW = 16;
+		const RH = 22;
+
+		const g: Game = {
+			mode: 'idle',
+			t: 0,
+			speed: 3.2,
+			score: 0,
+			best: readBest(),
+			runnerY: groundY - RH,
+			vy: 0,
+			grounded: true,
+			obstacles: [],
+			nextGap: 60,
+			palette,
+		};
+
+		function reset() {
+			g.mode = 'running';
+			g.t = 0;
+			g.speed = 3.2;
+			g.score = 0;
+			g.runnerY = groundY - RH;
+			g.vy = 0;
+			g.grounded = true;
+			g.obstacles = [];
+			g.nextGap = 50;
+		}
+
+		function jump() {
+			if (g.mode === 'idle') return reset();
+			if (g.mode === 'over') return reset();
+			if (g.grounded) {
+				g.vy = -10;
+				g.grounded = false;
+			}
+		}
+
+		// ---- input ----
+		const onKey = (e: KeyboardEvent) => {
+			if (e.code === 'Space' || e.code === 'ArrowUp') {
+				e.preventDefault();
+				jump();
+			}
+		};
+		const onPointer = (e: Event) => {
+			e.preventDefault();
+			jump();
+		};
+		window.addEventListener('keydown', onKey);
+		canvas.addEventListener('pointerdown', onPointer);
+		window.addEventListener('resize', resize);
+		cleanup.push(() => window.removeEventListener('keydown', onKey));
+		cleanup.push(() => canvas.removeEventListener('pointerdown', onPointer));
+		cleanup.push(() => window.removeEventListener('resize', resize));
+
+		// ---- update ----
+		function update() {
+			g.t++;
+			if (g.mode !== 'running') return;
+			g.speed = Math.min(7, g.speed + 0.0009);
+
+			// physics
+			g.vy += 0.6;
+			g.runnerY += g.vy;
+			if (g.runnerY >= groundY - RH) {
+				g.runnerY = groundY - RH;
+				g.vy = 0;
+				g.grounded = true;
+			}
+
+			// spawn
+			g.nextGap -= g.speed;
+			if (g.nextGap <= 0) {
+				const tall = Math.random() < 0.25;
+				g.obstacles.push({ x: W + 10, w: 16, h: tall ? 38 : 24, passed: false });
+				g.nextGap = 150 + Math.random() * 170 + g.speed * 12;
+			}
+
+			// move + score + collide
+			const rx = 44;
+			for (const o of g.obstacles) {
+				o.x -= g.speed;
+				if (!o.passed && o.x + o.w < rx) {
+					o.passed = true;
+					g.score++;
+				}
+				// forgiving hitbox
+				const hit =
+					rx + 3 < o.x + o.w &&
+					rx + RW - 3 > o.x &&
+					g.runnerY + RH - 2 > groundY - o.h;
+				if (hit) {
+					g.mode = 'over';
+					if (g.score > g.best) {
+						g.best = g.score;
+						writeBest(g.best);
+					}
+				}
+			}
+			g.obstacles = g.obstacles.filter((o) => o.x + o.w > -10);
+		}
+
+		// ---- render ----
+		function px(x: number, y: number, w: number, h: number, color: string) {
+			ctx!.fillStyle = color;
+			ctx!.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+		}
+
+		function drawRunner(x: number, y: number) {
+			const c = palette.ink;
+			px(x + 4, y, 8, 6, c); // head
+			px(x + 3, y + 6, 10, 9, c); // body
+			px(x + 2, y + 8, 1, 5, palette.blue); // arm accent
+			// legs animate while grounded & running
+			const stride = g.mode === 'running' && g.grounded && Math.floor(g.t / 5) % 2 === 0;
+			if (g.grounded) {
+				px(x + 3, y + 15, 3, 7, c);
+				px(x + 10, y + 15, 3, stride ? 5 : 7, c);
+			} else {
+				px(x + 3, y + 15, 4, 5, c); // tucked
+				px(x + 9, y + 15, 4, 5, c);
+			}
+		}
+
+		function drawObstacle(o: Obstacle) {
+			const top = groundY - o.h;
+			px(o.x, top, o.w, o.h, palette.blue);
+			px(o.x, top, o.w, 2, palette.ink); // lighter cap
+			// conflict ">< " marks
+			ctx!.fillStyle = palette.bg;
+			const my = top + o.h / 2 - 2;
+			px(o.x + 3, my, 2, 2, palette.bg);
+			px(o.x + 5, my + 2, 2, 2, palette.bg);
+			px(o.x + 11, my, 2, 2, palette.bg);
+			px(o.x + 9, my + 2, 2, 2, palette.bg);
+		}
+
+		function text(str: string, x: number, y: number, size: number, color: string, align: CanvasTextAlign = 'left') {
+			ctx!.fillStyle = color;
+			ctx!.font = `${size}px 'Press Start 2P', monospace`;
+			ctx!.textAlign = align;
+			ctx!.textBaseline = 'alphabetic';
+			ctx!.fillText(str, x, y);
+		}
+
+		function render() {
+			px(0, 0, W, H, palette.bg);
+
+			// scrolling ground dashes
+			const off = (g.t * g.speed) % 24;
+			ctx!.globalAlpha = 0.5;
+			for (let x = -off; x < W; x += 24) px(x, groundY + 6, 12, 2, palette.blue);
+			ctx!.globalAlpha = 1;
+			px(0, groundY + 2, W, 2, palette.blue); // ground line
+
+			for (const o of g.obstacles) drawObstacle(o);
+			drawRunner(44, g.runnerY);
+
+			// HUD
+			text(`COMMITS ${g.score}`, 12, 22, 8, palette.ink);
+			text(`BEST ${g.best}`, W - 12, 22, 8, palette.blue, 'right');
+
+			if (g.mode === 'idle') {
+				text('GIT RUNNER', W / 2, H / 2 - 8, 12, palette.ink, 'center');
+				text('SPACE / TAP TO RUN', W / 2, H / 2 + 14, 8, palette.blue, 'center');
+			} else if (g.mode === 'over') {
+				text('CONFLICT!', W / 2, H / 2 - 14, 12, palette.ink, 'center');
+				text(`${g.score} COMMITS LANDED`, W / 2, H / 2 + 6, 8, palette.blue, 'center');
+				text('SPACE / TAP TO RETRY', W / 2, H / 2 + 24, 8, palette.ink, 'center');
+			}
+		}
+
+		function loop() {
+			update();
+			render();
+			rafId = requestAnimationFrame(loop);
+		}
+		// make sure the pixel font is ready before the first text draw
+		(document as any).fonts?.load("8px 'Press Start 2P'").catch(() => {});
+		loop();
+	}
+
+	function destroy() {
+		if (rafId) cancelAnimationFrame(rafId);
+		rafId = 0;
+		cleanup.forEach((fn) => fn());
+		cleanup = [];
+	}
+
+	setup(); // covers arrival via client-side navigation
+	document.addEventListener('astro:page-load', setup);
+	document.addEventListener('astro:before-swap', destroy);
+</script>
+
+<style>
+	/* Press Start 2P, scoped: declared here and only applied to game UI. */
+	@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+	.dt-runner {
+		width: 100%;
+		height: 100%;
+	}
+	.dt-runner-canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		border-radius: 6px;
+		cursor: pointer;
+		touch-action: manipulation;
+	}
+</style>

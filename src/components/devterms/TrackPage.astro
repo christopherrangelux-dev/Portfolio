@@ -2,6 +2,7 @@
 import { withBase } from '../../lib/url';
 import { getTrack } from '../../data/devterms/content';
 import UnlockImage from './UnlockImage.astro';
+import GitRunner from './games/GitRunner.astro';
 
 interface Props {
 	trackSlug: string;
@@ -53,7 +54,11 @@ const rows = authored
 			<span class="dt-game-instructions">{track.game.instructions}</span>
 		</header>
 		<div class="dt-game-canvas" data-game-slot data-game-slug={track.game.slug}>
-			<span class="dt-game-placeholder">Mini-game arriving soon — score: {track.game.scoreLabel}</span>
+			{track.game.slug === 'git-runner' ? (
+				<GitRunner />
+			) : (
+				<span class="dt-game-placeholder">Mini-game arriving soon — score: {track.game.scoreLabel}</span>
+			)}
 		</div>
 	</section>
 </div>
