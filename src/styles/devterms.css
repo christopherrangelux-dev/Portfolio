@@ -668,6 +668,12 @@
 	display: flex;
 	justify-content: flex-end;
 }
+/* `display: flex` above overrides the [hidden] attribute's UA display:none, so
+   the closed overlay's full-viewport backdrop would otherwise stay laid out and
+   intercept every click on the page. Restore real hiding when hidden. */
+.dt-term-overlay[hidden] {
+	display: none;
+}
 .dt-term-backdrop {
 	position: absolute;
 	inset: 0;
