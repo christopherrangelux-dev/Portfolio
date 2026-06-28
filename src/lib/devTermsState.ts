@@ -24,11 +24,17 @@ export interface TrackProgress {
 	imageSegmentsUnlocked: number; // 0–3, one per completed level
 }
 
+// Avatar presentation is a cosmetic, player-chosen look — independent of
+// progress. Gear overlays sit identically on every variant.
+export type AvatarVariant = 'neutral' | 'feminine' | 'masculine';
+export const AVATAR_VARIANTS: AvatarVariant[] = ['feminine', 'masculine', 'neutral'];
+
 export interface DevTermsState {
 	xp: number;
 	level: number; // derived from xp (1–10), persisted for convenience
 	title: string; // current title slug, derived from conditions
 	gear: string[]; // unlocked gear slugs, derived from conditions
+	avatar: AvatarVariant; // cosmetic figure look, player-chosen
 	tracks: Record<string, TrackProgress>;
 	glossary: string[]; // all unlocked term slugs across every track
 	startedAt: string; // ISO timestamp
@@ -40,6 +46,7 @@ function freshState(): DevTermsState {
 		level: 1,
 		title: 'embedded-designer',
 		gear: [],
+		avatar: 'neutral',
 		tracks: {},
 		glossary: [],
 		startedAt: new Date().toISOString(),
@@ -79,6 +86,7 @@ export function getState(): DevTermsState {
 			...parsed,
 			tracks: parsed.tracks ?? base.tracks,
 			gear: parsed.gear ?? base.gear,
+			avatar: parsed.avatar ?? base.avatar,
 			glossary: parsed.glossary ?? base.glossary,
 		};
 	} catch {
@@ -95,6 +103,13 @@ export function saveState(state: DevTermsState): void {
 /** Wipe progress back to a fresh start. */
 export function resetState(): DevTermsState {
 	const next = freshState();
+	saveState(next);
+	return next;
+}
+
+/** Set the cosmetic avatar look and persist. Returns the updated state. */
+export function setAvatar(variant: AvatarVariant): DevTermsState {
+	const next = { ...getState(), avatar: variant };
 	saveState(next);
 	return next;
 }

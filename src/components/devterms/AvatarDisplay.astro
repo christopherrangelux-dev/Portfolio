@@ -1,19 +1,55 @@
 ---
-// Static pixel-art designer figure (SVG). Gear overlays are added in step 8 —
-// the empty slot groups below are intentional placeholders the gear step fills.
-// Drawn on a 16×24 grid scaled up; flat fills only (no gradients/shadows),
-// using portfolio tokens so it tracks day/night automatically.
+// Pixel-art designer figure (SVG) with unlockable gear (spec §7). Each gear
+// piece is drawn into a slot group and hidden by default (.dt-gear); the
+// dashboard script adds .is-on for every slug in state.gear, so gear appears
+// "on or around the figure" (spec §7) as milestones are hit. A labelled tray
+// below the avatar names each earned item.
+//
+// Drawn on a 16×24 grid scaled up; flat fills only, using portfolio tokens so
+// it tracks day/night automatically. Gear hues are local --dt-* vars (intentional
+// decorative locals, not token drift).
+import { GEAR } from '../../data/devterms/rpg';
 ---
 
 <figure class="dt-avatar">
 	<svg class="dt-avatar-svg" viewBox="0 0 16 24" width="96" height="144" role="img" aria-label="Your designer avatar" shape-rendering="crispEdges">
 		<!-- background prop slot (gear: item) -->
-		<g id="avatar-slot-item" aria-hidden="true"></g>
+		<g id="avatar-slot-item" aria-hidden="true">
+			<!-- architecture-map: faint system-diagram backdrop (endgame) -->
+			<g class="dt-gear" data-gear="architecture-map">
+				<rect x="0" y="0" width="16" height="24" fill="var(--accent-indigo)" fill-opacity="0.06" />
+				<line x1="0" y1="8" x2="16" y2="8" stroke="var(--accent-indigo)" stroke-opacity="0.18" stroke-width="0.5" />
+				<line x1="0" y1="16" x2="16" y2="16" stroke="var(--accent-indigo)" stroke-opacity="0.18" stroke-width="0.5" />
+				<line x1="5" y1="0" x2="5" y2="24" stroke="var(--accent-indigo)" stroke-opacity="0.18" stroke-width="0.5" />
+				<line x1="11" y1="0" x2="11" y2="24" stroke="var(--accent-indigo)" stroke-opacity="0.18" stroke-width="0.5" />
+			</g>
+		</g>
 
-		<!-- hair -->
-		<rect x="4" y="1" width="8" height="3" fill="var(--ink)" />
-		<rect x="3" y="2" width="1" height="3" fill="var(--ink)" />
-		<rect x="12" y="2" width="1" height="3" fill="var(--ink)" />
+		<!-- hair: one of three player-chosen looks; the dashboard toggles .is-on.
+		     Drawn before the face so the crown sits above it and long strands
+		     fall behind the shoulders. Neutral is the SSR default. -->
+		<g class="dt-hair is-on" data-avatar-variant="neutral" aria-hidden="true">
+			<rect x="5" y="0" width="6" height="1" fill="var(--ink)" />
+			<rect x="4" y="1" width="8" height="3" fill="var(--ink)" />
+			<rect x="3" y="2" width="1" height="4" fill="var(--ink)" />
+			<rect x="12" y="2" width="1" height="4" fill="var(--ink)" />
+			<rect x="4" y="3" width="1" height="1" fill="var(--ink)" />
+			<rect x="11" y="3" width="1" height="1" fill="var(--ink)" />
+		</g>
+		<g class="dt-hair" data-avatar-variant="masculine" aria-hidden="true">
+			<rect x="4" y="1" width="8" height="3" fill="var(--ink)" />
+			<rect x="4" y="4" width="1" height="1" fill="var(--ink)" />
+			<rect x="11" y="4" width="1" height="1" fill="var(--ink)" />
+		</g>
+		<g class="dt-hair" data-avatar-variant="feminine" aria-hidden="true">
+			<rect x="5" y="0" width="6" height="1" fill="var(--ink)" />
+			<rect x="4" y="1" width="8" height="3" fill="var(--ink)" />
+			<rect x="3" y="2" width="1" height="11" fill="var(--ink)" />
+			<rect x="12" y="2" width="1" height="11" fill="var(--ink)" />
+			<rect x="2" y="4" width="1" height="8" fill="var(--ink)" />
+			<rect x="13" y="4" width="1" height="8" fill="var(--ink)" />
+			<rect x="7" y="1" width="2" height="1" fill="var(--dt-skin)" />
+		</g>
 		<!-- face -->
 		<rect x="4" y="4" width="8" height="5" fill="var(--dt-skin)" />
 		<rect x="4" y="3" width="8" height="1" fill="var(--ink)" />
@@ -36,11 +72,71 @@
 		<rect x="4" y="22" width="3" height="1" fill="var(--muted)" />
 		<rect x="9" y="22" width="3" height="1" fill="var(--muted)" />
 
-		<!-- gear slots (filled in step 8) -->
-		<g id="avatar-slot-badge" aria-hidden="true"></g>
-		<g id="avatar-slot-accessory" aria-hidden="true"></g>
+		<!-- badge slot: worn on the chest / neck -->
+		<g id="avatar-slot-badge" aria-hidden="true">
+			<!-- terminal-sticker: a >_ sticker, upper-left chest -->
+			<g class="dt-gear" data-gear="terminal-sticker">
+				<rect x="4" y="11" width="3" height="2" fill="var(--ink)" />
+				<rect x="4.6" y="11.4" width="0.6" height="0.6" fill="var(--paper)" />
+				<rect x="5.2" y="12" width="0.6" height="0.6" fill="var(--paper)" />
+				<rect x="5.8" y="11.7" width="1" height="0.5" fill="var(--paper)" />
+			</g>
+			<!-- green-build-badge: check pip, upper-right chest -->
+			<g class="dt-gear" data-gear="green-build-badge">
+				<rect x="9" y="11" width="2" height="2" fill="var(--dt-green)" />
+				<rect x="9.4" y="11.9" width="0.5" height="0.5" fill="var(--paper)" />
+				<rect x="9.9" y="11.4" width="0.7" height="0.7" fill="var(--paper)" />
+			</g>
+			<!-- api-key-lanyard: straps from neck to a badge card on the chest -->
+			<g class="dt-gear" data-gear="api-key-lanyard">
+				<line x1="7" y1="10" x2="7" y2="14" stroke="var(--dt-strap)" stroke-width="0.7" />
+				<line x1="9" y1="10" x2="9" y2="14" stroke="var(--dt-strap)" stroke-width="0.7" />
+				<rect x="7" y="14" width="2" height="3" fill="var(--paper)" stroke="var(--ink)" stroke-width="0.4" />
+				<line x1="7.4" y1="15.2" x2="8.6" y2="15.2" stroke="var(--muted)" stroke-width="0.4" />
+			</g>
+		</g>
+
+		<!-- accessory slot: held in hands / clipped on -->
+		<g id="avatar-slot-accessory" aria-hidden="true">
+			<!-- field-notebook: held in the right hand -->
+			<g class="dt-gear" data-gear="field-notebook">
+				<rect x="11" y="15" width="3" height="4" fill="var(--dt-book)" />
+				<rect x="11" y="15" width="0.8" height="4" fill="var(--ink)" fill-opacity="0.5" />
+				<rect x="12" y="16" width="1.6" height="0.5" fill="var(--paper)" />
+				<rect x="12" y="17" width="1.6" height="0.5" fill="var(--paper)" />
+			</g>
+			<!-- vault-key: held in the left hand -->
+			<g class="dt-gear" data-gear="vault-key">
+				<rect x="1" y="16" width="1.6" height="1.6" fill="none" stroke="var(--dt-gold)" stroke-width="0.6" />
+				<rect x="2.6" y="16.6" width="1.8" height="0.6" fill="var(--dt-gold)" />
+				<rect x="4" y="17.2" width="0.5" height="0.7" fill="var(--dt-gold)" />
+			</g>
+			<!-- on-call-pager: clipped at the right hip -->
+			<g class="dt-gear" data-gear="on-call-pager">
+				<rect x="11" y="18" width="2" height="2.5" fill="var(--ink)" />
+				<rect x="11.4" y="18.4" width="1.2" height="0.8" fill="var(--dt-green)" />
+			</g>
+		</g>
 	</svg>
 	<figcaption class="dt-avatar-title" id="dt-avatar-title">Embedded Designer</figcaption>
+
+	<div class="dt-avatar-picker" role="group" aria-label="Choose your avatar look">
+		<button type="button" class="dt-avatar-pick" data-avatar-pick="feminine" aria-pressed="false">Girl</button>
+		<button type="button" class="dt-avatar-pick" data-avatar-pick="masculine" aria-pressed="false">Guy</button>
+		<button type="button" class="dt-avatar-pick is-active" data-avatar-pick="neutral" aria-pressed="true">Neutral</button>
+	</div>
+
+	<div class="dt-gear-tray" id="dt-gear-tray">
+		<p class="dt-gear-empty" id="dt-gear-empty">No gear yet — finish a level to earn your first.</p>
+		<ul class="dt-gear-list" aria-label="Gear earned">
+			{GEAR.map((g) => (
+				<li class="dt-gear-pill" data-gear-pill={g.slug} title={g.description}>
+					<span class="dt-gear-dot" data-slot={g.slot} aria-hidden="true"></span>
+					{g.label}
+				</li>
+			))}
+		</ul>
+	</div>
 </figure>
 
 <style>
@@ -50,8 +146,12 @@
 		align-items: center;
 		gap: 0.6rem;
 		margin: 0;
-		/* skin tone is local to the avatar; not a global token */
+		/* skin + gear hues are local to the avatar; not global tokens */
 		--dt-skin: #e8b894;
+		--dt-book: #9a6a3a;
+		--dt-gold: #c79a3a;
+		--dt-green: #2f9e44;
+		--dt-strap: #c2410c;
 	}
 	.dt-avatar-svg {
 		image-rendering: pixelated;
@@ -66,5 +166,92 @@
 		letter-spacing: 0.04em;
 		color: var(--muted);
 		text-align: center;
+	}
+
+	/* gear pieces start hidden; the dashboard reveals earned ones */
+	.dt-gear {
+		display: none;
+	}
+	.dt-gear.is-on {
+		display: inline;
+	}
+
+	/* hair variants: only the chosen look renders */
+	.dt-hair {
+		display: none;
+	}
+	.dt-hair.is-on {
+		display: inline;
+	}
+
+	.dt-avatar-picker {
+		display: flex;
+		gap: 0.25rem;
+	}
+	.dt-avatar-pick {
+		font-family: var(--mono);
+		font-size: 0.68rem;
+		letter-spacing: 0.02em;
+		padding: 0.2rem 0.5rem;
+		border: 1px solid var(--border);
+		border-radius: 4px;
+		background: var(--paper);
+		color: var(--muted);
+		cursor: pointer;
+		transition:
+			border-color 0.15s ease,
+			color 0.15s ease;
+	}
+	.dt-avatar-pick:hover {
+		color: var(--ink);
+		border-color: var(--accent);
+	}
+	.dt-avatar-pick.is-active {
+		color: var(--accent);
+		border-color: var(--accent);
+		background: color-mix(in srgb, var(--accent) 10%, transparent);
+	}
+
+	.dt-gear-tray {
+		width: 100%;
+		max-width: 12rem;
+	}
+	.dt-gear-empty {
+		margin: 0;
+		font-size: 0.72rem;
+		color: var(--muted);
+		text-align: center;
+		text-wrap: balance;
+	}
+	.dt-gear-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+	.dt-gear-pill {
+		display: none;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.74rem;
+		color: var(--ink);
+	}
+	.dt-gear-pill.is-on {
+		display: flex;
+	}
+	.dt-gear-dot {
+		width: 0.5rem;
+		height: 0.5rem;
+		border-radius: 2px;
+		flex: 0 0 auto;
+		background: var(--accent);
+	}
+	.dt-gear-dot[data-slot='badge'] {
+		background: var(--accent-amber);
+	}
+	.dt-gear-dot[data-slot='item'] {
+		background: var(--accent-indigo);
 	}
 </style>

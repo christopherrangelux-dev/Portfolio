@@ -50,10 +50,37 @@ import XPBar from './XPBar.astro';
 </div>
 
 <script>
-	import { getState, xpProgress, continueTarget, recentTerms, getTrackProgress, isTrackComplete } from '../../lib/devTermsState';
+	import { getState, setAvatar, xpProgress, continueTarget, recentTerms, getTrackProgress, isTrackComplete } from '../../lib/devTermsState';
+	import type { AvatarVariant } from '../../lib/devTermsState';
 	import { TRACKS, getTrack } from '../../data/devterms/content';
 	import { TITLES } from '../../data/devterms/rpg';
 	import { withBase } from '../../lib/url';
+
+	// Show the chosen avatar look: the matching hair variant + active picker button.
+	function hydrateAvatar(variant: string) {
+		document.querySelectorAll<HTMLElement>('.dt-hair').forEach((el) => {
+			el.classList.toggle('is-on', el.dataset.avatarVariant === variant);
+		});
+		document.querySelectorAll<HTMLButtonElement>('[data-avatar-pick]').forEach((btn) => {
+			const active = btn.dataset.avatarPick === variant;
+			btn.classList.toggle('is-active', active);
+			btn.setAttribute('aria-pressed', String(active));
+		});
+	}
+
+	// Reveal the gear the player has earned — on-figure pieces and tray pills
+	// share the same data-gear/data-gear-pill slugs from state.gear.
+	function hydrateGear(gear: string[]) {
+		const earned = new Set(gear);
+		document.querySelectorAll<HTMLElement>('[data-gear]').forEach((el) => {
+			el.classList.toggle('is-on', earned.has(el.dataset.gear!));
+		});
+		document.querySelectorAll<HTMLElement>('[data-gear-pill]').forEach((el) => {
+			el.classList.toggle('is-on', earned.has(el.dataset.gearPill!));
+		});
+		const empty = document.getElementById('dt-gear-empty');
+		if (empty) empty.hidden = earned.size > 0;
+	}
 
 	function titleLabel(slug: string): string {
 		return TITLES.find((t) => t.slug === slug)?.label ?? 'Embedded Designer';
@@ -75,6 +102,8 @@ import XPBar from './XPBar.astro';
 		setText('dt-level', String(xp.level));
 		setText('dt-title', label);
 		setText('dt-avatar-title', label);
+		hydrateGear(state.gear);
+		hydrateAvatar(state.avatar);
 		setText('dt-xp-text', xp.atMax ? `${xp.xp} XP · max level` : `${xp.xp} / ${xp.nextThreshold} XP`);
 		const fill = document.getElementById('dt-xp-fill');
 		if (fill) fill.style.width = `${xp.pct}%`;
@@ -132,6 +161,20 @@ import XPBar from './XPBar.astro';
 				}
 			}
 		}
+	}
+
+	// Avatar picker: delegated click bound once on document (survives view
+	// transitions), guarded against duplicate registration.
+	const w = window as typeof window & { __dtDashboardBound?: boolean };
+	if (!w.__dtDashboardBound) {
+		w.__dtDashboardBound = true;
+		document.addEventListener('click', (e) => {
+			const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-avatar-pick]');
+			if (!btn) return;
+			const variant = btn.dataset.avatarPick as AvatarVariant;
+			setAvatar(variant);
+			hydrateAvatar(variant);
+		});
 	}
 
 	// Run now (covers arrival by client navigation, where this script executes
