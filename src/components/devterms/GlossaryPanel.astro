@@ -1,0 +1,152 @@
+---
+// In-experience glossary: a floating "field notebook" launcher that opens a
+// slide-in panel listing every term the player has unlocked so far — so they
+// can look one up mid-mission without leaving the flow. Mounted on the
+// dashboard, track, and level pages. The panel contents are rendered from
+// state.glossary + the term data on open (so they always reflect progress).
+//
+// Mirrors the LevelFlow term-overlay slide-in pattern, with its own classes so
+// the two never collide. Both [hidden]-toggled surfaces also set
+// `[hidden] { display: none }` because their base rule sets display (the
+// override-bug that bit the term overlay and the glossary pending rows).
+import { withBase } from '../../lib/url';
+---
+
+<div class="dt-gloss">
+	<button type="button" class="dt-gloss-trigger" id="dt-gloss-trigger" aria-expanded="false" aria-controls="dt-gloss-panel">
+		<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+			<rect x="3" y="2" width="9" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.3" />
+			<line x1="3" y1="2" x2="3" y2="14" stroke="currentColor" stroke-width="2" />
+			<line x1="6" y1="5" x2="10" y2="5" stroke="currentColor" stroke-width="1.1" />
+			<line x1="6" y1="8" x2="10" y2="8" stroke="currentColor" stroke-width="1.1" />
+			<line x1="6" y1="11" x2="9" y2="11" stroke="currentColor" stroke-width="1.1" />
+		</svg>
+		<span>Field notebook</span>
+	</button>
+
+	<div class="dt-gloss-overlay" id="dt-gloss-panel" hidden>
+		<div class="dt-gloss-backdrop" data-gloss-close></div>
+		<aside class="dt-gloss-aside" role="dialog" aria-modal="true" aria-labelledby="dt-gloss-heading">
+			<header class="dt-gloss-head">
+				<div>
+					<p class="dt-gloss-eyebrow">Field notebook</p>
+					<h2 class="dt-gloss-heading" id="dt-gloss-heading">Your terms</h2>
+				</div>
+				<button type="button" class="dt-gloss-close" data-gloss-close aria-label="Close field notebook">×</button>
+			</header>
+			<input type="search" class="dt-gloss-search" id="dt-gloss-search" placeholder="Search your terms…" aria-label="Search your unlocked terms" />
+			<p class="dt-gloss-status" id="dt-gloss-status"></p>
+			<ul class="dt-gloss-list" id="dt-gloss-list"></ul>
+			<p class="dt-gloss-empty" id="dt-gloss-empty" hidden>
+				No terms yet. Play a mission — the terms you meet land here for quick reference.
+			</p>
+			<a class="dt-gloss-full" href={withBase('dev-terms/glossary')}>Open the full glossary →</a>
+		</aside>
+	</div>
+</div>
+
+<script>
+	import { getState } from '../../lib/devTermsState';
+	import { getAllTerms, getTrack } from '../../data/devterms/content';
+
+	function panel() {
+		return document.getElementById('dt-gloss-panel');
+	}
+
+	// Build the unlocked-term list from state + data, grouped by track in
+	// track order. Re-run each open so it reflects current progress.
+	function renderList() {
+		const list = document.getElementById('dt-gloss-list');
+		if (!list) return;
+		const unlocked = new Set(getState().glossary);
+		const terms = getAllTerms().filter((t) => unlocked.has(t.term.slug));
+
+		list.replaceChildren();
+		for (const { trackSlug, term } of terms) {
+			const li = document.createElement('li');
+			li.className = 'dt-gloss-item';
+			li.dataset.word = term.word.toLowerCase();
+			li.dataset.def = term.definition.toLowerCase();
+			const track = getTrack(trackSlug);
+			if (track) li.style.setProperty('--track-color', track.color);
+
+			const head = document.createElement('div');
+			head.className = 'dt-gloss-item-head';
+			const word = document.createElement('span');
+			word.className = 'dt-gloss-item-word';
+			word.textContent = term.word;
+			const tag = document.createElement('span');
+			tag.className = 'dt-gloss-item-tag';
+			tag.textContent = track?.name ?? trackSlug;
+			head.append(word, tag);
+
+			const def = document.createElement('p');
+			def.className = 'dt-gloss-item-def';
+			def.textContent = term.definition;
+
+			li.append(head, def);
+			if (term.codeExample) {
+				const code = document.createElement('code');
+				code.className = 'dt-gloss-item-code';
+				code.textContent = term.codeExample;
+				li.append(code);
+			}
+			list.append(li);
+		}
+
+		const status = document.getElementById('dt-gloss-status');
+		if (status) status.textContent = terms.length ? `${terms.length} term${terms.length === 1 ? '' : 's'} unlocked` : '';
+		const empty = document.getElementById('dt-gloss-empty');
+		if (empty) empty.hidden = terms.length > 0;
+		applySearch('');
+	}
+
+	function applySearch(q: string) {
+		const needle = q.trim().toLowerCase();
+		document.querySelectorAll<HTMLElement>('.dt-gloss-item').forEach((li) => {
+			const match = !needle || li.dataset.word!.includes(needle) || li.dataset.def!.includes(needle);
+			li.hidden = !match;
+		});
+	}
+
+	function openPanel() {
+		const p = panel();
+		if (!p) return;
+		renderList();
+		p.hidden = false;
+		requestAnimationFrame(() => p.classList.add('is-open'));
+		document.getElementById('dt-gloss-trigger')?.setAttribute('aria-expanded', 'true');
+		const search = document.getElementById('dt-gloss-search') as HTMLInputElement | null;
+		if (search) {
+			search.value = '';
+			setTimeout(() => search.focus(), 50);
+		}
+	}
+
+	function closePanel() {
+		const p = panel();
+		if (!p || p.hidden) return;
+		p.classList.remove('is-open');
+		document.getElementById('dt-gloss-trigger')?.setAttribute('aria-expanded', 'false');
+		setTimeout(() => {
+			p.hidden = true;
+		}, 300);
+	}
+
+	// Delegated handlers bound once on document (survive view transitions).
+	const w = window as typeof window & { __dtGlossPanelBound?: boolean };
+	if (!w.__dtGlossPanelBound) {
+		w.__dtGlossPanelBound = true;
+		document.addEventListener('click', (e) => {
+			const target = e.target as HTMLElement;
+			if (target.closest('#dt-gloss-trigger')) return openPanel();
+			if (target.closest('[data-gloss-close]')) return closePanel();
+		});
+		document.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') closePanel();
+		});
+		document.addEventListener('input', (e) => {
+			if ((e.target as HTMLElement).id === 'dt-gloss-search') applySearch((e.target as HTMLInputElement).value);
+		});
+	}
+</script>

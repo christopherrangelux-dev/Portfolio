@@ -3,6 +3,7 @@ import Base from '../../../layouts/Base.astro';
 import { withBase } from '../../../lib/url';
 import { TRACKS, getTrack } from '../../../data/devterms/content';
 import TrackPage from '../../../components/devterms/TrackPage.astro';
+import GlossaryPanel from '../../../components/devterms/GlossaryPanel.astro';
 
 import '../../../styles/devterms.css';
 
@@ -25,4 +26,5 @@ const track = getTrack(trackSlug!)!;
 
 		<TrackPage trackSlug={track.slug} />
 	</div>
+	<GlossaryPanel />
 </Base>

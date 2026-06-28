@@ -522,6 +522,178 @@
 }
 
 /* ===========================================================================
+   In-experience glossary launcher + slide-in panel
+   =========================================================================== */
+.dt-gloss-trigger {
+	position: fixed;
+	right: 1.25rem;
+	bottom: 1.25rem;
+	z-index: 45;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.45rem;
+	padding: 0.55rem 0.9rem;
+	font-family: var(--mono);
+	font-size: 0.78rem;
+	color: var(--paper);
+	background: var(--track-color, var(--accent));
+	border: none;
+	border-radius: 999px;
+	cursor: pointer;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+}
+.dt-gloss-trigger:hover {
+	filter: brightness(1.06);
+}
+.dt-gloss-trigger svg {
+	display: block;
+}
+
+.dt-gloss-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 60;
+	display: flex;
+	justify-content: flex-end;
+}
+/* base rule sets display:flex — restore real hiding when closed */
+.dt-gloss-overlay[hidden] {
+	display: none;
+}
+.dt-gloss-backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.35);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+.dt-gloss-overlay.is-open .dt-gloss-backdrop {
+	opacity: 1;
+}
+.dt-gloss-aside {
+	position: relative;
+	width: min(420px, 100%);
+	height: 100%;
+	overflow-y: auto;
+	background: var(--paper);
+	border-left: 1px solid var(--border);
+	padding: 1.75rem 1.5rem 2rem;
+	transform: translateX(100%);
+	transition: transform 0.3s ease;
+}
+.dt-gloss-overlay.is-open .dt-gloss-aside {
+	transform: none;
+}
+.dt-gloss-head {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+.dt-gloss-eyebrow {
+	font-family: var(--mono);
+	font-size: 0.7rem;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--accent);
+	margin: 0 0 0.2rem;
+}
+.dt-gloss-heading {
+	margin: 0;
+	font-size: 1.3rem;
+}
+.dt-gloss-close {
+	flex: 0 0 auto;
+	font-size: 1.4rem;
+	line-height: 1;
+	background: none;
+	border: none;
+	color: var(--muted);
+	cursor: pointer;
+	padding: 0.1rem 0.3rem;
+}
+.dt-gloss-close:hover {
+	color: var(--ink);
+}
+.dt-gloss-search {
+	width: 100%;
+	padding: 0.5rem 0.7rem;
+	font: inherit;
+	font-size: 0.86rem;
+	color: var(--ink);
+	background: var(--paper);
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	margin-bottom: 0.75rem;
+}
+.dt-gloss-search:focus {
+	outline: none;
+	border-color: var(--accent);
+}
+.dt-gloss-status {
+	font-family: var(--mono);
+	font-size: 0.7rem;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--muted);
+	margin: 0 0 0.75rem;
+}
+.dt-gloss-list {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+}
+.dt-gloss-item {
+	border-left: 3px solid var(--track-color, var(--accent));
+	padding-left: 0.75rem;
+}
+.dt-gloss-item-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.dt-gloss-item-word {
+	font-weight: 600;
+	font-size: 0.95rem;
+}
+.dt-gloss-item-tag {
+	flex: 0 0 auto;
+	font-family: var(--mono);
+	font-size: 0.6rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--track-color, var(--accent));
+}
+.dt-gloss-item-def {
+	margin: 0.25rem 0 0;
+	font-size: 0.82rem;
+	color: var(--ink);
+}
+.dt-gloss-item-code {
+	display: block;
+	margin-top: 0.35rem;
+	font-size: 0.72rem;
+	color: var(--muted);
+	word-break: break-word;
+}
+.dt-gloss-empty {
+	font-size: 0.84rem;
+	color: var(--muted);
+}
+.dt-gloss-full {
+	display: inline-block;
+	margin-top: 1.25rem;
+	font-family: var(--mono);
+	font-size: 0.78rem;
+	color: var(--accent);
+}
+
+/* ===========================================================================
    Level flow
    =========================================================================== */
 

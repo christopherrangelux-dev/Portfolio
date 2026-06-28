@@ -3,6 +3,7 @@ import Base from '../../../layouts/Base.astro';
 import { withBase } from '../../../lib/url';
 import { TRACKS, getTrack, getLevel } from '../../../data/devterms/content';
 import LevelFlow from '../../../components/devterms/LevelFlow.astro';
+import GlossaryPanel from '../../../components/devterms/GlossaryPanel.astro';
 
 import '../../../styles/devterms.css';
 
@@ -36,4 +37,5 @@ const lvl = getLevel(trackSlug!, levelNum);
 			)
 		}
 	</div>
+	<GlossaryPanel />
 </Base>
