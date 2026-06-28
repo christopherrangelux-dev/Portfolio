@@ -1,11 +1,19 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { withBase } from '../../lib/url';
-import { TRACKS } from '../../data/devterms/content';
+import { TRACKS, getAllTerms } from '../../data/devterms/content';
 import '../../styles/devterms.css';
 
 // Total term count is derived from the data, never hardcoded (spec §11).
 const totalTerms = TRACKS.reduce((sum, t) => sum + t.terms, 0);
+
+// Authored terms (only Git Flow until tracks 2–6 are written in step 11). Each
+// renders locked by default; the script unlocks the ones in state.glossary.
+const authored = getAllTerms();
+const authoredByTrack = new Map<string, number>();
+for (const { trackSlug } of authored) {
+	authoredByTrack.set(trackSlug, (authoredByTrack.get(trackSlug) ?? 0) + 1);
+}
 ---
 
 <Base
@@ -17,10 +25,130 @@ const totalTerms = TRACKS.reduce((sum, t) => sum + t.terms, 0);
 		<section class="dt-hero">
 			<p class="dt-eyebrow">Field Notebook</p>
 			<h1>Glossary</h1>
-			<p class="dt-lede">{totalTerms} terms across {TRACKS.length} tracks. Unlocked entries fill in as you complete missions.</p>
+			<p class="dt-lede">
+				{totalTerms} terms across {TRACKS.length} tracks. Words are always visible; definitions fill in as you complete missions.
+				<span class="dt-glossary-count" id="dt-glossary-count" hidden></span>
+			</p>
 		</section>
 
-		<!-- STEP 1 placeholder: filterable term grid built from localStorage in step 9. -->
-		<p class="dt-placeholder">Field notebook coming together — terms unlock as you play.</p>
+		<div class="dt-filter-bar" role="group" aria-label="Filter terms by track">
+			<button type="button" class="dt-filter is-active" data-filter="all" aria-pressed="true">All</button>
+			{TRACKS.map((t) => (
+				<button
+					type="button"
+					class="dt-filter"
+					data-filter={t.slug}
+					aria-pressed="false"
+					style={`--track-color: ${t.color}`}
+				>
+					{t.name}
+				</button>
+			))}
+		</div>
+
+		<ul class="dt-glossary-grid" id="dt-glossary-grid">
+			{authored.map(({ trackSlug, term }) => {
+				const track = TRACKS.find((t) => t.slug === trackSlug)!;
+				return (
+					<li
+						class="dt-term-card is-locked"
+						data-term-card={term.slug}
+						data-card-track={trackSlug}
+						style={`--track-color: ${track.color}`}
+					>
+						<div class="dt-term-card-head">
+							<h2 class="dt-term-card-word">{term.word}</h2>
+							<span class="dt-term-card-tag">{track.name}</span>
+						</div>
+						{term.codeExample && <code class="dt-term-card-code">{term.codeExample}</code>}
+						<p class="dt-term-card-def">{term.definition}</p>
+						<p class="dt-term-card-ctx">{term.designerContext}</p>
+						<span class="dt-term-card-lock" aria-hidden="true">Locked · unlock in {track.name}</span>
+					</li>
+				);
+			})}
+		</ul>
+
+		{/* Tracks whose terms aren't authored yet (everything but Git Flow, until step 11). */}
+		<div class="dt-glossary-pending">
+			{TRACKS.filter((t) => !authoredByTrack.has(t.slug)).map((t) => (
+				<p class="dt-glossary-pending-row" data-pending-track={t.slug} style={`--track-color: ${t.color}`}>
+					<span class="dt-pending-dot" aria-hidden="true"></span>
+					<strong>{t.name}</strong> — {t.terms} terms arrive when this track is built.
+				</p>
+			))}
+		</div>
+
+		<p class="dt-glossary-empty" id="dt-glossary-empty" hidden>No terms in this track yet — it's still being built.</p>
 	</div>
 </Base>
+
+<script>
+	import { getState } from '../../lib/devTermsState';
+
+	function hydrate() {
+		const grid = document.getElementById('dt-glossary-grid');
+		if (!grid) return; // not on the glossary page
+
+		const state = getState();
+		const unlocked = new Set(state.glossary);
+
+		const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-term-card]'));
+		let unlockedCount = 0;
+		for (const card of cards) {
+			const isUnlocked = unlocked.has(card.dataset.termCard!);
+			card.classList.toggle('is-locked', !isUnlocked);
+			if (isUnlocked) unlockedCount++;
+		}
+
+		const count = document.getElementById('dt-glossary-count');
+		if (count) {
+			count.textContent = ` ${unlockedCount} of ${cards.length} unlocked so far.`;
+			count.hidden = cards.length === 0;
+		}
+
+		applyFilter(currentFilter());
+	}
+
+	function currentFilter(): string {
+		return document.querySelector<HTMLElement>('.dt-filter.is-active')?.dataset.filter ?? 'all';
+	}
+
+	function applyFilter(filter: string) {
+		const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-term-card]'));
+		let shown = 0;
+		for (const card of cards) {
+			const match = filter === 'all' || card.dataset.cardTrack === filter;
+			card.hidden = !match;
+			if (match) shown++;
+		}
+		// Pending-track rows only make sense in the "all" view or that track's view.
+		document.querySelectorAll<HTMLElement>('[data-pending-track]').forEach((row) => {
+			row.hidden = !(filter === 'all' || row.dataset.pendingTrack === filter);
+		});
+		const empty = document.getElementById('dt-glossary-empty');
+		if (empty) {
+			const pendingVisible = document.querySelector<HTMLElement>('[data-pending-track]:not([hidden])');
+			empty.hidden = shown > 0 || !!pendingVisible;
+		}
+	}
+
+	// Delegated filter clicks, bound once (survives view transitions).
+	const w = window as typeof window & { __dtGlossaryBound?: boolean };
+	if (!w.__dtGlossaryBound) {
+		w.__dtGlossaryBound = true;
+		document.addEventListener('click', (e) => {
+			const btn = (e.target as HTMLElement).closest<HTMLElement>('.dt-filter');
+			if (!btn) return;
+			document.querySelectorAll<HTMLElement>('.dt-filter').forEach((b) => {
+				const active = b === btn;
+				b.classList.toggle('is-active', active);
+				b.setAttribute('aria-pressed', String(active));
+			});
+			applyFilter(btn.dataset.filter ?? 'all');
+		});
+	}
+
+	hydrate();
+	document.addEventListener('astro:page-load', hydrate);
+</script>

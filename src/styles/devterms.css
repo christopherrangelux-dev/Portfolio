@@ -371,6 +371,157 @@
 }
 
 /* ===========================================================================
+   Glossary (field notebook)
+   =========================================================================== */
+.dt-glossary-count {
+	color: var(--ink);
+}
+.dt-filter-bar {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-bottom: 1.75rem;
+}
+.dt-filter {
+	font-family: var(--mono);
+	font-size: 0.74rem;
+	letter-spacing: 0.02em;
+	padding: 0.3rem 0.7rem;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--paper);
+	color: var(--muted);
+	cursor: pointer;
+	transition:
+		color 0.15s ease,
+		border-color 0.15s ease,
+		background 0.15s ease;
+}
+.dt-filter:hover {
+	color: var(--ink);
+	border-color: var(--track-color, var(--accent));
+}
+.dt-filter.is-active {
+	color: var(--track-color, var(--accent));
+	border-color: var(--track-color, var(--accent));
+	background: color-mix(in srgb, var(--track-color, var(--accent)) 10%, transparent);
+}
+
+.dt-glossary-grid {
+	list-style: none;
+	margin: 0 0 1.5rem;
+	padding: 0;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 1rem;
+}
+.dt-term-card {
+	position: relative;
+	border: 1px solid var(--border);
+	border-left: 3px solid var(--track-color, var(--accent));
+	border-radius: 6px;
+	padding: 1rem 1.1rem 1.1rem;
+	background: var(--paper);
+	overflow: hidden;
+}
+.dt-term-card-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+.dt-term-card-word {
+	margin: 0;
+	font-size: 1.05rem;
+	font-weight: 600;
+}
+.dt-term-card-tag {
+	flex: 0 0 auto;
+	font-family: var(--mono);
+	font-size: 0.62rem;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--track-color, var(--accent));
+}
+.dt-term-card-code {
+	display: block;
+	font-size: 0.74rem;
+	color: var(--muted);
+	margin-bottom: 0.5rem;
+	word-break: break-word;
+}
+.dt-term-card-def {
+	margin: 0 0 0.5rem;
+	font-size: 0.86rem;
+}
+.dt-term-card-ctx {
+	margin: 0;
+	font-size: 0.8rem;
+	color: var(--muted);
+}
+.dt-term-card-lock {
+	display: none;
+	font-family: var(--mono);
+	font-size: 0.64rem;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	color: var(--muted);
+}
+
+/* Locked: word + tag stay sharp; definition/context/code blur and the lock
+   chip shows in their place (spec §11 — redacted card, word visible). */
+.dt-term-card.is-locked .dt-term-card-code,
+.dt-term-card.is-locked .dt-term-card-def,
+.dt-term-card.is-locked .dt-term-card-ctx {
+	filter: blur(4px);
+	opacity: 0.45;
+	user-select: none;
+	pointer-events: none;
+}
+.dt-term-card.is-locked .dt-term-card-lock {
+	display: block;
+	margin-top: 0.75rem;
+}
+
+.dt-glossary-pending {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 1.5rem;
+}
+.dt-glossary-pending-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0;
+	font-size: 0.82rem;
+	color: var(--muted);
+}
+/* display:flex overrides the [hidden] attribute; restore real hiding so the
+   filter can drop rows for other tracks. */
+.dt-glossary-pending-row[hidden] {
+	display: none;
+}
+.dt-glossary-pending-row strong {
+	color: var(--ink);
+	font-weight: 600;
+}
+.dt-pending-dot {
+	width: 0.55rem;
+	height: 0.55rem;
+	border-radius: 2px;
+	flex: 0 0 auto;
+	background: var(--track-color, var(--accent));
+	opacity: 0.55;
+}
+.dt-glossary-empty {
+	font-family: var(--mono);
+	font-size: 0.84rem;
+	color: var(--muted);
+}
+
+/* ===========================================================================
    Level flow
    =========================================================================== */
 
