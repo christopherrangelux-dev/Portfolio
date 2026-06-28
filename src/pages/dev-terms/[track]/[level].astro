@@ -26,7 +26,10 @@ const lvl = getLevel(trackSlug!, levelNum);
 		<a class="dt-back-link" href={withBase(`dev-terms/${track.slug}`)}>← {track.name}</a>
 		<section class="dt-hero">
 			<p class="dt-eyebrow">{track.name} · Level {levelNum}</p>
-			<h1>{lvl ? lvl.title : 'Mission briefing'}</h1>
+			<div class="dt-hero-title-row">
+				<h1>{lvl ? lvl.title : 'Mission briefing'}</h1>
+				<GlossaryPanel />
+			</div>
 		</section>
 
 		{
@@ -37,5 +40,4 @@ const lvl = getLevel(trackSlug!, levelNum);
 			)
 		}
 	</div>
-	<GlossaryPanel />
 </Base>

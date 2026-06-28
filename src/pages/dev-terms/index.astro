@@ -13,7 +13,10 @@ import '../../styles/devterms.css';
 	<div class="container devterms">
 		<section class="dt-hero">
 			<p class="dt-eyebrow">Field Manual</p>
-			<h1>Dev Terms</h1>
+			<div class="dt-hero-title-row">
+				<h1>Dev Terms</h1>
+				<GlossaryPanel />
+			</div>
 			<p class="dt-lede">
 				The language engineers use every sprint, learned by doing. Six tracks, scenario-based
 				missions, one growing field notebook.
@@ -26,5 +29,4 @@ import '../../styles/devterms.css';
 			<a href={withBase('dev-terms/glossary')}>Open the field notebook →</a>
 		</p>
 	</div>
-	<GlossaryPanel />
 </Base>

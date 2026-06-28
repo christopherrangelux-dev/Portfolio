@@ -20,11 +20,13 @@ const track = getTrack(trackSlug!)!;
 		<a class="dt-back-link" href={withBase('dev-terms')}>← All tracks</a>
 		<section class="dt-hero">
 			<p class="dt-eyebrow">{track.missionTheme}</p>
-			<h1>{track.name}</h1>
+			<div class="dt-hero-title-row">
+				<h1>{track.name}</h1>
+				<GlossaryPanel />
+			</div>
 			<p class="dt-lede">{track.tagline}</p>
 		</section>
 
 		<TrackPage trackSlug={track.slug} />
 	</div>
-	<GlossaryPanel />
 </Base>
