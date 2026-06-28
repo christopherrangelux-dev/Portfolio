@@ -5,6 +5,7 @@ import UnlockImage from './UnlockImage.astro';
 import GitRunner from './games/GitRunner.astro';
 import ApiSwitchboard from './games/ApiSwitchboard.astro';
 import InfraDefense from './games/InfraDefense.astro';
+import CicdConveyor from './games/CicdConveyor.astro';
 
 // Per-track mini-game, keyed by the game slug. Tracks without an entry here
 // fall back to the "arriving soon" placeholder until their game is built.
@@ -12,6 +13,7 @@ const GAME_COMPONENTS: Record<string, typeof GitRunner> = {
 	'git-runner': GitRunner,
 	'api-switchboard': ApiSwitchboard,
 	'infra-defense': InfraDefense,
+	'cicd-conveyor': CicdConveyor,
 };
 
 interface Props {

@@ -1,0 +1,275 @@
+---
+// CI/CD Conveyor — CI/CD & Dev Process's 8-bit mini-game (spec §8). Canvas only.
+// Builds ride a conveyor belt left to right. Some carry a bug; tap a build (or
+// press space to flag the one nearest the deploy gate) to pull it before it
+// ships. Let clean builds reach the gate for a clean deploy (+1); if a buggy
+// build ships, it's a bad release — game over. Score = clean deploys; best
+// persists.
+//
+// Same scaffolding as the other games: chunky pixels, two-colour palette (track
+// coral + off-white) on a dark field, Press Start 2P scoped to the game UI.
+---
+
+<div class="dt-conveyor" data-conveyor>
+	<canvas class="dt-conveyor-canvas" data-conveyor-canvas role="img" aria-label="CI/CD Conveyor — tap buggy builds to flag them before they ship"></canvas>
+</div>
+
+<script>
+	const BEST_KEY = 'dt-cicd-conveyor-best';
+	const H = 220;
+
+	type Build = { x: number; buggy: boolean; flash: number };
+
+	let rafId = 0;
+	let cleanup: Array<() => void> = [];
+
+	function readBest(): number {
+		try {
+			return Number(localStorage.getItem(BEST_KEY)) || 0;
+		} catch {
+			return 0;
+		}
+	}
+	function writeBest(n: number) {
+		try {
+			localStorage.setItem(BEST_KEY, String(n));
+		} catch {
+			/* ignore */
+		}
+	}
+
+	function setup() {
+		destroy();
+		const canvas = document.querySelector<HTMLCanvasElement>('[data-conveyor-canvas]');
+		if (!canvas) return;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		const palette = {
+			coral: getComputedStyle(canvas).getPropertyValue('--track-color').trim() || '#D85A30',
+			ink: '#f4f1ea',
+			bg: '#0f1014',
+		};
+
+		const BW = 48;
+		const BH = 32;
+		const beltY = H / 2 + 6;
+		let W = 0;
+
+		function resize() {
+			const dpr = Math.min(window.devicePixelRatio || 1, 2);
+			W = canvas!.clientWidth || 800;
+			canvas!.width = Math.round(W * dpr);
+			canvas!.height = Math.round(H * dpr);
+			ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+			ctx!.imageSmoothingEnabled = false;
+		}
+		resize();
+
+		const g = {
+			mode: 'idle' as 'idle' | 'running' | 'over',
+			t: 0,
+			score: 0,
+			best: readBest(),
+			speed: 1.3,
+			spawnIn: 40,
+			builds: [] as Build[],
+			caughtFlash: 0,
+		};
+
+		function reset() {
+			g.mode = 'running';
+			g.t = 0;
+			g.score = 0;
+			g.speed = 1.3;
+			g.spawnIn = 30;
+			g.builds = [];
+			g.caughtFlash = 0;
+		}
+
+		function flagAt(px: number): boolean {
+			// flag the build whose box contains px (topmost / closest to gate wins)
+			for (let i = g.builds.length - 1; i >= 0; i--) {
+				const b = g.builds[i];
+				if (px >= b.x - BW / 2 && px <= b.x + BW / 2) {
+					resolveFlag(i);
+					return true;
+				}
+			}
+			return false;
+		}
+
+		function resolveFlag(i: number) {
+			const b = g.builds[i];
+			g.builds.splice(i, 1);
+			g.caughtFlash = b.buggy ? 12 : 0;
+			// flagging a buggy build = caught (good, avoids game over); flagging a
+			// clean one just wastes a would-be deploy. No score either way.
+		}
+
+		// ---- input ----
+		const onKey = (e: KeyboardEvent) => {
+			if (e.code === 'Space') {
+				e.preventDefault();
+				if (g.mode !== 'running') return reset();
+				// flag the build nearest the deploy gate (largest x)
+				let idx = -1;
+				let best = -Infinity;
+				for (let i = 0; i < g.builds.length; i++) {
+					if (g.builds[i].x > best) {
+						best = g.builds[i].x;
+						idx = i;
+					}
+				}
+				if (idx >= 0) resolveFlag(idx);
+			}
+		};
+		const onPointer = (e: PointerEvent) => {
+			e.preventDefault();
+			if (g.mode !== 'running') return reset();
+			const rect = canvas!.getBoundingClientRect();
+			flagAt(((e.clientX - rect.left) / rect.width) * W);
+		};
+		window.addEventListener('keydown', onKey);
+		canvas.addEventListener('pointerdown', onPointer);
+		window.addEventListener('resize', resize);
+		cleanup.push(() => window.removeEventListener('keydown', onKey));
+		cleanup.push(() => canvas.removeEventListener('pointerdown', onPointer));
+		cleanup.push(() => window.removeEventListener('resize', resize));
+
+		// ---- update ----
+		function update() {
+			g.t++;
+			if (g.caughtFlash > 0) g.caughtFlash--;
+			if (g.mode !== 'running') return;
+
+			g.speed = Math.min(3.1, g.speed + 0.001);
+			g.spawnIn -= 1;
+			if (g.spawnIn <= 0) {
+				g.builds.push({ x: -BW, buggy: Math.random() < 0.42, flash: 0 });
+				g.spawnIn = Math.max(34, 84 - g.t * 0.02);
+			}
+
+			const gate = W - 8;
+			for (let i = g.builds.length - 1; i >= 0; i--) {
+				const b = g.builds[i];
+				b.x += g.speed;
+				if (b.x - BW / 2 >= gate) {
+					g.builds.splice(i, 1);
+					if (b.buggy) {
+						g.mode = 'over';
+					} else {
+						g.score++;
+						if (g.score > g.best) {
+							g.best = g.score;
+							writeBest(g.best);
+						}
+					}
+				}
+			}
+		}
+
+		// ---- render ----
+		function px(x: number, y: number, w: number, h: number, color: string) {
+			ctx!.fillStyle = color;
+			ctx!.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+		}
+		function text(s: string, x: number, y: number, size: number, color: string, align: CanvasTextAlign = 'left') {
+			ctx!.fillStyle = color;
+			ctx!.font = `${size}px 'Press Start 2P', monospace`;
+			ctx!.textAlign = align;
+			ctx!.textBaseline = 'alphabetic';
+			ctx!.fillText(s, x, y);
+		}
+
+		function drawBuild(b: Build) {
+			const top = beltY - BH;
+			const color = b.buggy ? palette.coral : palette.ink;
+			ctx!.strokeStyle = color;
+			ctx!.lineWidth = 2;
+			px(b.x - BW / 2, top, BW, BH, palette.bg);
+			ctx!.strokeRect(Math.round(b.x - BW / 2) + 1, top + 1, BW - 2, BH - 2);
+			if (b.buggy) {
+				// little bug: body + antennae + legs
+				const cx = b.x;
+				const cy = top + BH / 2;
+				px(cx - 5, cy - 3, 10, 8, palette.coral);
+				px(cx - 7, cy - 1, 2, 2, palette.coral);
+				px(cx + 5, cy - 1, 2, 2, palette.coral);
+				px(cx - 6, cy - 6, 2, 3, palette.coral);
+				px(cx + 4, cy - 6, 2, 3, palette.coral);
+			} else {
+				text('OK', b.x, beltY - BH / 2 + 3, 7, palette.ink, 'center');
+			}
+		}
+
+		function render() {
+			px(0, 0, W, H, palette.bg);
+
+			// belt
+			px(0, beltY, W, 3, palette.coral);
+			const off = (g.t * g.speed) % 22;
+			ctx!.globalAlpha = 0.4;
+			for (let x = -off; x < W; x += 22) px(x, beltY + 7, 11, 2, palette.ink);
+			ctx!.globalAlpha = 1;
+
+			// deploy gate
+			const gate = W - 8;
+			px(gate, beltY - BH - 6, 4, BH + 14, g.caughtFlash > 0 ? palette.ink : palette.coral);
+			text('DEPLOY', gate - 6, beltY + 22, 6, palette.coral, 'right');
+
+			for (const b of g.builds) drawBuild(b);
+
+			text(`DEPLOYS ${g.score}`, 12, 20, 8, palette.ink);
+			text(`BEST ${g.best}`, W - 12, 20, 8, palette.coral, 'right');
+
+			if (g.mode === 'idle') {
+				text('CI/CD CONVEYOR', W / 2, H / 2 - 30, 11, palette.ink, 'center');
+				text('FLAG THE BUGGY BUILDS', W / 2, H / 2 - 12, 7, palette.coral, 'center');
+				text('TAP A BUILD — LET CLEAN ONES SHIP', W / 2, H / 2 + 2, 6, palette.coral, 'center');
+				text('SPACE / TAP TO START', W / 2, H / 2 + 18, 7, palette.ink, 'center');
+			} else if (g.mode === 'over') {
+				text('SHIPPED A BUG!', W / 2, H / 2 - 30, 11, palette.coral, 'center');
+				text(`${g.score} CLEAN DEPLOYS`, W / 2, H / 2 - 10, 8, palette.ink, 'center');
+				text('SPACE / TAP TO RETRY', W / 2, H / 2 + 8, 7, palette.coral, 'center');
+			}
+		}
+
+		function loop() {
+			update();
+			render();
+			rafId = requestAnimationFrame(loop);
+		}
+		(document as any).fonts?.load("8px 'Press Start 2P'").catch(() => {});
+		loop();
+	}
+
+	function destroy() {
+		if (rafId) cancelAnimationFrame(rafId);
+		rafId = 0;
+		cleanup.forEach((fn) => fn());
+		cleanup = [];
+	}
+
+	setup();
+	document.addEventListener('astro:page-load', setup);
+	document.addEventListener('astro:before-swap', destroy);
+</script>
+
+<style>
+	@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+	.dt-conveyor {
+		width: 100%;
+		height: 100%;
+	}
+	.dt-conveyor-canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		border-radius: 6px;
+		cursor: pointer;
+		touch-action: manipulation;
+	}
+</style>

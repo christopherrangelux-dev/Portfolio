@@ -899,6 +899,278 @@ const cloudInfraLevels: Level[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Track 4 — CI/CD & Dev Process (fully authored)
+// ---------------------------------------------------------------------------
+
+const cicdLevels: Level[] = [
+	{
+		number: 1,
+		title: 'The pipeline',
+		xpReward: 15,
+		scenario: {
+			briefing:
+				'Mission 4-A: You pushed a small token change and opened your PR like a pro. Now there\'s a red X next to it and a message: "Pipeline failed." You didn\'t even know there was a pipeline. Apparently your change is blocking a release.',
+			exchanges: [
+				{
+					speaker: 'The Tech Lead',
+					text: "When you push, an automated `pipeline` runs — a series of steps the code goes through before it's allowed to ship. Build it, test it, check it. Think of it like a factory line with quality checkpoints. Your change hit a checkpoint and stopped.",
+					highlightedTerms: ['pipeline'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: "The first step is the `build` — assembling all the code into the final, runnable version of the site. Your token file had a stray comma, so the build couldn't assemble. That's all 'pipeline failed' means here: it choked at the build step.",
+					highlightedTerms: ['build'],
+				},
+				{
+					speaker: 'The On-Call Engineer',
+					text: "This whole setup is `CI` — Continuous Integration. Every change gets automatically built and checked the moment it's pushed, so problems surface in minutes instead of weeks later. It's not punishing you; it caught a typo before users ever saw it.",
+					highlightedTerms: ['ci'],
+				},
+				{
+					speaker: 'You',
+					text: 'I fix the comma, push again. The pipeline reruns on its own, turns green, and the path to release reopens. And `CD` — the part that takes a green build and ships it automatically — does the rest.',
+					highlightedTerms: ['cd'],
+				},
+			],
+			decision: {
+				prompt: 'Your PR shows "pipeline failed" at the build step. What do you do?',
+				options: [
+					{
+						text: 'Merge anyway — it\'s just a warning',
+						correct: false,
+						consequence:
+							"A failed build isn't a warning, it's a stop sign. Merging broken code can take down the whole release for everyone. The red X is protecting the team.",
+					},
+					{
+						text: 'Read the build error and fix what it points to',
+						correct: true,
+						consequence:
+							'Exactly. The pipeline tells you where it failed — usually a specific file and line. Fixing that and re-pushing reruns the checks automatically.',
+					},
+					{
+						text: 'Ask someone else to merge it for you',
+						correct: false,
+						consequence:
+							'Handing off a red pipeline just moves the same broken build to someone else. The error is readable and the fix is yours — start with what it says.',
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'ci',
+				word: 'CI',
+				definition:
+					'The practice of automatically building and checking code every time someone changes it, so problems are caught immediately instead of piling up. Each change gets vetted on arrival, like a spell-checker that runs the instant you finish a sentence.',
+				designerContext:
+					'CI is why a tiny mistake in a shared file gets flagged within minutes. When your design token or copy change "fails CI," it means an automatic check caught something before it reached users.',
+			},
+			{
+				slug: 'cd',
+				word: 'CD',
+				definition:
+					'The automated step that takes code which has passed all checks and releases it — to staging, or all the way to production — without someone manually pushing it out. The second half of the assembly line: once it passes inspection, it ships itself.',
+				designerContext:
+					'CD is why an approved change can go live within minutes of merging, no manual upload required. It explains how "I merged it and it was live almost instantly" actually happens.',
+			},
+			{
+				slug: 'build',
+				word: 'build',
+				codeExample: 'npm run build',
+				definition:
+					"Assembling all the separate source files into the final, optimized version that actually runs. The raw ingredients get cooked into the finished dish. If anything's malformed, the build fails before it produces anything.",
+				designerContext:
+					'"The build is broken" means the site can\'t even be assembled, so nothing can ship — including your changes. A broken build blocks everyone, which is why a stray typo in a shared file gets urgent attention fast.',
+			},
+			{
+				slug: 'pipeline',
+				word: 'pipeline',
+				definition:
+					'The ordered series of automated steps code passes through from "just changed" to "live," each one a checkpoint that can pass or fail. Like a factory line with inspection stations — clear one to reach the next.',
+				designerContext:
+					'When your PR runs a pipeline, you can see exactly which stage passed or failed. That visibility lets you tell the difference between "my code is wrong" and "an unrelated test is flaky" without guessing.',
+			},
+		],
+	},
+	{
+		number: 2,
+		title: 'Shipping safely',
+		xpReward: 20,
+		scenario: {
+			briefing:
+				'Mission 4-B: A half-finished feature — one you\'re still designing — just appeared on the live site. Real users can see it. It\'s not ready. The question in the channel is calm but pointed: "how is this live?"',
+			exchanges: [
+				{
+					speaker: 'The Tech Lead',
+					text: 'Unfinished work should sit behind a `feature flag` — a switch that hides a feature from users until you flip it on. The code can ship to production while the feature stays invisible. Someone flipped this one early, or it never got wrapped in a flag at all.',
+					highlightedTerms: ['feature-flag'],
+				},
+				{
+					speaker: 'The On-Call Engineer',
+					text: "When code goes to production, that's a `deploy` — the act of releasing a version to a live environment. The feature got deployed with the flag accidentally on. The deploy itself worked fine; the visibility switch was the problem.",
+					highlightedTerms: ['deploy'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: "Quickest fix: flip the flag off. If that weren't possible, we'd `rollback` — return to the previous known-good version, like an undo for the whole site. And the flag's default state is set by an `environment variable`, a setting that lives outside the code and differs per environment.",
+					highlightedTerms: ['rollback', 'environment-variable'],
+				},
+				{
+					speaker: 'You',
+					text: "Flag off. The feature vanishes from production, still safe and intact in our work. No rollback needed. I'm realizing feature flags are a design tool too — they're how you'd run a gradual rollout.",
+					highlightedTerms: [],
+				},
+			],
+			decision: {
+				prompt: 'A not-yet-ready feature is visible in production. Fastest safe fix?',
+				options: [
+					{
+						text: "Delete the feature's code immediately",
+						correct: false,
+						consequence:
+							'Ripping out code under pressure risks breaking things around it. If a flag exists, switching it off is faster and far safer than deleting work.',
+					},
+					{
+						text: 'Turn off its feature flag',
+						correct: true,
+						consequence:
+							'Exactly. A flag flip hides the feature instantly without touching code or losing progress. This is precisely what flags are for.',
+					},
+					{
+						text: "Leave it up and add a 'beta' label",
+						correct: false,
+						consequence:
+							"Slapping 'beta' on unfinished work doesn't make it ready — it just ships a rough experience to everyone. Hide it first, polish it next.",
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'feature-flag',
+				word: 'feature flag',
+				codeExample: 'if (flags.newCheckout) { ... }',
+				definition:
+					"A switch that turns a feature on or off without changing the code that's already shipped. The feature can be live in the codebase but hidden from users until you flip it on — for everyone, or just a chosen few. A dimmer switch for functionality.",
+				designerContext:
+					'Feature flags are a design superpower: they enable gradual rollouts, A/B tests, and "show this to 5% of users first." If you\'re planning a phased launch, flags are the mechanism that makes it possible.',
+			},
+			{
+				slug: 'deploy',
+				word: 'deploy',
+				definition:
+					'The act of pushing a version of the code out to a running environment so it actually takes effect — most importantly to production, where users meet it. Building is cooking the dish; deploying is serving it to the table.',
+				designerContext:
+					'"When\'s the next deploy?" tells you when your merged change will actually reach users. Merged and deployed aren\'t the same — work can be approved and waiting for the next release window.',
+			},
+			{
+				slug: 'rollback',
+				word: 'rollback',
+				definition:
+					'Returning a live site to its previous working version after a bad release — a fast, whole-system undo. Instead of fixing the new problem under pressure, you restore the last version everyone knows was fine.',
+				designerContext:
+					'Rollback is the safety net behind shipping fast. It\'s why teams can take risks on a release — if something\'s badly wrong, they can revert in moments. It also means a fix you saw live might briefly disappear if a deploy gets rolled back.',
+			},
+			{
+				slug: 'environment-variable',
+				word: 'environment variable',
+				codeExample: 'STRIPE_KEY=sk_live_...',
+				definition:
+					'A setting that lives outside the code and can differ per environment — staging versus production, for example. The same code reads these values to behave correctly in each place. Like the same appliance plugged into different outlets with different voltages.',
+				designerContext:
+					'Environment variables explain why staging can point at test data while production points at the real thing, using identical code. When something behaves differently across environments with no visible code change, a differing variable is often why.',
+			},
+		],
+	},
+	{
+		number: 3,
+		title: 'The culture',
+		xpReward: 25,
+		scenario: {
+			briefing:
+				'Mission 4-C: Your one-line color token change came back with a wall of red: "47 tests failing." Forty-seven. From one line. Before you panic, the Tech Lead drops a calming message: this is exactly what the system is supposed to do.',
+			exchanges: [
+				{
+					speaker: 'The Tech Lead',
+					text: "Don't panic. Those 47 `test`s are automated checks that confirm parts of the app still behave correctly. Your color change touched a token that 47 components rely on, so 47 checks re-ran. Most are probably just expecting the old value. The system is working, not screaming.",
+					highlightedTerms: ['test'],
+				},
+				{
+					speaker: 'The On-Call Engineer',
+					text: "The fact that 47 tests even cover that token is good `coverage` — a measure of how much of the code has tests watching it. High coverage means changes can't quietly break things. You're getting loud feedback precisely because this area is well protected.",
+					highlightedTerms: ['coverage'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: 'Also — `linting` flagged a formatting nit in your file. Linting is an automatic style-and-consistency checker. Harmless, just tidy it. And once green, your change goes through `code review`: a teammate reads it, comments, approves. That\'s the human checkpoint on top of the automated ones.',
+					highlightedTerms: ['linting', 'code-review'],
+				},
+			],
+			decision: {
+				prompt: 'Your token change fails 47 tests that expected the old color value. What\'s the right next step?',
+				options: [
+					{
+						text: 'Force the change through and ignore the tests',
+						correct: false,
+						consequence:
+							"Bypassing 47 failing tests ships 47 unverified behaviors. The tests aren't obstacles — they're telling you exactly what your change affects.",
+					},
+					{
+						text: 'Update the tests to expect the new value, with review',
+						correct: true,
+						consequence:
+							'Right. If the new color is correct, the tests should be updated to match it — then reviewed so a human confirms the change was intentional, not accidental.',
+					},
+					{
+						text: 'Revert and never touch tokens again',
+						correct: false,
+						consequence:
+							'Understandable instinct, but unnecessary — this is normal, healthy feedback, not danger. Backing away from tokens entirely cedes work you\'re capable of. Update the expectations and move on.',
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'code-review',
+				word: 'code review',
+				definition:
+					'The step where another person reads your proposed change, asks questions, suggests improvements, and approves before it merges. The human quality check that sits alongside the automated ones. Peer review, for code.',
+				designerContext:
+					'Designers increasingly take part in code reviews for token, copy, and UI changes. Knowing what a review is — and that comments are normal, not criticism — lets you participate confidently instead of feeling audited.',
+			},
+			{
+				slug: 'linting',
+				word: 'linting',
+				codeExample: 'eslint src/',
+				definition:
+					'An automatic checker for style and consistency — formatting, naming, small mistakes — separate from whether the code works. It keeps a codebase looking uniform no matter how many people touch it. Like a grammar checker for code.',
+				designerContext:
+					'Linting is the engineering cousin of a design system\'s rules — automated consistency enforcement. A "lint error" on your change is usually a quick formatting fix, not a sign anything\'s actually broken.',
+			},
+			{
+				slug: 'test',
+				word: 'test',
+				codeExample: 'expect(button.color).toBe(token.primary)',
+				definition:
+					'An automated check that confirms a specific piece of the app behaves the way it\'s supposed to. Run them all and you quickly learn whether a change broke anything. Like a checklist that re-verifies itself every time the work changes.',
+				designerContext:
+					'When a change "breaks tests," it means an automatic check noticed different behavior. That\'s often good — it surfaces ripple effects of your change instantly, like discovering one token touches 47 components.',
+			},
+			{
+				slug: 'coverage',
+				word: 'coverage',
+				codeExample: 'Coverage: 84% of statements',
+				definition:
+					'A measure of how much of the code is watched by tests. High coverage means most changes will trip a test if they break something; low coverage means problems can slip through unnoticed. A gauge of how well-guarded the code is.',
+				designerContext:
+					'Coverage explains why some changes get loud, immediate feedback and others sail through silently. Well-covered areas catch your mistakes early — a feature, not a frustration.',
+			},
+		],
+	},
+];
+
+// ---------------------------------------------------------------------------
 // Tracks
 // ---------------------------------------------------------------------------
 
@@ -967,7 +1239,7 @@ export const TRACKS: Track[] = [
 		missionTheme: 'Unblocking the release',
 		terms: 12,
 		levelCount: 3,
-		levels: [],
+		levels: cicdLevels,
 		game: GAMES['cicd'],
 		unlockImage: {
 			description: 'A pipeline flowchart — commit → build → test → deploy → monitor — in three stages.',
