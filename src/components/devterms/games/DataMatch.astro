@@ -276,6 +276,10 @@
 			render();
 			rafId = requestAnimationFrame(loop);
 		}
+		// Populate the board before the first frame so idle-mode render() has tiles
+		// to draw — otherwise g.grid is [] and render reads g.grid[0][0] of an
+		// empty array, throwing every frame and freezing the loop on a blank canvas.
+		fillGrid();
 		(document as any).fonts?.load("8px 'Press Start 2P'").catch(() => {});
 		loop();
 	}

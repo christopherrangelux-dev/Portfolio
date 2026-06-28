@@ -100,6 +100,17 @@ const COMMANDS = {
 		console.log('screenshot:', f);
 	},
 
+	// Resize the viewport, e.g. `resize 390 844` (iPhone-ish) or `resize 1280 720`
+	// to go back to desktop. Media-query-driven layout reflows on the real
+	// viewport size, which `eval` can't change — this is the responsive-check hook.
+	async resize(arg) {
+		if (!page) return console.log('ERROR: launch first');
+		const [w, h] = (arg || '').split(/\s+/).map(Number);
+		if (!w || !h) return console.log('usage: resize <width> <height>');
+		await page.setViewportSize({ width: w, height: h });
+		console.log('resized ->', `${w}x${h}`);
+	},
+
 	async click(sel) {
 		if (!page) return console.log('ERROR: launch first');
 		try {
