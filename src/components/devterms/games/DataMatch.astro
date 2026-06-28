@@ -1,0 +1,311 @@
+---
+// Data Match — Data & Databases' 8-bit mini-game (spec §8). Canvas only. A grid
+// of data tiles (four glyph kinds: table, key, row, link). Tap three tiles of
+// the same kind to "resolve a query" (+1) — they clear, the columns collapse,
+// and fresh tiles drop in. A timer bar drains continuously; each resolved query
+// tops it back up. Pick three that don't match and the selection just clears.
+// Timer hits zero — game over. Score = queries resolved; best persists.
+//
+// Two-colour discipline like the other games: tiles drawn in off-white on a dark
+// field, selection + accents in the track green. Kinds are told apart by their
+// pixel glyph shape, not by colour. Press Start 2P scoped to the game UI.
+---
+
+<div class="dt-match" data-match>
+	<canvas class="dt-match-canvas" data-match-canvas role="img" aria-label="Data Match — tap three matching data tiles to resolve a query"></canvas>
+</div>
+
+<script>
+	const BEST_KEY = 'dt-data-match-best';
+	const H = 220;
+	const KINDS = 4; // 0 table, 1 key, 2 row, 3 link
+
+	type Tile = { kind: number; sel: boolean };
+
+	let rafId = 0;
+	let cleanup: Array<() => void> = [];
+
+	function readBest(): number {
+		try {
+			return Number(localStorage.getItem(BEST_KEY)) || 0;
+		} catch {
+			return 0;
+		}
+	}
+	function writeBest(n: number) {
+		try {
+			localStorage.setItem(BEST_KEY, String(n));
+		} catch {
+			/* ignore */
+		}
+	}
+
+	function setup() {
+		destroy();
+		const canvas = document.querySelector<HTMLCanvasElement>('[data-match-canvas]');
+		if (!canvas) return;
+		const ctx = canvas.getContext('2d');
+		if (!ctx) return;
+
+		const palette = {
+			green: getComputedStyle(canvas).getPropertyValue('--track-color').trim() || '#639922',
+			ink: '#f4f1ea',
+			bg: '#0f1014',
+		};
+
+		const COLS = 5;
+		const ROWS = 4;
+		const TILE = 34;
+		const GAP = 8;
+		let W = 0;
+		let gridX = 0;
+		let gridY = 0;
+
+		function resize() {
+			const dpr = Math.min(window.devicePixelRatio || 1, 2);
+			W = canvas!.clientWidth || 800;
+			canvas!.width = Math.round(W * dpr);
+			canvas!.height = Math.round(H * dpr);
+			ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
+			ctx!.imageSmoothingEnabled = false;
+			const gw = COLS * TILE + (COLS - 1) * GAP;
+			const gh = ROWS * TILE + (ROWS - 1) * GAP;
+			gridX = (W - gw) / 2;
+			gridY = (H - gh) / 2 + 8;
+		}
+		resize();
+
+		const g = {
+			mode: 'idle' as 'idle' | 'running' | 'over',
+			t: 0,
+			score: 0,
+			best: readBest(),
+			grid: [] as Tile[][], // grid[col][row]
+			selected: [] as Array<[number, number]>,
+			timer: 1, // 0..1
+			drain: 0.0016,
+			resolveFlash: 0,
+		};
+
+		function fillGrid() {
+			g.grid = [];
+			for (let c = 0; c < COLS; c++) {
+				g.grid[c] = [];
+				for (let r = 0; r < ROWS; r++) g.grid[c][r] = { kind: (Math.random() * KINDS) | 0, sel: false };
+			}
+		}
+
+		function reset() {
+			g.mode = 'running';
+			g.t = 0;
+			g.score = 0;
+			g.selected = [];
+			g.timer = 1;
+			g.drain = 0.0016;
+			g.resolveFlash = 0;
+			fillGrid();
+		}
+
+		function tileRect(c: number, r: number) {
+			return { x: gridX + c * (TILE + GAP), y: gridY + r * (TILE + GAP) };
+		}
+
+		function clearSelection() {
+			for (const [c, r] of g.selected) g.grid[c][r].sel = false;
+			g.selected = [];
+		}
+
+		// Clear matched cells, collapse each column down, refill from the top.
+		function resolveMatch() {
+			const byCol = new Map<number, number[]>();
+			for (const [c, r] of g.selected) {
+				if (!byCol.has(c)) byCol.set(c, []);
+				byCol.get(c)!.push(r);
+			}
+			for (const [c, rows] of byCol) {
+				const keep = g.grid[c].filter((_, r) => !rows.includes(r));
+				const add: Tile[] = Array.from({ length: rows.length }, () => ({ kind: (Math.random() * KINDS) | 0, sel: false }));
+				g.grid[c] = [...add, ...keep]; // new tiles drop in at the top
+			}
+			g.selected = [];
+			g.score++;
+			g.resolveFlash = 10;
+			g.timer = Math.min(1, g.timer + 0.12);
+			g.drain = Math.min(0.0042, g.drain + 0.00006);
+			if (g.score > g.best) {
+				g.best = g.score;
+				writeBest(g.best);
+			}
+		}
+
+		function tapAt(px: number, py: number) {
+			for (let c = 0; c < COLS; c++)
+				for (let r = 0; r < ROWS; r++) {
+					const { x, y } = tileRect(c, r);
+					if (px >= x && px <= x + TILE && py >= y && py <= y + TILE) {
+						const tile = g.grid[c][r];
+						if (tile.sel) {
+							// tap a selected tile to deselect it
+							tile.sel = false;
+							g.selected = g.selected.filter(([sc, sr]) => !(sc === c && sr === r));
+							return;
+						}
+						tile.sel = true;
+						g.selected.push([c, r]);
+						if (g.selected.length === 3) {
+							const kinds = g.selected.map(([sc, sr]) => g.grid[sc][sr].kind);
+							if (kinds[0] === kinds[1] && kinds[1] === kinds[2]) resolveMatch();
+							else clearSelection();
+						}
+						return;
+					}
+				}
+		}
+
+		// ---- input ----
+		const onPointer = (e: PointerEvent) => {
+			e.preventDefault();
+			if (g.mode !== 'running') return reset();
+			const rect = canvas!.getBoundingClientRect();
+			tapAt((e.clientX - rect.left) * (W / rect.width), (e.clientY - rect.top) * (H / rect.height));
+		};
+		const onKey = (e: KeyboardEvent) => {
+			if (e.code === 'Space' && g.mode !== 'running') {
+				e.preventDefault();
+				reset();
+			}
+		};
+		canvas.addEventListener('pointerdown', onPointer);
+		window.addEventListener('keydown', onKey);
+		window.addEventListener('resize', resize);
+		cleanup.push(() => canvas.removeEventListener('pointerdown', onPointer));
+		cleanup.push(() => window.removeEventListener('keydown', onKey));
+		cleanup.push(() => window.removeEventListener('resize', resize));
+
+		// ---- update ----
+		function update() {
+			g.t++;
+			if (g.resolveFlash > 0) g.resolveFlash--;
+			if (g.mode !== 'running') return;
+			g.timer -= g.drain;
+			if (g.timer <= 0) {
+				g.timer = 0;
+				g.mode = 'over';
+			}
+		}
+
+		// ---- render ----
+		function px(x: number, y: number, w: number, h: number, color: string) {
+			ctx!.fillStyle = color;
+			ctx!.fillRect(Math.round(x), Math.round(y), Math.round(w), Math.round(h));
+		}
+		function text(s: string, x: number, y: number, size: number, color: string, align: CanvasTextAlign = 'left') {
+			ctx!.fillStyle = color;
+			ctx!.font = `${size}px 'Press Start 2P', monospace`;
+			ctx!.textAlign = align;
+			ctx!.textBaseline = 'alphabetic';
+			ctx!.fillText(s, x, y);
+		}
+
+		// distinct chunky glyph per kind, centred in a TILE box at (x,y)
+		function drawGlyph(kind: number, x: number, y: number, color: string) {
+			const cx = x + TILE / 2;
+			const cy = y + TILE / 2;
+			if (kind === 0) {
+				// table: 2x2 grid of cells
+				px(cx - 9, cy - 9, 18, 18, color);
+				px(cx - 7, cy - 7, 5, 5, palette.bg);
+				px(cx + 2, cy - 7, 5, 5, palette.bg);
+				px(cx - 7, cy + 2, 5, 5, palette.bg);
+				px(cx + 2, cy + 2, 5, 5, palette.bg);
+			} else if (kind === 1) {
+				// key: round bow + stem + teeth
+				px(cx - 8, cy - 5, 8, 8, color);
+				px(cx - 6, cy - 3, 4, 4, palette.bg);
+				px(cx, cy - 2, 10, 3, color);
+				px(cx + 6, cy + 1, 2, 3, color);
+				px(cx + 9, cy + 1, 2, 3, color);
+			} else if (kind === 2) {
+				// row: three stacked bars
+				px(cx - 9, cy - 7, 18, 3, color);
+				px(cx - 9, cy - 1, 18, 3, color);
+				px(cx - 9, cy + 5, 18, 3, color);
+			} else {
+				// link: two dots joined by a bar (foreign key)
+				px(cx - 9, cy - 3, 6, 6, color);
+				px(cx + 3, cy - 3, 6, 6, color);
+				px(cx - 3, cy - 1, 6, 2, color);
+			}
+		}
+
+		function render() {
+			px(0, 0, W, H, palette.bg);
+
+			// timer bar
+			const barW = COLS * TILE + (COLS - 1) * GAP;
+			px(gridX, gridY - 16, barW, 5, '#15161c');
+			px(gridX, gridY - 16, Math.round(barW * g.timer), 5, g.timer < 0.25 ? palette.ink : palette.green);
+
+			for (let c = 0; c < COLS; c++)
+				for (let r = 0; r < ROWS; r++) {
+					const t = g.grid[c][r];
+					const { x, y } = tileRect(c, r);
+					px(x, y, TILE, TILE, t.sel ? palette.green : '#15161c');
+					drawGlyph(t.kind, x, y, t.sel ? palette.bg : palette.ink);
+				}
+
+			text(`QUERIES ${g.score}`, 12, 18, 8, palette.ink);
+			text(`BEST ${g.best}`, W - 12, 18, 8, palette.green, 'right');
+
+			if (g.mode === 'idle') {
+				px(0, H / 2 - 44, W, 88, 'rgba(15,16,20,0.82)');
+				text('DATA MATCH', W / 2, H / 2 - 22, 11, palette.ink, 'center');
+				text('TAP THREE MATCHING TILES', W / 2, H / 2 - 4, 6, palette.green, 'center');
+				text('TO RESOLVE A QUERY', W / 2, H / 2 + 10, 6, palette.green, 'center');
+				text('TAP TO START', W / 2, H / 2 + 28, 7, palette.ink, 'center');
+			} else if (g.mode === 'over') {
+				px(0, H / 2 - 40, W, 80, 'rgba(15,16,20,0.82)');
+				text('TIME OUT!', W / 2, H / 2 - 22, 12, palette.green, 'center');
+				text(`${g.score} QUERIES RESOLVED`, W / 2, H / 2 - 2, 7, palette.ink, 'center');
+				text('SPACE / TAP TO RETRY', W / 2, H / 2 + 18, 7, palette.green, 'center');
+			}
+		}
+
+		function loop() {
+			update();
+			render();
+			rafId = requestAnimationFrame(loop);
+		}
+		(document as any).fonts?.load("8px 'Press Start 2P'").catch(() => {});
+		loop();
+	}
+
+	function destroy() {
+		if (rafId) cancelAnimationFrame(rafId);
+		rafId = 0;
+		cleanup.forEach((fn) => fn());
+		cleanup = [];
+	}
+
+	setup();
+	document.addEventListener('astro:page-load', setup);
+	document.addEventListener('astro:before-swap', destroy);
+</script>
+
+<style>
+	@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+	.dt-match {
+		width: 100%;
+		height: 100%;
+	}
+	.dt-match-canvas {
+		display: block;
+		width: 100%;
+		height: 100%;
+		image-rendering: pixelated;
+		border-radius: 6px;
+		cursor: pointer;
+		touch-action: manipulation;
+	}
+</style>

@@ -1454,6 +1454,289 @@ const securityLevels: Level[] = [
 ];
 
 // ---------------------------------------------------------------------------
+// Track 6 — Data & Databases (spec §10)
+// ---------------------------------------------------------------------------
+
+const dataDbsLevels: Level[] = [
+	{
+		number: 1,
+		title: 'The structure',
+		xpReward: 15,
+		scenario: {
+			briefing:
+				'Mission 6-A: You designed a slick new "team workspace" feature. Engineering\'s first question isn\'t about the visuals — it\'s "what\'s the data model?" You nod like you understand. You\'re about to actually understand.',
+			exchanges: [
+				{
+					speaker: 'The Data Engineer',
+					text: 'Everything your feature shows has to be stored somewhere — that\'s the `database`. It\'s the organized warehouse where all the app\'s information lives: users, workspaces, settings, everything. Your screens are windows into it.',
+					highlightedTerms: ['database', 'schema'],
+				},
+				{
+					speaker: 'The Data Engineer',
+					text: 'Inside the database, data is organized into `table`s — think spreadsheets, one per type of thing. A `users` table, a `workspaces` table. Each table holds many rows, and each row is one record: one user, one workspace.',
+					highlightedTerms: ['table'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: 'The `schema` is the blueprint — what tables exist, what `field`s (columns) each one has, and how they connect. A field is a single piece of info: a user\'s email, a workspace\'s name. When we ask "what\'s the data model," we\'re asking you to help define this blueprint.',
+					highlightedTerms: ['schema', 'field'],
+				},
+				{
+					speaker: 'You',
+					text: 'So my "workspace" needs a table, with fields: name, owner, members, created date. I\'m basically designing a structured form that maps to columns. This is just information architecture wearing a database costume.',
+					highlightedTerms: [],
+				},
+			],
+			decision: {
+				prompt: 'Engineering asks for the "data model" behind your new feature. What are they asking for?',
+				options: [
+					{
+						text: 'The visual mockups, in higher fidelity',
+						correct: false,
+						consequence:
+							'They have the visuals. They\'re asking what *information* the feature needs stored — the tables and fields underneath, not the pixels on top.',
+					},
+					{
+						text: 'What information it stores and how it\'s structured',
+						correct: true,
+						consequence:
+							'Exactly. The data model is the tables, fields, and relationships your feature needs. Sketching that with them makes you a stronger design partner.',
+					},
+					{
+						text: 'That\'s purely an engineering decision',
+						correct: false,
+						consequence:
+							'You know best what information the feature requires — what each card shows, what users edit. That directly shapes the data model. Don\'t opt out of it.',
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'database',
+				word: 'database',
+				codeExample: '(e.g. PostgreSQL, MySQL)',
+				definition:
+					'An organized store where an app keeps all its information so it can be saved, found, and updated reliably. Far more structured than a pile of files — more like a well-run warehouse with labeled shelves. Almost every app you use sits on top of one.',
+				designerContext:
+					'Every piece of real data in your designs — a username, a saved draft, a setting — lives in a database. Understanding that helps you reason about what\'s stored, what\'s temporary, and what has to persist between sessions.',
+			},
+			{
+				slug: 'table',
+				word: 'table',
+				codeExample: 'users, workspaces, orders',
+				definition:
+					'A single collection of one type of thing inside a database, organized like a spreadsheet — columns define the kinds of info, rows are individual records. One table for users, one for orders, and so on.',
+				designerContext:
+					'Tables often map closely to the "objects" in your design — users, projects, messages. Thinking in tables helps you align your information architecture with how the data is actually structured.',
+			},
+			{
+				slug: 'schema',
+				word: 'schema',
+				codeExample: '(the structure: tables, fields, relationships)',
+				definition:
+					'The blueprint of a database — which tables exist, what fields each one holds, and how they relate. It defines the *shape* of the data before any actual data fills it in. The floor plan, not the furniture.',
+				designerContext:
+					'When you map out what information a feature needs and how its pieces relate, you\'re sketching a schema. Collaborating on it early prevents mismatches between what you designed and what the data can actually support.',
+			},
+			{
+				slug: 'field',
+				word: 'field',
+				codeExample: 'email, created_at, workspace_name',
+				definition:
+					'A single piece of information in a record — one column of a table. A user record might have fields for name, email, and signup date. The smallest labeled unit of stored data. (Also called a column.)',
+				designerContext:
+					'Every piece of data you put on a screen corresponds to a field. Knowing this helps you ask precise questions — "is there a field for that?" — instead of assuming data exists that was never stored.',
+			},
+		],
+	},
+	{
+		number: 2,
+		title: 'Getting the data',
+		xpReward: 20,
+		scenario: {
+			briefing:
+				'Mission 6-B: An analytics dashboard you designed is showing wrong numbers — revenue figures that don\'t match finance\'s totals. The design is reading the data faithfully. The data it\'s being handed is wrong, and the reason is in how it\'s being fetched.',
+			exchanges: [
+				{
+					speaker: 'The Data Engineer',
+					text: 'The dashboard runs a `query` to get its numbers — a precise request to the database for specific data. "Give me total revenue for June." If the query asks the wrong question, you get confident, wrong answers. The display is honest; the question was off.',
+					highlightedTerms: ['query', 'sql'],
+				},
+				{
+					speaker: 'The Data Engineer',
+					text: 'Queries are written in `SQL` — the standard language for asking databases questions. This one joined the wrong tables. It pulled refunds in with sales because the connection between them was wired up incorrectly.',
+					highlightedTerms: ['sql'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: 'The wiring problem is about keys. Every row has a `primary key` — a unique ID, like a fingerprint for that record. A `foreign key` is how one table points to a row in another. The query matched on the wrong foreign key, so it stitched together rows that don\'t actually belong together.',
+					highlightedTerms: ['primary-key', 'foreign-key'],
+				},
+				{
+					speaker: 'You',
+					text: 'So my dashboard is fine — it\'s faithfully displaying a flawed query. The fix is upstream in how the data\'s joined, not in my charts. Knowing that, I can describe the bug precisely instead of doubting my own design.',
+					highlightedTerms: [],
+				},
+			],
+			decision: {
+				prompt: 'Your dashboard shows wrong revenue, but the design renders exactly what it\'s given. Where\'s the bug?',
+				options: [
+					{
+						text: 'In your chart components',
+						correct: false,
+						consequence:
+							'The charts faithfully display whatever data arrives. If the numbers are wrong but the rendering is correct, the problem is in the data being fed in, not the display.',
+					},
+					{
+						text: 'In the query feeding the dashboard',
+						correct: true,
+						consequence:
+							'Right. A faithful display of bad data points upstream — to a query pulling or joining the wrong rows. Naming that precisely gets it to the right person fast.',
+					},
+					{
+						text: 'In the user\'s browser',
+						correct: false,
+						consequence:
+							'The same wrong numbers would show everywhere — this isn\'t a local glitch. Consistently wrong totals point at the query, not one person\'s browser.',
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'query',
+				word: 'query',
+				codeExample: "SELECT SUM(amount) FROM sales WHERE month = 'June'",
+				definition:
+					'A specific request to a database for specific information. "Give me all orders from yesterday," "count active users." The database answers exactly what you ask — which means a poorly framed query returns confidently wrong results.',
+				designerContext:
+					'Most data on a screen arrives via a query. When numbers look wrong but the layout is right, the query is a prime suspect. Knowing this helps you point engineers upstream instead of doubting your own design.',
+			},
+			{
+				slug: 'sql',
+				word: 'SQL',
+				codeExample: 'SELECT name FROM users WHERE active = true',
+				definition:
+					'The standard language for asking databases questions and getting data back. Readable enough that the intent is often clear even to non-engineers — SELECT name FROM users reads almost like English. The lingua franca of structured data.',
+				designerContext:
+					'You don\'t need to write SQL, but recognizing it helps you follow data conversations and even sanity-check what a screen is *supposed* to be pulling. It demystifies where your numbers come from.',
+			},
+			{
+				slug: 'primary-key',
+				word: 'primary key',
+				codeExample: 'id: 4471 (unique per row)',
+				definition:
+					'A unique identifier for each record in a table — no two rows share one. It\'s how the database tells records apart with certainty, even if other details match. A fingerprint for a row.',
+				designerContext:
+					'Primary keys are why "two users named Alex Smith" never get confused by the system. They explain how an app reliably references the exact item you selected, even among look-alikes.',
+			},
+			{
+				slug: 'foreign-key',
+				word: 'foreign key',
+				codeExample: 'workspace_id: 4471 (points to a row in another table)',
+				definition:
+					'A field in one table that points to a specific record in another, creating a relationship between them. It\'s how a database connects related things — this order belongs to that customer. The thread linking two tables together.',
+				designerContext:
+					'Foreign keys are the data version of relationships you design constantly — a comment belongs to a post, a task belongs to a project. Understanding them clarifies how connected data is wired, and how a wrong link produces wrong results.',
+			},
+		],
+	},
+	{
+		number: 3,
+		title: 'Keeping it healthy',
+		xpReward: 25,
+		scenario: {
+			briefing:
+				'Mission 6-C: Mid-demo, in front of a client, the app slows to a crawl and then throws an error. Behind the scenes, a database migration was running at exactly the wrong moment. Live demos have a sense of timing.',
+			exchanges: [
+				{
+					speaker: 'The Data Engineer',
+					text: 'A `migration` was running — a controlled, versioned change to the database\'s structure, like adding a column or reshaping a table. Migrations are how the schema evolves safely over time. This one just had catastrophically bad timing against a live demo.',
+					highlightedTerms: ['migration', 'data-integrity'],
+				},
+				{
+					speaker: 'The Data Engineer',
+					text: 'The slowdown got worse because a query that needed an `index` didn\'t have one. An index is like a book\'s index — it lets the database jump straight to the rows it needs instead of scanning every page. Without it, big tables crawl.',
+					highlightedTerms: ['index'],
+				},
+				{
+					speaker: 'The Tech Lead',
+					text: 'For demos, we should\'ve been on `seed data` — fake but realistic sample data made for testing and demos, kept separate from real records. And migrations are written carefully to protect `data integrity`: the guarantee that the data stays accurate and consistent, with no broken links or half-finished changes.',
+					highlightedTerms: ['seed-data', 'data-integrity'],
+				},
+				{
+					speaker: 'You',
+					text: 'So three lessons: run migrations off-hours, make sure demo-critical screens are indexed, and demo on seed data. None of these are "design" exactly, but knowing them makes me the kind of designer engineers actually want in the planning room.',
+					highlightedTerms: [],
+				},
+			],
+			decision: {
+				prompt: 'A migration during a live demo caused slowness and errors. What\'s the lesson for next time?',
+				options: [
+					{
+						text: 'Never change the database again',
+						correct: false,
+						consequence:
+							'Databases have to evolve — migrations are normal and necessary. The lesson is *timing and preparation*, not avoiding change forever.',
+					},
+					{
+						text: 'Schedule migrations off-hours and demo on seed data',
+						correct: true,
+						consequence:
+							'Exactly. Run structural changes when traffic\'s low, and demo on safe sample data. Both are simple practices that prevent exactly this.',
+					},
+					{
+						text: 'Blame the database engineer',
+						correct: false,
+						consequence:
+							'Blame fixes nothing and misses the real takeaway: better timing and a seed-data demo environment. The fix is process, not fault.',
+					},
+				],
+			},
+		},
+		terms: [
+			{
+				slug: 'migration',
+				word: 'migration',
+				codeExample: 'ALTER TABLE users ADD COLUMN avatar_url',
+				definition:
+					'A controlled, versioned change to a database\'s structure — adding a column, renaming a table, reshaping how data is organized. Migrations let the schema evolve over time without losing or corrupting existing data. Each one is a tracked, reversible step.',
+				designerContext:
+					'When you add a new field to a feature — a profile bio, a new status — a migration is what makes room for it in the database. Understanding this helps you grasp why "a small new field" can still require real engineering coordination.',
+			},
+			{
+				slug: 'index',
+				word: 'index',
+				codeExample: 'CREATE INDEX ON orders (customer_id)',
+				definition:
+					'A behind-the-scenes shortcut that lets a database find specific rows fast, without scanning the entire table. Like the index at the back of a book — jump straight to the right page instead of reading all of them. Essential as data grows large.',
+				designerContext:
+					'Indexes are often why one screen loads instantly and a similar one lags. When a list or search feels slow, "is that column indexed?" is a surprisingly relevant question for a designer to understand.',
+			},
+			{
+				slug: 'seed-data',
+				word: 'seed data',
+				codeExample: '(sample records loaded for testing/demos)',
+				definition:
+					'Fake but realistic data created to fill an app during development, testing, or demos — kept entirely separate from real user records. It lets you see how a feature looks "full" without touching or risking actual data. A stunt double for the real thing.',
+				designerContext:
+					'Good seed data is a design ally — it\'s how you preview empty, sparse, and overflowing states. Asking for realistic seed data (long names, edge cases) helps you design for reality instead of tidy placeholder text.',
+			},
+			{
+				slug: 'data-integrity',
+				word: 'data integrity',
+				codeExample: '(constraints that keep data valid and consistent)',
+				definition:
+					'The guarantee that data stays accurate, consistent, and uncorrupted — no broken links between records, no half-finished changes, no contradictions. The systems and rules that keep the warehouse honest. When it fails, you get impossible states.',
+				designerContext:
+					'Data integrity failures surface as weird UI — an order with no customer, a comment on a deleted post, a count that doesn\'t add up. Recognizing these as integrity issues helps you report them precisely instead of as one-off "glitches."',
+			},
+		],
+	},
+];
+
+// ---------------------------------------------------------------------------
 // Tracks
 // ---------------------------------------------------------------------------
 
@@ -1557,7 +1840,7 @@ export const TRACKS: Track[] = [
 		missionTheme: 'Tracing the bad data',
 		terms: 12,
 		levelCount: 3,
-		levels: [],
+		levels: dataDbsLevels,
 		game: GAMES['data-dbs'],
 		unlockImage: {
 			description:

@@ -7,6 +7,7 @@ import ApiSwitchboard from './games/ApiSwitchboard.astro';
 import InfraDefense from './games/InfraDefense.astro';
 import CicdConveyor from './games/CicdConveyor.astro';
 import SecurityPuzzle from './games/SecurityPuzzle.astro';
+import DataMatch from './games/DataMatch.astro';
 
 // Per-track mini-game, keyed by the game slug. Tracks without an entry here
 // fall back to the "arriving soon" placeholder until their game is built.
@@ -16,6 +17,7 @@ const GAME_COMPONENTS: Record<string, typeof GitRunner> = {
 	'infra-defense': InfraDefense,
 	'cicd-conveyor': CicdConveyor,
 	'security-puzzle': SecurityPuzzle,
+	'data-match': DataMatch,
 };
 
 interface Props {
