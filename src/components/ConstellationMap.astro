@@ -8,8 +8,10 @@ interface Props {
 
 const { work } = Astro.props;
 
-// Hardcoded layout — tweakable constants. Positions are in the 1000x600 SVG
-// viewBox; connections drive line opacity between two slugs.
+// Curated layout — tweakable constants. Positions are in the 1000x600 SVG
+// viewBox; connections drive line opacity between two slugs. Any project NOT
+// listed here still appears: it gets an auto-placed fallback position (see the
+// node generation below), so the map can never silently drop a case study again.
 const POSITIONS: Record<string, { x: number; y: number }> = {
 	'nexus-ops-mcp': { x: 280, y: 180 },
 	'self-service-workflow': { x: 420, y: 220 },
@@ -17,6 +19,10 @@ const POSITIONS: Record<string, { x: number; y: number }> = {
 	'xd-library': { x: 550, y: 160 },
 	'olaiyas-cradle': { x: 680, y: 380 },
 	'recipe-book': { x: 720, y: 480 },
+	'field-manual': { x: 150, y: 300 },
+	'branch-theory': { x: 180, y: 450 },
+	'design-debt-dashboard': { x: 540, y: 440 },
+	'evidence-engine': { x: 850, y: 250 },
 };
 
 const CONNECTIONS: Array<{ from: string; to: string; opacity: number }> = [
@@ -27,7 +33,19 @@ const CONNECTIONS: Array<{ from: string; to: string; opacity: number }> = [
 	{ from: 'xd-library', to: 'api-governance', opacity: 0.5 },
 	{ from: 'olaiyas-cradle', to: 'recipe-book', opacity: 0.6 },
 	{ from: 'olaiyas-cradle', to: 'xd-library', opacity: 0.3 },
+	{ from: 'field-manual', to: 'branch-theory', opacity: 0.6 },
+	{ from: 'design-debt-dashboard', to: 'api-governance', opacity: 0.5 },
+	{ from: 'design-debt-dashboard', to: 'xd-library', opacity: 0.4 },
+	{ from: 'evidence-engine', to: 'design-debt-dashboard', opacity: 0.4 },
+	{ from: 'evidence-engine', to: 'xd-library', opacity: 0.3 },
 ];
+
+// Deterministic fallback for any project without a curated position: pack it
+// into the open top band so newly added case studies show up automatically.
+function autoPosition(n: number): { x: number; y: number } {
+	const perRow = 6;
+	return { x: 150 + (n % perRow) * 140, y: 90 + Math.floor(n / perRow) * 70 };
+}
 
 // Static decorative star field — scattered hardcoded coordinates, purely
 // cosmetic, no animation.
@@ -46,16 +64,22 @@ const STARS: Array<{ x: number; y: number; r: number }> = [
 	{ x: 60, y: 250, r: 1 },
 ];
 
-const projectsBySlug = new Map(work.map((p) => [p.id, p]));
-const nodes = Object.entries(POSITIONS)
-	.map(([slug, pos]) => {
-		const project = projectsBySlug.get(slug);
-		if (!project) return null;
-		return { slug, ...pos, project };
-	})
-	.filter((n): n is { slug: string; x: number; y: number; project: CollectionEntry<'work'> } => n !== null);
+// Render a node for EVERY project in the collection, not just the curated ones:
+// use the curated position when present, else an auto-placed fallback. This is
+// what keeps the map in sync with the work grid as case studies are added.
+let autoIndex = 0;
+const nodes = work.map((project) => {
+	const pos = POSITIONS[project.id] ?? autoPosition(autoIndex++);
+	return { slug: project.id, ...pos, project };
+});
 
-const connections = CONNECTIONS.filter((c) => POSITIONS[c.from] && POSITIONS[c.to]);
+// A position now exists for every project, so connections only need both
+// endpoints to be real slugs in the collection.
+const renderedSlugs = new Set(nodes.map((n) => n.slug));
+const positionBySlug: Record<string, { x: number; y: number }> = Object.fromEntries(
+	nodes.map((n) => [n.slug, { x: n.x, y: n.y }])
+);
+const connections = CONNECTIONS.filter((c) => renderedSlugs.has(c.from) && renderedSlugs.has(c.to));
 ---
 
 <div class="constellation-wrap" id="constellation-wrap">
@@ -74,8 +98,8 @@ const connections = CONNECTIONS.filter((c) => POSITIONS[c.from] && POSITIONS[c.t
 
 		<g class="constellation-lines">
 			{connections.map((c) => {
-				const from = POSITIONS[c.from];
-				const to = POSITIONS[c.to];
+				const from = positionBySlug[c.from];
+				const to = positionBySlug[c.to];
 				return (
 					<line
 						x1={from.x}
