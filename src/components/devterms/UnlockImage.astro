@@ -4,11 +4,14 @@
 // is always present but each locked strip is frosted/blurred; on unlock the
 // overlay fades, revealing that third sharp (0.6s).
 //
-// The diagram here is a generic per-track "blueprint" placeholder built from
-// the track color + unlock-image description. The real reference diagrams
-// (branch diagram, schema, etc., spec §2/§8) are a later designed-output pass;
-// this component already implements the reveal mechanism, so swapping the SVG
-// (or an <img>) in later is a drop-in.
+// Git Flow (the finished reference track) renders a real designed branch
+// diagram — a main spine with commits, a feature branch that diverges, and a
+// merge back into main — laid out so each horizontal third carries a coherent
+// chunk of the story (top: main + commits → middle: feature branch → bottom:
+// merge). Tracks 2–6 still use the generic per-track "blueprint" placeholder
+// until their own designed-output pass (build step 11+); both paths share the
+// identical 3-strip reveal mechanism, so swapping a real diagram in later is a
+// drop-in.
 //
 // Strips are hydrated by the parent TrackPage script (data-segment="1|2|3").
 import { getTrack } from '../../data/devterms/content';
@@ -18,31 +21,65 @@ interface Props {
 }
 const { trackSlug } = Astro.props;
 const track = getTrack(trackSlug)!;
+const isGitFlow = trackSlug === 'git-flow';
 ---
 
 <figure class="dt-unlock" aria-label={track.unlockImage.altText}>
 	<div class="dt-unlock-frame">
-		<svg class="dt-unlock-svg" viewBox="0 0 300 198" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
-			<defs>
-				<pattern id={`grid-${trackSlug}`} width="20" height="20" patternUnits="userSpaceOnUse">
-					<path d="M20 0 L0 0 0 20" fill="none" stroke="var(--track-color)" stroke-opacity="0.12" stroke-width="1" />
-				</pattern>
-			</defs>
-			<rect width="300" height="198" fill={`url(#grid-${trackSlug})`} />
-			{/* three bands, one per level — abstract node-graph blueprint */}
-			{[0, 1, 2].map((band) => {
-				const y = 33 + band * 66;
-				return (
-					<g>
-						<circle cx="48" cy={y} r="9" fill="none" stroke="var(--track-color)" stroke-width="2" />
-						<line x1="57" y1={y} x2="138" y2={y} stroke="var(--track-color)" stroke-width="2" />
-						<rect x="138" y={y - 11} width="46" height="22" rx="3" fill="none" stroke="var(--track-color)" stroke-width="2" />
-						<line x1="184" y1={y} x2="232" y2={y} stroke="var(--track-color)" stroke-width="2" stroke-dasharray="4 4" />
-						<circle cx="244" cy={y} r="9" fill="var(--track-color)" fill-opacity="0.18" stroke="var(--track-color)" stroke-width="2" />
-					</g>
-				);
-			})}
-		</svg>
+		{isGitFlow ? (
+			<svg class="dt-unlock-svg dt-git-graph" viewBox="0 0 300 198" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+				<defs>
+					<pattern id="grid-git-flow" width="20" height="20" patternUnits="userSpaceOnUse">
+						<path d="M20 0 L0 0 0 20" fill="none" stroke="var(--track-color)" stroke-opacity="0.1" stroke-width="1" />
+					</pattern>
+				</defs>
+				<rect width="300" height="198" fill="url(#grid-git-flow)" />
+
+				{/* main spine — one continuous line down the left lane, spans all 3 strips */}
+				<line x1="100" y1="20" x2="100" y2="186" stroke="var(--track-color)" stroke-width="2.5" />
+				{/* feature branch spine — right lane, lives in the middle strip */}
+				<line x1="200" y1="86" x2="200" y2="150" stroke="var(--track-color)" stroke-width="2.5" />
+				{/* branch off main → feature, and merge feature → main */}
+				<path d="M100 52 C 140 52, 160 86, 200 86" fill="none" stroke="var(--track-color)" stroke-width="2.5" />
+				<path d="M200 150 C 200 168, 150 172, 100 172" fill="none" stroke="var(--track-color)" stroke-width="2.5" />
+
+				{/* strip 1 — main + early commits */}
+				<text class="dt-git-label" x="100" y="12" text-anchor="middle">main</text>
+				<circle cx="100" cy="30" r="6" fill="var(--paper)" stroke="var(--track-color)" stroke-width="2.5" />
+				<circle cx="100" cy="52" r="6" fill="var(--paper)" stroke="var(--track-color)" stroke-width="2.5" />
+
+				{/* strip 2 — feature branch + its commits */}
+				<text class="dt-git-label" x="200" y="78" text-anchor="middle">feature</text>
+				<circle cx="200" cy="98" r="6" fill="var(--paper)" stroke="var(--track-color)" stroke-width="2.5" />
+				<circle cx="200" cy="124" r="6" fill="var(--paper)" stroke="var(--track-color)" stroke-width="2.5" />
+
+				{/* strip 3 — merge commit back on main */}
+				<circle cx="100" cy="172" r="7.5" fill="var(--track-color)" fill-opacity="0.85" stroke="var(--track-color)" stroke-width="2.5" />
+				<text class="dt-git-tag" x="100" y="192" text-anchor="middle">merged</text>
+			</svg>
+		) : (
+			<svg class="dt-unlock-svg" viewBox="0 0 300 198" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+				<defs>
+					<pattern id={`grid-${trackSlug}`} width="20" height="20" patternUnits="userSpaceOnUse">
+						<path d="M20 0 L0 0 0 20" fill="none" stroke="var(--track-color)" stroke-opacity="0.12" stroke-width="1" />
+					</pattern>
+				</defs>
+				<rect width="300" height="198" fill={`url(#grid-${trackSlug})`} />
+				{/* three bands, one per level — abstract node-graph blueprint */}
+				{[0, 1, 2].map((band) => {
+					const y = 33 + band * 66;
+					return (
+						<g>
+							<circle cx="48" cy={y} r="9" fill="none" stroke="var(--track-color)" stroke-width="2" />
+							<line x1="57" y1={y} x2="138" y2={y} stroke="var(--track-color)" stroke-width="2" />
+							<rect x="138" y={y - 11} width="46" height="22" rx="3" fill="none" stroke="var(--track-color)" stroke-width="2" />
+							<line x1="184" y1={y} x2="232" y2={y} stroke="var(--track-color)" stroke-width="2" stroke-dasharray="4 4" />
+							<circle cx="244" cy={y} r="9" fill="var(--track-color)" fill-opacity="0.18" stroke="var(--track-color)" stroke-width="2" />
+						</g>
+					);
+				})}
+			</svg>
+		)}
 
 		{[1, 2, 3].map((seg) => (
 			<div class="dt-unlock-strip is-locked" data-segment={seg} style={`top: ${((seg - 1) * 100) / 3}%`} />
@@ -50,3 +87,20 @@ const track = getTrack(trackSlug)!;
 	</div>
 	<figcaption class="dt-unlock-caption">{track.unlockImage.description} <span class="dt-unlock-hint">Reveals one strip per level.</span></figcaption>
 </figure>
+
+<style>
+	.dt-git-label {
+		font-family: var(--mono);
+		font-size: 9px;
+		font-weight: 600;
+		fill: var(--track-color);
+		opacity: 0.9;
+	}
+	.dt-git-tag {
+		font-family: var(--mono);
+		font-size: 8px;
+		fill: var(--muted);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+</style>
