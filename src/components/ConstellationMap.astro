@@ -22,7 +22,7 @@ const POSITIONS: Record<string, { x: number; y: number }> = {
 	'field-manual': { x: 150, y: 300 },
 	'branch-theory': { x: 180, y: 450 },
 	'design-debt-dashboard': { x: 540, y: 440 },
-	'evidence-engine': { x: 850, y: 250 },
+	'guess-the-winner': { x: 850, y: 250 },
 };
 
 const CONNECTIONS: Array<{ from: string; to: string; opacity: number }> = [
@@ -36,8 +36,8 @@ const CONNECTIONS: Array<{ from: string; to: string; opacity: number }> = [
 	{ from: 'field-manual', to: 'branch-theory', opacity: 0.6 },
 	{ from: 'design-debt-dashboard', to: 'api-governance', opacity: 0.5 },
 	{ from: 'design-debt-dashboard', to: 'xd-library', opacity: 0.4 },
-	{ from: 'evidence-engine', to: 'design-debt-dashboard', opacity: 0.4 },
-	{ from: 'evidence-engine', to: 'xd-library', opacity: 0.3 },
+	{ from: 'guess-the-winner', to: 'design-debt-dashboard', opacity: 0.4 },
+	{ from: 'guess-the-winner', to: 'xd-library', opacity: 0.3 },
 ];
 
 // Deterministic fallback for any project without a curated position: pack it
