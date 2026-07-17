@@ -28,7 +28,7 @@ on, it was clear the assigned engineering lead wasn't equipped to lead the proje
 up as the de facto lead: building the project timeline, delegating the blueprint and journey-map
 deliverables, and setting up the research interviews myself.
 
-![Service blueprint excerpt (representative recreation)](/images/figma-mock-blueprint-oc.png)
+![Service blueprint excerpt (representative recreation)](/images/figma-mock-blueprint-oc.jpg)
 
 ## The Decision
 
@@ -36,7 +36,7 @@ Rather than default to a generic research readout, the team built a service blue
 map that made the program's frontstage/backstage gaps visible, and traced those gaps directly to
 a funding case stakeholders could act on.
 
-![Service roadmap excerpt (representative recreation)](/images/figma-mock-portal-oc.png)
+![Service roadmap excerpt (representative recreation)](/images/figma-mock-portal-oc.jpg)
 
 ## The Outcome
 

@@ -4,32 +4,32 @@
 <div id="cursor-lens" aria-hidden="true"></div>
 
 <style>
-	@property --cx {
-		syntax: '<length>';
-		inherits: false;
-		initial-value: -500px;
-	}
-
-	@property --cy {
-		syntax: '<length>';
-		inherits: false;
-		initial-value: -500px;
-	}
-
+	/*
+	 * A small fixed glow moved with transform (GPU-composited) instead of a
+	 * full-viewport mix-blend-mode layer repainted every frame. The old approach
+	 * re-blended the whole viewport on every cursor move — brutal on older GPUs.
+	 * This keeps the warm "light follows cursor" look at a fraction of the cost.
+	 */
 	#cursor-lens {
 		position: fixed;
-		inset: 0;
+		top: 0;
+		left: 0;
+		width: 700px;
+		height: 700px;
+		margin: -350px 0 0 -350px; /* center the glow on the translate origin */
+		border-radius: 50%;
 		pointer-events: none;
 		z-index: 9999;
-		mix-blend-mode: soft-light;
-		opacity: 0.4;
-		background: radial-gradient(350px circle at var(--cx, -500px) var(--cy, -500px), rgba(255, 245, 220, 0.6), transparent 70%);
-		transition: --cx 80ms ease-out, --cy 80ms ease-out;
+		opacity: 0.5;
+		background: radial-gradient(circle, rgba(255, 240, 205, 0.55), transparent 70%);
+		transform: translate3d(-1000px, -1000px, 0);
+		transition: transform 80ms ease-out;
+		will-change: transform;
 	}
 
 	[data-theme='night'] #cursor-lens {
-		opacity: 0.25;
-		background: radial-gradient(350px circle at var(--cx, -500px) var(--cy, -500px), rgba(200, 215, 240, 0.5), transparent 70%);
+		opacity: 0.35;
+		background: radial-gradient(circle, rgba(190, 208, 238, 0.5), transparent 70%);
 	}
 
 	@media (hover: none), (prefers-reduced-motion: reduce) {
@@ -97,12 +97,15 @@
 
 		if (!window.matchMedia('(hover: none)').matches) {
 			let raf = 0;
+			let x = 0;
+			let y = 0;
 			document.addEventListener('mousemove', (e) => {
+				x = e.clientX;
+				y = e.clientY;
 				if (raf) return;
 				raf = requestAnimationFrame(() => {
 					const lens = document.getElementById('cursor-lens');
-					lens?.style.setProperty('--cx', `${e.clientX}px`);
-					lens?.style.setProperty('--cy', `${e.clientY}px`);
+					if (lens) lens.style.transform = `translate3d(${x}px, ${y}px, 0)`;
 					raf = 0;
 				});
 			});
