@@ -1,0 +1,364 @@
+---
+// Self-contained recreation of the Evidence Engine's signature output: the
+// weighted evidence ledger. Toggle between the same scenarios the real engine's
+// eval suite checks, and watch the recommendation + reasoning change. Bar track
+// width encodes each factor's *weight* for the target; the fill encodes its
+// 0–1 sub-score. A factor scoring below the blocking threshold turns red-lamp
+// red and caps the confidence, no matter how strong the others are.
+//
+// The three factor rows are static markup (so Astro's scoped styles apply);
+// the script only updates their text, classes, and bar widths. Data is baked
+// (no network) so the page always renders; the live server that produces this
+// shape for real is linked from the case study.
+
+const ROWS = [
+	{ factor: 'cloud_cover', label: 'Cloud cover' },
+	{ factor: 'moon_phase', label: 'Moon phase' },
+	{ factor: 'bortle_class', label: 'Light pollution' },
+];
+---
+
+<figure class="evidence-ledger" data-evidence-ledger>
+	<div class="el-scenarios" role="tablist" aria-label="Shoot conditions">
+		<button type="button" role="tab" class="el-tab is-active" data-scenario="0" aria-selected="true">New moon · dark site</button>
+		<button type="button" role="tab" class="el-tab" data-scenario="1" aria-selected="false">Full moon · clear</button>
+		<button type="button" role="tab" class="el-tab" data-scenario="2" aria-selected="false">Overcast · new moon</button>
+		<button type="button" role="tab" class="el-tab" data-scenario="3" aria-selected="false">Manhattan · clear</button>
+	</div>
+
+	<div class="el-readout">
+		<div class="el-rec">
+			<div class="el-rec-main">
+				<span class="el-rec-label">Best window</span>
+				<span class="el-window" data-window></span>
+			</div>
+			<span class="el-confidence" data-confidence></span>
+		</div>
+		<p class="el-summary" data-summary></p>
+
+		<div class="el-evidence">
+			{ROWS.map((r) => (
+				<div class="el-row" data-row={r.factor}>
+					<div class="el-row-head">
+						<span class="el-factor">{r.label}</span>
+						<span class="el-weight" data-weight></span>
+						<span class="el-tag" data-tag hidden></span>
+					</div>
+					<p class="el-value"><span data-value></span> <span class="el-source" data-source></span></p>
+					<div class="el-bar">
+						<div class="el-bar-track" data-track><div class="el-bar-fill" data-fill></div></div>
+						<span class="el-score" data-score></span>
+					</div>
+				</div>
+			))}
+		</div>
+
+		<p class="el-legend">
+			Bar width = how much this factor <em>weighs</em> for the target · fill = its score ·
+			<span class="el-legend-block">red</span> = a blocking factor that caps confidence
+		</p>
+	</div>
+</figure>
+
+<script>
+	interface Factor {
+		factor: string;
+		value: string;
+		weight: number; // 0–1, share of the target's composite
+		score: number; // 0–1 sub-score
+		source: string;
+		dominant?: boolean;
+		blocking?: boolean;
+	}
+	interface Scenario {
+		window: string;
+		confidence: 'high' | 'medium' | 'low';
+		summary: string;
+		evidence: Factor[];
+	}
+
+	// Milky-Way weights: cloud 0.40, moon 0.35, bortle 0.25. These mirror the
+	// engine's real eval scenarios (core anchored to actual 2026 lunar dates).
+	const SCENARIOS: Scenario[] = [
+		{
+			window: 'Jul 14, 11:00PM – 2:00AM',
+			confidence: 'high',
+			summary:
+				'Strong Milky Way conditions: the factors align, led by cloud cover (4% average during dark hours on the best night).',
+			evidence: [
+				{ factor: 'cloud_cover', value: '4% average during dark hours', weight: 0.4, score: 0.96, source: 'open-meteo', dominant: true },
+				{ factor: 'moon_phase', value: 'new moon, 3% illumination, up 12% of dark hours', weight: 0.35, score: 0.98, source: 'calculated' },
+				{ factor: 'bortle_class', value: 'Bortle 2, truly dark site (Death Valley, 6 km)', weight: 0.25, score: 0.89, source: 'static dataset' },
+			],
+		},
+		{
+			window: 'Jul 28, 10:00PM – 2:00AM',
+			confidence: 'low',
+			summary:
+				'Conditions are limited for Milky Way: moon phase is the blocking factor (full moon, 99% illumination, up 92% of dark hours).',
+			evidence: [
+				{ factor: 'cloud_cover', value: '6% average during dark hours', weight: 0.4, score: 0.94, source: 'open-meteo' },
+				{ factor: 'moon_phase', value: 'full moon, 99% illumination, up 92% of dark hours', weight: 0.35, score: 0.09, source: 'calculated', dominant: true, blocking: true },
+				{ factor: 'bortle_class', value: 'Bortle 2, truly dark site (Death Valley, 6 km)', weight: 0.25, score: 0.89, source: 'static dataset' },
+			],
+		},
+		{
+			window: 'Jul 13, 10:00PM – 2:00AM',
+			confidence: 'low',
+			summary:
+				'Conditions are limited for Milky Way: cloud cover is the blocking factor (90% average during dark hours).',
+			evidence: [
+				{ factor: 'cloud_cover', value: '90% average during dark hours', weight: 0.4, score: 0.1, source: 'open-meteo', dominant: true, blocking: true },
+				{ factor: 'moon_phase', value: 'new moon, 1% illumination, up 9% of dark hours', weight: 0.35, score: 0.99, source: 'calculated' },
+				{ factor: 'bortle_class', value: 'Bortle 2, truly dark site (Death Valley, 6 km)', weight: 0.25, score: 0.89, source: 'static dataset' },
+			],
+		},
+		{
+			window: 'Jul 13, 7:00PM – 11:00PM',
+			confidence: 'medium',
+			summary:
+				'Workable but imperfect Milky Way conditions; light pollution is the main constraint (Bortle 8, inner-city sky).',
+			evidence: [
+				{ factor: 'cloud_cover', value: '8% average during dark hours', weight: 0.4, score: 0.92, source: 'open-meteo' },
+				{ factor: 'moon_phase', value: 'new moon, 2% illumination, up 11% of dark hours', weight: 0.35, score: 0.98, source: 'calculated' },
+				{ factor: 'bortle_class', value: 'Bortle 8, inner-city sky (Manhattan, 0 km)', weight: 0.25, score: 0.21, source: 'static dataset', dominant: true, blocking: true },
+			],
+		},
+	];
+
+	function weightLabel(w: number): string {
+		if (w >= 0.35) return 'high';
+		if (w >= 0.2) return 'medium';
+		return 'low';
+	}
+
+	function renderScenario(root: HTMLElement, s: Scenario): void {
+		(root.querySelector('[data-window]') as HTMLElement).textContent = s.window;
+		const conf = root.querySelector('[data-confidence]') as HTMLElement;
+		conf.textContent = s.confidence + ' confidence';
+		conf.dataset.level = s.confidence;
+		(root.querySelector('[data-summary]') as HTMLElement).textContent = s.summary;
+
+		for (const f of s.evidence) {
+			const row = root.querySelector<HTMLElement>(`.el-row[data-row="${f.factor}"]`);
+			if (!row) continue;
+			row.classList.toggle('is-blocking', Boolean(f.blocking));
+			row.classList.toggle('is-dominant', Boolean(f.dominant));
+
+			(row.querySelector('[data-weight]') as HTMLElement).textContent = weightLabel(f.weight) + ' weight';
+			(row.querySelector('[data-value]') as HTMLElement).textContent = f.value;
+			(row.querySelector('[data-source]') as HTMLElement).textContent = '· ' + f.source;
+			(row.querySelector('[data-score]') as HTMLElement).textContent = f.score.toFixed(2);
+
+			const tag = row.querySelector('[data-tag]') as HTMLElement;
+			if (f.blocking) {
+				tag.hidden = false;
+				tag.textContent = 'blocking';
+				tag.className = 'el-tag el-tag-block';
+			} else if (f.dominant) {
+				tag.hidden = false;
+				tag.textContent = 'led the call';
+				tag.className = 'el-tag el-tag-lead';
+			} else {
+				tag.hidden = true;
+				tag.className = 'el-tag';
+			}
+
+			const track = row.querySelector('[data-track]') as HTMLElement;
+			track.style.width = f.weight * 100 * 0.85 + '%'; // widest factor ≈ 34% of the row
+			const fill = row.querySelector('[data-fill]') as HTMLElement;
+			// Reset to 0 first so the width transition re-fires on every switch.
+			fill.style.width = '0%';
+			requestAnimationFrame(() => {
+				fill.style.width = Math.round(f.score * 100) + '%';
+			});
+		}
+	}
+
+	function setupEvidenceLedger(): void {
+		document.querySelectorAll<HTMLElement>('[data-evidence-ledger]').forEach((root) => {
+			if ((root as HTMLElement & { __bound?: boolean }).__bound) return;
+			(root as HTMLElement & { __bound?: boolean }).__bound = true;
+
+			const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('.el-tab'));
+			function select(i: number): void {
+				tabs.forEach((t, j) => {
+					t.classList.toggle('is-active', j === i);
+					t.setAttribute('aria-selected', String(j === i));
+				});
+				renderScenario(root, SCENARIOS[i]);
+			}
+			root.addEventListener('click', (e) => {
+				const tab = (e.target as Element).closest<HTMLButtonElement>('.el-tab');
+				if (tab) select(tabs.indexOf(tab));
+			});
+			select(0);
+		});
+	}
+
+	document.addEventListener('astro:page-load', setupEvidenceLedger);
+</script>
+
+<style>
+	.evidence-ledger {
+		margin: 2.5rem 0;
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		overflow: hidden;
+		background: var(--paper);
+		font-family: var(--mono);
+	}
+
+	.el-scenarios {
+		display: flex;
+		flex-wrap: wrap;
+		border-bottom: 1px solid var(--border);
+		background: color-mix(in srgb, var(--accent) 5%, var(--paper));
+	}
+	.el-tab {
+		flex: 1 1 auto;
+		padding: 0.7rem 0.9rem;
+		font-family: var(--mono);
+		font-size: 0.72rem;
+		letter-spacing: 0.02em;
+		color: var(--muted);
+		background: transparent;
+		border: none;
+		border-right: 1px solid var(--border);
+		border-bottom: 2px solid transparent;
+		cursor: pointer;
+		transition: color 0.15s, background 0.15s, border-color 0.15s;
+		white-space: nowrap;
+	}
+	.el-tab:last-child { border-right: none; }
+	.el-tab:hover { color: var(--ink); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+	.el-tab.is-active {
+		color: var(--accent);
+		border-bottom-color: var(--accent);
+		background: var(--paper);
+	}
+	.el-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+	.el-readout { padding: 1.5rem 1.5rem 1.25rem; }
+
+	.el-rec {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 1rem;
+		flex-wrap: wrap;
+	}
+	.el-rec-label {
+		display: block;
+		font-size: 0.66rem;
+		text-transform: uppercase;
+		letter-spacing: 0.14em;
+		color: var(--muted);
+	}
+	.el-window { font-size: 1.15rem; color: var(--ink); font-weight: 500; }
+	.el-confidence {
+		font-size: 0.72rem;
+		letter-spacing: 0.03em;
+		padding: 0.28rem 0.6rem;
+		border-radius: 999px;
+		border: 1px solid currentColor;
+		text-transform: capitalize;
+		white-space: nowrap;
+	}
+	.el-confidence[data-level='high'] { color: #2f8f5b; }
+	.el-confidence[data-level='medium'] { color: var(--accent-amber, #b6802f); }
+	.el-confidence[data-level='low'] { color: #c0392b; }
+
+	.el-summary {
+		margin: 0.9rem 0 1.4rem;
+		font-family: var(--mono);
+		font-size: 0.82rem;
+		line-height: 1.6;
+		color: var(--ink);
+	}
+
+	.el-row {
+		padding: 0.85rem 0;
+		border-top: 1px solid var(--border);
+		position: relative;
+	}
+	.el-row.is-dominant::before {
+		content: '';
+		position: absolute;
+		left: -1.5rem;
+		top: 0.85rem;
+		bottom: 0.85rem;
+		width: 2px;
+		background: var(--accent);
+	}
+	.el-row.is-blocking.is-dominant::before { background: #d64a3f; }
+
+	.el-row-head {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		flex-wrap: wrap;
+	}
+	.el-factor { font-size: 0.8rem; font-weight: 500; color: var(--ink); }
+	.el-weight {
+		font-size: 0.64rem;
+		text-transform: uppercase;
+		letter-spacing: 0.1em;
+		color: var(--muted);
+	}
+	.el-tag {
+		font-size: 0.6rem;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		padding: 0.12rem 0.4rem;
+		border-radius: 3px;
+	}
+	.el-tag[hidden] { display: none; }
+	.el-tag-lead { color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+	.el-tag-block { color: #fff; background: #d64a3f; }
+
+	.el-value {
+		margin: 0.3rem 0 0.5rem;
+		font-size: 0.74rem;
+		color: var(--muted);
+		line-height: 1.5;
+	}
+	.el-source { opacity: 0.7; }
+
+	.el-bar { display: flex; align-items: center; gap: 0.7rem; }
+	.el-bar-track {
+		height: 12px;
+		min-width: 40px;
+		background: color-mix(in srgb, var(--muted) 22%, transparent);
+		border-radius: 3px;
+		overflow: hidden;
+	}
+	.el-bar-fill {
+		height: 100%;
+		width: 0;
+		background: var(--accent);
+		border-radius: 3px;
+		transition: width 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+	.is-blocking .el-bar-fill { background: #d64a3f; }
+	.el-score {
+		font-size: 0.7rem;
+		color: var(--muted);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.el-legend {
+		margin: 1.4rem 0 0;
+		font-size: 0.66rem;
+		color: var(--muted);
+		line-height: 1.6;
+	}
+	.el-legend em { font-style: italic; color: var(--ink); }
+	.el-legend-block { color: #d64a3f; font-weight: 500; }
+
+	@media (max-width: 34rem) {
+		.el-tab { flex-basis: 50%; border-bottom: 1px solid var(--border); }
+		.el-row.is-dominant::before { left: -1rem; }
+		.el-readout { padding: 1.25rem 1rem 1rem; }
+	}
+</style>

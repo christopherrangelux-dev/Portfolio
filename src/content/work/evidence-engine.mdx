@@ -1,0 +1,105 @@
+---
+name: "Evidence Engine"
+title: "Evidence Engine: An MCP Server That Shows Its Reasoning"
+subtitle: "A real, deployed MCP server whose product is the evidence trail, not the verdict. Its first tool plans astrophotography shoot windows and returns the weighted reasoning behind every call."
+order: 1.5
+featured: true
+tags: ["AI Infrastructure", "MCP Server", "Design Engineering"]
+snapshot:
+  role: "Design Engineer"
+  timeline: "2026"
+  tools: "TypeScript, Node, Hono, MCP SDK, Fly.io"
+  team: "Solo"
+metric: "100%"
+metricLabel: "of recommendations ship with their evidence trail"
+color: "#26375c"
+pattern: stacked-bars
+---
+
+import EvidenceLedger from '../../components/EvidenceLedger.astro';
+import DemoPreviewCard from '../../components/DemoPreviewCard.astro';
+
+[MCP Server Registration](/work/nexus-ops-mcp) was a design case study about how organizations
+register and discover MCP servers at scale. This is the other half of that story: actually
+building and shipping one.
+
+## The Problem
+
+Most AI tools hand back a verdict and hide the reasoning. You get an answer with no way to see what
+drove it, which is exactly backwards for a decision you're accountable for. "Evidence over
+authority" is easy to put on a slide. I wanted a tool where it was structural, where every response
+carries the weighted evidence that produced it, not as an explanation bolted on afterward but as the
+actual product.
+
+The test case is deliberately unglamorous and checkable: planning an astrophotography shoot. Whether
+tonight is good for the Milky Way is a real question with real inputs, cloud cover, moon phase, and
+light pollution, that either align or they don't. You can check the call against the actual sky.
+
+## The Process
+
+The tool is Night Window. Ask it to plan a shoot window for a location and it returns a
+recommendation plus the full evidence ledger behind it: every factor with its weight, its score, its
+data source, and whether it helped or hurt.
+
+<EvidenceLedger />
+
+Same location, same tool, four different skies. Watch what the last two do. A perfect new moon under
+heavy cloud, and a perfectly clear new-moon night in Manhattan, both get pulled down, but by
+different factors, and the ledger names which one.
+
+Under all of it is one small reasoning engine that has no idea it's an MCP server. Three thin layers
+sit on top of the same core: the MCP protocol endpoint, a plain REST route, and the web demo. The
+protocol is a transport, not the product, so the logic worth writing never had to know which one it
+was answering.
+
+<DemoPreviewCard
+	href="https://evidence-engine.fly.dev"
+	image="/images/evidence-engine-hero.png"
+	alt="The Evidence Engine live demo: a shoot-window recommendation with its weighted evidence ledger"
+/>
+
+## The Decision
+
+The first version scored each factor from zero to one and combined them with target-dependent
+weights. It was wrong in a specific, instructive way: a clear-sky, new-moon night in Manhattan
+scored "high" for the Milky Way, because two great factors outvoted one catastrophic one. A weighted
+average will happily average away a dealbreaker.
+
+So the scoring has a second rule on top of the average. Any single factor below a threshold caps the
+overall confidence, no matter how strong the rest are. Good weather can't outvote bad light
+pollution. The ledger flags that factor in red and names it the blocking one. That is the whole
+thesis in miniature: the number alone can lie, and the evidence is what keeps it honest.
+
+A few other calls worth naming:
+
+- **Moon phase is calculated, not fetched.** You can't order a full moon from an API, so position
+  and illumination come from astronomy math (a truncated Meeus series), unit-tested against known
+  2026 new and full moon dates.
+- **Light pollution is a deliberate shortcut.** A static curated dataset of dark-sky sites and
+  metros, not a live satellite lookup. It's documented as a cut with a stated path to the real
+  thing, rather than pretended away.
+- **It degrades instead of failing.** If the weather API times out, the tool still answers on moon
+  and light pollution alone, and lowers its own confidence to say so.
+
+## The Outcome
+
+- Deployed and live on Fly.io, reachable three ways from one server: the MCP endpoint, a REST API,
+  and the web demo
+- Connectable as a real remote MCP server in Claude Desktop or Claude Code, where the evidence trail
+  returns with every tool call
+- A reasoning eval suite that pins the tool to fixed scenarios (real lunar dates, injected weather)
+  and checks it flags the right blocking factor every time
+- Scale-to-zero hosting: it sleeps when idle and wakes on demand, which keeps costs near zero without
+  pretending the server isn't real
+
+## Reflection
+
+The honest version: the astrophotography domain is a vehicle. The point wasn't a better shoot
+planner, it was a working example of a tool that argues its case instead of asserting it. That said,
+I do photograph the night sky, and the first time Night Window told me a clear night was still a bad
+Milky Way call because the moon was up, and it was right, the evidence-over-authority idea stopped
+being a slogan and started being something I'd rely on.
+
+It also closes a loop I'd only drawn on paper. [MCP Server Registration](/work/nexus-ops-mcp) argued
+about where MCP capability should live across an organization. This one is the small, real proof that
+I can build the thing those systems are meant to hold.
