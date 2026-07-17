@@ -1203,13 +1203,19 @@ img {
 }
 
 .photo-item {
+  display: flex;
+  flex-direction: column;
+}
+
+/* The crop lives on the frame so the caption below it is never clipped. */
+.photo-frame {
   position: relative;
   border-radius: 8px;
   aspect-ratio: 1;
   overflow: hidden;
 }
 
-.photo-item img {
+.photo-frame img {
   display: block;
   width: 100%;
   height: 100%;
@@ -1218,22 +1224,36 @@ img {
 
 .about-photo-tall {
   grid-row: span 2;
-  aspect-ratio: auto;
 }
 
 .about-photo-wide {
   grid-column: span 2;
+}
+
+/* Tall/wide frames follow the image's natural aspect instead of a square. */
+.about-photo-tall .photo-frame,
+.about-photo-wide .photo-frame {
   aspect-ratio: auto;
+}
+
+.about-photo-tall .photo-frame img,
+.about-photo-wide .photo-frame img {
+  height: auto;
 }
 
 @media (max-width: 700px) {
   .about-photo-tall {
     grid-row: span 1;
+  }
+  .about-photo-tall .photo-frame {
     aspect-ratio: 3 / 4;
+  }
+  .about-photo-tall .photo-frame img {
+    height: 100%;
   }
 }
 
-.photo-item::after {
+.photo-frame::after {
   content: '';
   position: absolute;
   inset: 0;
@@ -1244,12 +1264,12 @@ img {
   pointer-events: none;
 }
 
-.photo-item:hover::after {
+.photo-frame:hover::after {
   opacity: 0.35;
 }
 
 @media (hover: none) {
-  .photo-item::after {
+  .photo-frame::after {
     display: none;
   }
 }
