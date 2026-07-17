@@ -507,6 +507,21 @@ img {
   }
 }
 
+/*
+ * Page (View Transition) speed. Astro's default crossfade snapshots the whole
+ * old + new page and blends them — a full-viewport composite that janks on
+ * older GPUs. Shorten every transition group (root fade + shared-element
+ * morphs like work-title/work-metric) so fewer expensive frames are painted,
+ * which reads as snappier page-to-page navigation. Astro already disables
+ * these entirely under prefers-reduced-motion, so no guard is needed here.
+ */
+::view-transition-group(*),
+::view-transition-old(*),
+::view-transition-new(*) {
+  animation-duration: 130ms;
+  animation-timing-function: ease-out;
+}
+
 /* hero */
 
 .hero {
