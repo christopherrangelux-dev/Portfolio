@@ -510,16 +510,22 @@ img {
 /*
  * Page (View Transition) speed. Astro's default crossfade snapshots the whole
  * old + new page and blends them — a full-viewport composite that janks on
- * older GPUs. Shorten every transition group (root fade + shared-element
- * morphs like work-title/work-metric) so fewer expensive frames are painted,
- * which reads as snappier page-to-page navigation. Astro already disables
- * these entirely under prefers-reduced-motion, so no guard is needed here.
+ * older GPUs. We drop that root crossfade entirely (instant page swap, no
+ * full-page blend) while KEEPING the shared-element morphs (work-title /
+ * work-metric on Work → case-study nav), capped short so they stay snappy.
+ * Astro already disables all of this under prefers-reduced-motion.
  */
 ::view-transition-group(*),
 ::view-transition-old(*),
 ::view-transition-new(*) {
   animation-duration: 130ms;
   animation-timing-function: ease-out;
+}
+
+/* Instant swap for the full page; the named morphs above still animate. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
 }
 
 /* hero */
