@@ -12,10 +12,10 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/mdx": "^6.0.3",
+    "@astrojs/mdx": "^8.0.1",
     "@astrojs/sitemap": "^3.7.3",
-    "astro": "^6.4.7",
-    "astro-og-canvas": "^0.11.1"
+    "astro": "^7.3.2",
+    "astro-og-canvas": "^0.13.1"
   },
   "devDependencies": {
     "esbuild": "^0.28.1",
